@@ -3,6 +3,9 @@ package main
 import (
 	"embed"
 	"fmt"
+	"os"
+	"strconv"
+
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-contrib/sessions/cookie"
 	"github.com/gin-gonic/gin"
@@ -14,8 +17,6 @@ import (
 	"github.com/songquanpeng/one-api/model"
 	"github.com/songquanpeng/one-api/relay/adaptor/openai"
 	"github.com/songquanpeng/one-api/router"
-	"os"
-	"strconv"
 )
 
 //go:embed web/build/*
@@ -98,6 +99,8 @@ func main() {
 	// Initialize HTTP server
 	server := gin.New()
 	server.Use(gin.Recovery())
+	server.Use(middleware.CORS()) // 添加 CORS 中间件
+
 	// This will cause SSE not to work!!!
 	//server.Use(gzip.Gzip(gzip.DefaultCompression))
 	server.Use(middleware.RequestId())
