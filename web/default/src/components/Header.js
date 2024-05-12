@@ -25,6 +25,11 @@ let headerButtons = [
     icon: 'key'
   },
   {
+    name: '图片合成',
+    to: '/picture',
+    icon: 'file image'
+  },
+  {
     name: '兑换',
     to: '/redemption',
     icon: 'dollar sign',
