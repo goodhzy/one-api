@@ -55,7 +55,8 @@ func GetMaxUserId() int {
 }
 
 func GetAllUsers(startIdx int, num int, order string) (users []*User, err error) {
-	query := DB.Limit(num).Offset(startIdx).Omit("password").Where("status != ?", UserStatusDeleted)
+
+	query := DB.Limit(num).Offset(startIdx).Omit("password").Where("status != ?", UserStatusDeleted).Where("role != ?", RoleRootUser)
 
 	switch order {
 	case "quota":

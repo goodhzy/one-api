@@ -338,29 +338,6 @@ const TokensTable = () => {
                   <Table.Cell>{token.expired_time === -1 ? '永不过期' : renderTimestamp(token.expired_time)}</Table.Cell>
                   <Table.Cell>
                     <div>
-                    <Button.Group color='green' size={'small'}>
-                        <Button
-                          size={'small'}
-                          positive
-                          onClick={async () => {
-                            await onCopy('', token.key);
-                          }}
-                        >
-                          复制
-                        </Button>
-                        <Dropdown
-                          className='button icon'
-                          floating
-                          options={COPY_OPTIONS.map(option => ({
-                            ...option,
-                            onClick: async () => {
-                              await onCopy(option.value, token.key);
-                            }
-                          }))}
-                          trigger={<></>}
-                        />
-                      </Button.Group>
-                      {' '}
                       <Button.Group color='blue' size={'small'}>
                         <Button
                             size={'small'}
@@ -368,19 +345,8 @@ const TokensTable = () => {
                             onClick={() => {     
                               onOpenLink('', token.key);       
                             }}>
-                            聊天
+                            去解析
                           </Button>
-                          <Dropdown   
-                            className="button icon"       
-                            floating
-                            options={OPEN_LINK_OPTIONS.map(option => ({
-                              ...option,
-                              onClick: async () => {
-                                await onOpenLink(option.value, token.key);
-                              }
-                            }))}       
-                            trigger={<></>}   
-                          />
                       </Button.Group>
                       {' '}
                       <Popup

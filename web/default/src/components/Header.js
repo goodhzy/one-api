@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { UserContext } from '../context/User';
 
 import { Button, Container, Dropdown, Icon, Menu, Segment } from 'semantic-ui-react';
-import { API, getLogo, getSystemName, isAdmin, isMobile, showSuccess } from '../helpers';
+import { API, getLogo, getSystemName, isAdmin, isMobile, isRoot, showSuccess } from '../helpers';
 import '../index.css';
 
 // Header Buttons
@@ -49,22 +49,24 @@ let headerButtons = [
   {
     name: '设置',
     to: '/setting',
-    icon: 'setting'
+    icon: 'setting',
+    root: true
+
   },
-  {
-    name: '关于',
-    to: '/about',
-    icon: 'info circle'
-  }
+  // {
+  //   name: '关于',
+  //   to: '/about',
+  //   icon: 'info circle'
+  // }
 ];
 
-if (localStorage.getItem('chat_link')) {
-  headerButtons.splice(1, 0, {
-    name: '聊天',
-    to: '/chat',
-    icon: 'comments'
-  });
-}
+// if (localStorage.getItem('chat_link')) {
+//   headerButtons.splice(1, 0, {
+//     name: '聊天',
+//     to: '/chat',
+//     icon: 'comments'
+//   });
+// }
 
 const Header = () => {
   const [userState, userDispatch] = useContext(UserContext);
@@ -90,6 +92,7 @@ const Header = () => {
   const renderButtons = (isMobile) => {
     return headerButtons.map((button) => {
       if (button.admin && !isAdmin()) return <></>;
+      if(button.root && !isRoot()) return <></>;
       if (isMobile) {
         return (
           <Menu.Item

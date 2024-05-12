@@ -57,7 +57,7 @@ const Home = () => {
         homePageContentLoaded && homePageContent === '' ? <>
           <Segment>
             <Header as='h3'>系统状况</Header>
-            <Grid columns={2} stackable>
+            <Grid columns={1} stackable>
               <Grid.Column>
                 <Card fluid>
                   <Card.Content>
@@ -71,40 +71,42 @@ const Home = () => {
                   </Card.Content>
                 </Card>
               </Grid.Column>
-              <Grid.Column>
-                <Card fluid>
-                  <Card.Content>
-                    <Card.Header>系统配置</Card.Header>
-                    <Card.Meta>系统配置总览</Card.Meta>
-                    <Card.Description>
-                      <p>
-                        邮箱验证：
-                        {statusState?.status?.email_verification === true
-                          ? '已启用'
-                          : '未启用'}
-                      </p>
-                      <p>
-                        GitHub 身份验证：
-                        {statusState?.status?.github_oauth === true
-                          ? '已启用'
-                          : '未启用'}
-                      </p>
-                      <p>
-                        微信身份验证：
-                        {statusState?.status?.wechat_login === true
-                          ? '已启用'
-                          : '未启用'}
-                      </p>
-                      <p>
-                        Turnstile 用户校验：
-                        {statusState?.status?.turnstile_check === true
-                          ? '已启用'
-                          : '未启用'}
-                      </p>
-                    </Card.Description>
-                  </Card.Content>
-                </Card>
-              </Grid.Column>
+              {/*<Grid.Column>*/}
+              {/*  <Card fluid>*/}
+              {/*    <Card.Content>*/}
+              {/*      <Card.Header>系统配置</Card.Header>*/}
+              {/*      <Card.Meta>系统配置总览</Card.Meta>*/}
+              {/*      <Card.Description>*/}
+              {/*        <p>*/}
+              {/*          邮箱验证：*/}
+              {/*          {statusState?.status?.email_verification === true*/}
+              {/*            ? '已启用'*/}
+              {/*            : '未启用'}*/}
+              {/*        </p>*/}
+              {/*        <p>*/}
+              {/*          GitHub 身份验证：*/}
+              {/*          {statusState?.status?.github_oauth === true*/}
+              {/*            ? '已启用'*/}
+              {/*            : '未启用'}*/}
+              {/*        </p>*/}
+              {/*        <p>*/}
+              {/*          微信身份验证：*/}
+              {/*          {statusState?.status?.wechat_login === true*/}
+              {/*            ? '已启用'*/}
+              {/*            : '未启用'}*/}
+              {/*        </p>*/}
+              {/*        <p>*/}
+              {/*          Turnstile 用户校验：*/}
+              {/*          {statusState?.status?.turnstile_check === true*/}
+              {/*            ? '已启用'*/}
+              {/*            : '未启用'}*/}
+              {/*        </p>*/}
+              {/*      </Card.Description>*/}
+              {/*    */}
+              {/*    </Card.Content>*/}
+              {/*  </Card>*/}
+              {/*</Grid.Column>*/}
+
             </Grid>
           </Segment>
         </> : <>

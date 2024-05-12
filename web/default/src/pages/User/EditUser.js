@@ -120,22 +120,22 @@ const EditUser = () => {
           </Form.Field>
           {
             userId && <>
-              <Form.Field>
-                <Form.Dropdown
-                  label='分组'
-                  placeholder={'请选择分组'}
-                  name='group'
-                  fluid
-                  search
-                  selection
-                  allowAdditions
-                  additionLabel={'请在系统设置页面编辑分组倍率以添加新的分组：'}
-                  onChange={handleInputChange}
-                  value={inputs.group}
-                  autoComplete='new-password'
-                  options={groupOptions}
-                />
-              </Form.Field>
+              {/*<Form.Field>*/}
+              {/*  <Form.Dropdown*/}
+              {/*    label='分组'*/}
+              {/*    placeholder={'请选择分组'}*/}
+              {/*    name='group'*/}
+              {/*    fluid*/}
+              {/*    search*/}
+              {/*    selection*/}
+              {/*    allowAdditions*/}
+              {/*    additionLabel={'请在系统设置页面编辑分组倍率以添加新的分组：'}*/}
+              {/*    onChange={handleInputChange}*/}
+              {/*    value={inputs.group}*/}
+              {/*    autoComplete='new-password'*/}
+              {/*    options={groupOptions}*/}
+              {/*  />*/}
+              {/*</Form.Field>*/}
               <Form.Field>
                 <Form.Input
                   label={`剩余额度${renderQuotaWithPrompt(quota)}`}
@@ -149,36 +149,37 @@ const EditUser = () => {
               </Form.Field>
             </>
           }
-          <Form.Field>
-            <Form.Input
-              label='已绑定的 GitHub 账户'
-              name='github_id'
-              value={github_id}
-              autoComplete='new-password'
-              placeholder='此项只读，需要用户通过个人设置页面的相关绑定按钮进行绑定，不可直接修改'
-              readOnly
-            />
-          </Form.Field>
-          <Form.Field>
-            <Form.Input
-              label='已绑定的微信账户'
-              name='wechat_id'
-              value={wechat_id}
-              autoComplete='new-password'
-              placeholder='此项只读，需要用户通过个人设置页面的相关绑定按钮进行绑定，不可直接修改'
-              readOnly
-            />
-          </Form.Field>
-          <Form.Field>
-            <Form.Input
-              label='已绑定的邮箱账户'
-              name='email'
-              value={email}
-              autoComplete='new-password'
-              placeholder='此项只读，需要用户通过个人设置页面的相关绑定按钮进行绑定，不可直接修改'
-              readOnly
-            />
-          </Form.Field>
+          {/*<Form.Field>*/}
+          {/*  <Form.Input*/}
+          {/*    label='已绑定的 GitHub 账户'*/}
+          {/*    name='github_id'*/}
+          {/*    value={github_id}*/}
+          {/*    autoComplete='new-password'*/}
+          {/*    placeholder='此项只读，需要用户通过个人设置页面的相关绑定按钮进行绑定，不可直接修改'*/}
+          {/*    readOnly*/}
+          {/*  />*/}
+          {/*</Form.Field>*/}
+          {/*<Form.Field>*/}
+          {/*  <Form.Input*/}
+          {/*    label='已绑定的微信账户'*/}
+          {/*    name='wechat_id'*/}
+          {/*    value={wechat_id}*/}
+          {/*    autoComplete='new-password'*/}
+          {/*    placeholder='此项只读，需要用户通过个人设置页面的相关绑定按钮进行绑定，不可直接修改'*/}
+          {/*    readOnly*/}
+          {/*  />*/}
+          {/*</Form.Field>*/}
+          {/*<Form.Field>*/}
+          {/*  <Form.Input*/}
+          {/*    label='已绑定的邮箱账户'*/}
+          {/*    name='email'*/}
+          {/*    value={email}*/}
+          {/*    autoComplete='new-password'*/}
+          {/*    placeholder='此项只读，需要用户通过个人设置页面的相关绑定按钮进行绑定，不可直接修改'*/}
+          {/*    readOnly*/}
+          {/*  />*/}
+          {/*</Form.Field>*/}
+
           <Button onClick={handleCancel}>取消</Button>
           <Button positive onClick={submit}>提交</Button>
         </Form>

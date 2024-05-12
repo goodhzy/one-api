@@ -88,9 +88,9 @@ const TopUp = () => {
                 setRedemptionCode(e.target.value);
               }}
             />
-            <Button color='green' onClick={openTopUpLink}>
-              充值
-            </Button>
+            {/*<Button color='green' onClick={openTopUpLink}>*/}
+            {/*  充值*/}
+            {/*</Button>*/}
             <Button color='yellow' onClick={topUp} disabled={isSubmitting}>
                 {isSubmitting ? '兑换中...' : '兑换'}
             </Button>
