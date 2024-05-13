@@ -27,13 +27,16 @@ const ImageTable = (props) => {
           {imageList.map((image, index) => (
             <TableRow key={index}>
               <TableCell>
-                <Image centered={true} src={image.front.url} size='small' />
+                <Image centered={true} src={image?.front?.url} size='small' />
               </TableCell>
               <TableCell>
-                <Image centered={true} src={image.back.url} size='small' />
+                <Image centered={true} src={image?.back?.url} size='small' />
               </TableCell>
               <TableCell>
-                <Image centered={true} src={image.result} size='small' />
+                {/*<Image  centered={true} src={image.result} size='small' />*/}
+                {
+                  image.result && <img src={image.result.url} alt='' style={{ width: '300px', height: image.result.renderHeight + 'px' }} />
+                }
               </TableCell>
             </TableRow>
           ))}

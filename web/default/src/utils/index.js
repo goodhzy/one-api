@@ -25,7 +25,8 @@ export const getImageInfo = (image) => {
     img.onload = () => {
       resolve({
         width: img.width,
-        height: img.height
+        height: img.height,
+        imgEle: img
       });
     };
   });
