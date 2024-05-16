@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Divider, Form, Grid, Header } from 'semantic-ui-react';
-import { API, showError, showSuccess, timestamp2string, verifyJSON } from '../helpers';
+import { API, isRoot, showError, showSuccess, timestamp2string, verifyJSON } from '../helpers';
 
 const OperationSetting = () => {
   let now = new Date();
@@ -23,7 +23,8 @@ const OperationSetting = () => {
     DisplayInCurrencyEnabled: '',
     DisplayTokenStatEnabled: '',
     ApproximateTokenEnabled: '',
-    RetryTimes: 0
+    RetryTimes: 0,
+    prompt: ''
   });
   const [originInputs, setOriginInputs] = useState({});
   let [loading, setLoading] = useState(false);
@@ -141,6 +142,10 @@ const OperationSetting = () => {
           await updateOption('RetryTimes', inputs.RetryTimes);
         }
         break;
+        case 'prompt':
+          if (originInputs['prompt'] !== inputs.prompt) {
+            await updateOption('prompt', inputs.prompt);
+          }
     }
   };
 
@@ -160,226 +165,246 @@ const OperationSetting = () => {
       <Grid.Column>
         <Form loading={loading}>
           <Header as='h3'>
-            通用设置
-          </Header>
-          <Form.Group widths={4}>
-            <Form.Input
-              label='充值链接'
-              name='TopUpLink'
-              onChange={handleInputChange}
-              autoComplete='new-password'
-              value={inputs.TopUpLink}
-              type='link'
-              placeholder='例如发卡网站的购买链接'
-            />
-            <Form.Input
-              label='聊天页面链接'
-              name='ChatLink'
-              onChange={handleInputChange}
-              autoComplete='new-password'
-              value={inputs.ChatLink}
-              type='link'
-              placeholder='例如 ChatGPT Next Web 的部署地址'
-            />
-            <Form.Input
-              label='单位美元额度'
-              name='QuotaPerUnit'
-              onChange={handleInputChange}
-              autoComplete='new-password'
-              value={inputs.QuotaPerUnit}
-              type='number'
-              step='0.01'
-              placeholder='一单位货币能兑换的额度'
-            />
-            <Form.Input
-              label='失败重试次数'
-              name='RetryTimes'
-              type={'number'}
-              step='1'
-              min='0'
-              onChange={handleInputChange}
-              autoComplete='new-password'
-              value={inputs.RetryTimes}
-              placeholder='失败重试次数'
-            />
-          </Form.Group>
-          <Form.Group inline>
-            <Form.Checkbox
-              checked={inputs.DisplayInCurrencyEnabled === 'true'}
-              label='以货币形式显示额度'
-              name='DisplayInCurrencyEnabled'
-              onChange={handleInputChange}
-            />
-            <Form.Checkbox
-              checked={inputs.DisplayTokenStatEnabled === 'true'}
-              label='Billing 相关 API 显示令牌额度而非用户额度'
-              name='DisplayTokenStatEnabled'
-              onChange={handleInputChange}
-            />
-            <Form.Checkbox
-              checked={inputs.ApproximateTokenEnabled === 'true'}
-              label='使用近似的方式估算 token 数以减少计算量'
-              name='ApproximateTokenEnabled'
-              onChange={handleInputChange}
-            />
-          </Form.Group>
-          <Form.Button onClick={() => {
-            submitConfig('general').then();
-          }}>保存通用设置</Form.Button>
-          <Divider />
-          <Header as='h3'>
-            日志设置
-          </Header>
-          <Form.Group inline>
-            <Form.Checkbox
-              checked={inputs.LogConsumeEnabled === 'true'}
-              label='启用额度消费日志记录'
-              name='LogConsumeEnabled'
-              onChange={handleInputChange}
-            />
-          </Form.Group>
-          <Form.Group widths={4}>
-            <Form.Input label='目标时间' value={historyTimestamp} type='datetime-local'
-                        name='history_timestamp'
-                        onChange={(e, { name, value }) => {
-                          setHistoryTimestamp(value);
-                        }} />
-          </Form.Group>
-          <Form.Button onClick={() => {
-            deleteHistoryLogs().then();
-          }}>清理历史日志</Form.Button>
-          <Divider />
-          <Header as='h3'>
-            监控设置
-          </Header>
-          <Form.Group widths={3}>
-            <Form.Input
-              label='最长响应时间'
-              name='ChannelDisableThreshold'
-              onChange={handleInputChange}
-              autoComplete='new-password'
-              value={inputs.ChannelDisableThreshold}
-              type='number'
-              min='0'
-              placeholder='单位秒，当运行渠道全部测试时，超过此时间将自动禁用渠道'
-            />
-            <Form.Input
-              label='额度提醒阈值'
-              name='QuotaRemindThreshold'
-              onChange={handleInputChange}
-              autoComplete='new-password'
-              value={inputs.QuotaRemindThreshold}
-              type='number'
-              min='0'
-              placeholder='低于此额度时将发送邮件提醒用户'
-            />
-          </Form.Group>
-          <Form.Group inline>
-            <Form.Checkbox
-              checked={inputs.AutomaticDisableChannelEnabled === 'true'}
-              label='失败时自动禁用渠道'
-              name='AutomaticDisableChannelEnabled'
-              onChange={handleInputChange}
-            />
-            <Form.Checkbox
-              checked={inputs.AutomaticEnableChannelEnabled === 'true'}
-              label='成功时自动启用渠道'
-              name='AutomaticEnableChannelEnabled'
-              onChange={handleInputChange}
-            />
-          </Form.Group>
-          <Form.Button onClick={() => {
-            submitConfig('monitor').then();
-          }}>保存监控设置</Form.Button>
-          <Divider />
-          <Header as='h3'>
-            额度设置
-          </Header>
-          <Form.Group widths={4}>
-            <Form.Input
-              label='新用户初始额度'
-              name='QuotaForNewUser'
-              onChange={handleInputChange}
-              autoComplete='new-password'
-              value={inputs.QuotaForNewUser}
-              type='number'
-              min='0'
-              placeholder='例如：100'
-            />
-            <Form.Input
-              label='请求预扣费额度'
-              name='PreConsumedQuota'
-              onChange={handleInputChange}
-              autoComplete='new-password'
-              value={inputs.PreConsumedQuota}
-              type='number'
-              min='0'
-              placeholder='请求结束后多退少补'
-            />
-            <Form.Input
-              label='邀请新用户奖励额度'
-              name='QuotaForInviter'
-              onChange={handleInputChange}
-              autoComplete='new-password'
-              value={inputs.QuotaForInviter}
-              type='number'
-              min='0'
-              placeholder='例如：2000'
-            />
-            <Form.Input
-              label='新用户使用邀请码奖励额度'
-              name='QuotaForInvitee'
-              onChange={handleInputChange}
-              autoComplete='new-password'
-              value={inputs.QuotaForInvitee}
-              type='number'
-              min='0'
-              placeholder='例如：1000'
-            />
-          </Form.Group>
-          <Form.Button onClick={() => {
-            submitConfig('quota').then();
-          }}>保存额度设置</Form.Button>
-          <Divider />
-          <Header as='h3'>
-            倍率设置
+            提示词设置
           </Header>
           <Form.Group widths='equal'>
             <Form.TextArea
-              label='模型倍率'
-              name='ModelRatio'
+              label='提示词'
+              name='prompt'
               onChange={handleInputChange}
               style={{ minHeight: 250, fontFamily: 'JetBrains Mono, Consolas' }}
-              autoComplete='new-password'
-              value={inputs.ModelRatio}
-              placeholder='为一个 JSON 文本，键为模型名称，值为倍率'
-            />
-          </Form.Group>
-          <Form.Group widths='equal'>
-            <Form.TextArea
-              label='补全倍率'
-              name='CompletionRatio'
-              onChange={handleInputChange}
-              style={{ minHeight: 250, fontFamily: 'JetBrains Mono, Consolas' }}
-              autoComplete='new-password'
-              value={inputs.CompletionRatio}
-              placeholder='为一个 JSON 文本，键为模型名称，值为倍率，此处的倍率设置是模型补全倍率相较于提示倍率的比例，使用该设置可强制覆盖 One API 的内部比例'
-            />
-          </Form.Group>
-          <Form.Group widths='equal'>
-            <Form.TextArea
-              label='分组倍率'
-              name='GroupRatio'
-              onChange={handleInputChange}
-              style={{ minHeight: 250, fontFamily: 'JetBrains Mono, Consolas' }}
-              autoComplete='new-password'
-              value={inputs.GroupRatio}
-              placeholder='为一个 JSON 文本，键为分组名称，值为倍率'
+              value={inputs.prompt}
+              placeholder='请输入提示词'
             />
           </Form.Group>
           <Form.Button onClick={() => {
-            submitConfig('ratio').then();
-          }}>保存倍率设置</Form.Button>
+            submitConfig('prompt').then();
+          }}>保存提示词设置</Form.Button>
+          {
+            isRoot() && <>
+              <Header as='h3'>
+                通用设置
+              </Header>
+              <Form.Group widths={4}>
+                <Form.Input
+                  label='充值链接'
+                  name='TopUpLink'
+                  onChange={handleInputChange}
+                  autoComplete='new-password'
+                  value={inputs.TopUpLink}
+                  type='link'
+                  placeholder='例如发卡网站的购买链接'
+                />
+                <Form.Input
+                  label='聊天页面链接'
+                  name='ChatLink'
+                  onChange={handleInputChange}
+                  autoComplete='new-password'
+                  value={inputs.ChatLink}
+                  type='link'
+                  placeholder='例如 ChatGPT Next Web 的部署地址'
+                />
+                <Form.Input
+                  label='单位美元额度'
+                  name='QuotaPerUnit'
+                  onChange={handleInputChange}
+                  autoComplete='new-password'
+                  value={inputs.QuotaPerUnit}
+                  type='number'
+                  step='0.01'
+                  placeholder='一单位货币能兑换的额度'
+                />
+                <Form.Input
+                  label='失败重试次数'
+                  name='RetryTimes'
+                  type={'number'}
+                  step='1'
+                  min='0'
+                  onChange={handleInputChange}
+                  autoComplete='new-password'
+                  value={inputs.RetryTimes}
+                  placeholder='失败重试次数'
+                />
+              </Form.Group>
+              <Form.Group inline>
+                <Form.Checkbox
+                  checked={inputs.DisplayInCurrencyEnabled === 'true'}
+                  label='以货币形式显示额度'
+                  name='DisplayInCurrencyEnabled'
+                  onChange={handleInputChange}
+                />
+                <Form.Checkbox
+                  checked={inputs.DisplayTokenStatEnabled === 'true'}
+                  label='Billing 相关 API 显示令牌额度而非用户额度'
+                  name='DisplayTokenStatEnabled'
+                  onChange={handleInputChange}
+                />
+                <Form.Checkbox
+                  checked={inputs.ApproximateTokenEnabled === 'true'}
+                  label='使用近似的方式估算 token 数以减少计算量'
+                  name='ApproximateTokenEnabled'
+                  onChange={handleInputChange}
+                />
+              </Form.Group>
+              <Form.Button onClick={() => {
+                submitConfig('general').then();
+              }}>保存通用设置</Form.Button>
+              <Divider />
+              <Header as='h3'>
+                日志设置
+              </Header>
+              <Form.Group inline>
+                <Form.Checkbox
+                  checked={inputs.LogConsumeEnabled === 'true'}
+                  label='启用额度消费日志记录'
+                  name='LogConsumeEnabled'
+                  onChange={handleInputChange}
+                />
+              </Form.Group>
+              <Form.Group widths={4}>
+                <Form.Input label='目标时间' value={historyTimestamp} type='datetime-local'
+                            name='history_timestamp'
+                            onChange={(e, { name, value }) => {
+                              setHistoryTimestamp(value);
+                            }} />
+              </Form.Group>
+              <Form.Button onClick={() => {
+                deleteHistoryLogs().then();
+              }}>清理历史日志</Form.Button>
+              <Divider />
+              <Header as='h3'>
+                监控设置
+              </Header>
+              <Form.Group widths={3}>
+                <Form.Input
+                  label='最长响应时间'
+                  name='ChannelDisableThreshold'
+                  onChange={handleInputChange}
+                  autoComplete='new-password'
+                  value={inputs.ChannelDisableThreshold}
+                  type='number'
+                  min='0'
+                  placeholder='单位秒，当运行渠道全部测试时，超过此时间将自动禁用渠道'
+                />
+                <Form.Input
+                  label='额度提醒阈值'
+                  name='QuotaRemindThreshold'
+                  onChange={handleInputChange}
+                  autoComplete='new-password'
+                  value={inputs.QuotaRemindThreshold}
+                  type='number'
+                  min='0'
+                  placeholder='低于此额度时将发送邮件提醒用户'
+                />
+              </Form.Group>
+              <Form.Group inline>
+                <Form.Checkbox
+                  checked={inputs.AutomaticDisableChannelEnabled === 'true'}
+                  label='失败时自动禁用渠道'
+                  name='AutomaticDisableChannelEnabled'
+                  onChange={handleInputChange}
+                />
+                <Form.Checkbox
+                  checked={inputs.AutomaticEnableChannelEnabled === 'true'}
+                  label='成功时自动启用渠道'
+                  name='AutomaticEnableChannelEnabled'
+                  onChange={handleInputChange}
+                />
+              </Form.Group>
+              <Form.Button onClick={() => {
+                submitConfig('monitor').then();
+              }}>保存监控设置</Form.Button>
+              <Divider />
+              <Header as='h3'>
+                额度设置
+              </Header>
+              <Form.Group widths={4}>
+                <Form.Input
+                  label='新用户初始额度'
+                  name='QuotaForNewUser'
+                  onChange={handleInputChange}
+                  autoComplete='new-password'
+                  value={inputs.QuotaForNewUser}
+                  type='number'
+                  min='0'
+                  placeholder='例如：100'
+                />
+                <Form.Input
+                  label='请求预扣费额度'
+                  name='PreConsumedQuota'
+                  onChange={handleInputChange}
+                  autoComplete='new-password'
+                  value={inputs.PreConsumedQuota}
+                  type='number'
+                  min='0'
+                  placeholder='请求结束后多退少补'
+                />
+                <Form.Input
+                  label='邀请新用户奖励额度'
+                  name='QuotaForInviter'
+                  onChange={handleInputChange}
+                  autoComplete='new-password'
+                  value={inputs.QuotaForInviter}
+                  type='number'
+                  min='0'
+                  placeholder='例如：2000'
+                />
+                <Form.Input
+                  label='新用户使用邀请码奖励额度'
+                  name='QuotaForInvitee'
+                  onChange={handleInputChange}
+                  autoComplete='new-password'
+                  value={inputs.QuotaForInvitee}
+                  type='number'
+                  min='0'
+                  placeholder='例如：1000'
+                />
+              </Form.Group>
+              <Form.Button onClick={() => {
+                submitConfig('quota').then();
+              }}>保存额度设置</Form.Button>
+              <Divider />
+              <Header as='h3'>
+                倍率设置
+              </Header>
+              <Form.Group widths='equal'>
+                <Form.TextArea
+                  label='模型倍率'
+                  name='ModelRatio'
+                  onChange={handleInputChange}
+                  style={{ minHeight: 250, fontFamily: 'JetBrains Mono, Consolas' }}
+                  autoComplete='new-password'
+                  value={inputs.ModelRatio}
+                  placeholder='为一个 JSON 文本，键为模型名称，值为倍率'
+                />
+              </Form.Group>
+              <Form.Group widths='equal'>
+                <Form.TextArea
+                  label='补全倍率'
+                  name='CompletionRatio'
+                  onChange={handleInputChange}
+                  style={{ minHeight: 250, fontFamily: 'JetBrains Mono, Consolas' }}
+                  autoComplete='new-password'
+                  value={inputs.CompletionRatio}
+                  placeholder='为一个 JSON 文本，键为模型名称，值为倍率，此处的倍率设置是模型补全倍率相较于提示倍率的比例，使用该设置可强制覆盖 One API 的内部比例'
+                />
+              </Form.Group>
+              <Form.Group widths='equal'>
+                <Form.TextArea
+                  label='分组倍率'
+                  name='GroupRatio'
+                  onChange={handleInputChange}
+                  style={{ minHeight: 250, fontFamily: 'JetBrains Mono, Consolas' }}
+                  autoComplete='new-password'
+                  value={inputs.GroupRatio}
+                  placeholder='为一个 JSON 文本，键为分组名称，值为倍率'
+                />
+              </Form.Group>
+              <Form.Button onClick={() => {
+                submitConfig('ratio').then();
+              }}>保存倍率设置</Form.Button>
+            </>
+          }
         </Form>
       </Grid.Column>
     </Grid>

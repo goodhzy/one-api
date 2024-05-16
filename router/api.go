@@ -29,7 +29,7 @@ func SetApiRouter(router *gin.Engine) {
 		apiRouter.GET("/oauth/wechat/bind", middleware.CriticalRateLimit(), middleware.UserAuth(), auth.WeChatBind)
 		apiRouter.GET("/oauth/email/bind", middleware.CriticalRateLimit(), middleware.UserAuth(), controller.EmailBind)
 		apiRouter.POST("/topup", middleware.AdminAuth(), controller.AdminTopUp)
-
+		apiRouter.GET("/prompt", controller.GetPrompt)
 		userRoute := apiRouter.Group("/user")
 		{
 			userRoute.POST("/register", middleware.CriticalRateLimit(), middleware.TurnstileCheck(), controller.Register)
@@ -62,7 +62,7 @@ func SetApiRouter(router *gin.Engine) {
 			}
 		}
 		optionRoute := apiRouter.Group("/option")
-		optionRoute.Use(middleware.RootAuth())
+		optionRoute.Use(middleware.AdminAuth())
 		{
 			optionRoute.GET("/", controller.GetOptions)
 			optionRoute.PUT("/", controller.UpdateOption)

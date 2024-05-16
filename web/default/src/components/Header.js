@@ -55,8 +55,7 @@ let headerButtons = [
     name: '设置',
     to: '/setting',
     icon: 'setting',
-    root: true
-
+    admin: true
   },
   // {
   //   name: '关于',

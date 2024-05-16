@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/songquanpeng/one-api/common"
 	"github.com/songquanpeng/one-api/common/config"
+	"github.com/songquanpeng/one-api/common/helper"
 	"github.com/songquanpeng/one-api/common/message"
 	"github.com/songquanpeng/one-api/model"
 	"net/http"
@@ -204,4 +205,28 @@ func ResetPassword(c *gin.Context) {
 		"data":    password,
 	})
 	return
+}
+
+func GetPrompt(c *gin.Context) {
+	var options []*model.Option
+	config.OptionMapRWMutex.Lock()
+	for k, v := range config.OptionMap {
+		if strings.HasSuffix(k, "Token") || strings.HasSuffix(k, "Secret") {
+			continue
+		}
+		options = append(options, &model.Option{
+			Key:   k,
+			Value: helper.Interface2String(v),
+		})
+	}
+	config.OptionMapRWMutex.Unlock()
+	for _, option := range options {
+		if option.Key == "prompt" {
+			c.JSON(http.StatusOK, gin.H{
+				"success": true,
+				"message": "",
+				"data":    option.Value,
+			})
+		}
+	}
 }

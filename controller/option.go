@@ -2,6 +2,7 @@ package controller
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/songquanpeng/one-api/common/config"
 	"github.com/songquanpeng/one-api/common/helper"
 	"github.com/songquanpeng/one-api/model"
@@ -24,12 +25,33 @@ func GetOptions(c *gin.Context) {
 		})
 	}
 	config.OptionMapRWMutex.Unlock()
-	c.JSON(http.StatusOK, gin.H{
-		"success": true,
-		"message": "",
-		"data":    options,
-	})
-	return
+	// 打印c
+	// 当前当前的用户id
+	fmt.Println(c.GetInt("id"))
+	// 当前用户的角色
+	fmt.Println(c.GetInt("role"))
+	// 当前用户的用户名
+
+	// 管理员只能获取提示词
+	if model.IsRoot(c.GetInt("id")) {
+		c.JSON(http.StatusOK, gin.H{
+			"success": true,
+			"message": "",
+			"data":    options,
+		})
+	} else {
+		var filteredOptions []*model.Option
+		for _, option := range options {
+			if option.Key == "prompt" {
+				filteredOptions = append(filteredOptions, option)
+			}
+		}
+		c.JSON(http.StatusOK, gin.H{
+			"success": true,
+			"message": "",
+			"data":    filteredOptions,
+		})
+	}
 }
 
 func UpdateOption(c *gin.Context) {
