@@ -154,11 +154,11 @@ export default function Token() {
           新建令牌
         </Button>
       </Stack>
-      <Stack mb={2}>
-        <Alert severity="info">
-          将 OpenAI API 基础地址 https://api.openai.com 替换为 <b>{siteInfo.server_address}</b>，复制下面的密钥即可使用
-        </Alert>
-      </Stack>
+      {/*<Stack mb={2}>*/}
+      {/*  <Alert severity="info">*/}
+      {/*    将 OpenAI API 基础地址 https://api.openai.com 替换为 <b>{siteInfo.server_address}</b>，复制下面的密钥即可使用*/}
+      {/*  </Alert>*/}
+      {/*</Stack>*/}
       <Card>
         <Box component="form" onSubmit={searchTokens} noValidate sx={{marginTop: 2}}>
           <TableToolBar filterName={searchKeyword} handleFilterName={handleSearchKeyword} placeholder={'搜索令牌的名称...'} />

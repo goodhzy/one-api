@@ -28,7 +28,7 @@ const COPY_OPTIONS = [
   {
     key: 'next',
     text: 'ChatGPT Next',
-    url: 'https://app.nextchat.dev/#/?settings={"key":"sk-{key}","url":"{serverAddress}"}',
+    url: 'https://gptupload.prompts666.com/#/?settings={"key":"sk-{key}","url":"{serverAddress}"}',
     encode: false
   },
   { key: 'ama', text: 'BotGem', url: 'ama://set-api-key?server={serverAddress}&key=sk-{key}', encode: true },
@@ -207,25 +207,25 @@ export default function TokensTableRow({ item, manageToken, handleOpenModal, set
 
         <TableCell>
           <Stack direction="row" spacing={1}>
+            {/*<ButtonGroup size="small" aria-label="split button">*/}
+            {/*  <Button*/}
+            {/*    color="primary"*/}
+            {/*    onClick={() => {*/}
+            {/*      navigator.clipboard.writeText(`sk-${item.key}`);*/}
+            {/*      showSuccess('已复制到剪贴板！');*/}
+            {/*    }}*/}
+            {/*  >*/}
+            {/*    复制*/}
+            {/*  </Button>*/}
+            {/*  <Button size="small" onClick={(e) => handleOpenMenu(e, 'copy')}>*/}
+            {/*    <IconCaretDownFilled size={'16px'} />*/}
+            {/*  </Button>*/}
+            {/*</ButtonGroup>*/}
             <ButtonGroup size="small" aria-label="split button">
-              <Button
-                color="primary"
-                onClick={() => {
-                  navigator.clipboard.writeText(`sk-${item.key}`);
-                  showSuccess('已复制到剪贴板！');
-                }}
-              >
-                复制
-              </Button>
-              <Button size="small" onClick={(e) => handleOpenMenu(e, 'copy')}>
-                <IconCaretDownFilled size={'16px'} />
-              </Button>
-            </ButtonGroup>
-            <ButtonGroup size="small" aria-label="split button">
-              <Button color="primary" onClick={(e) => handleCopy(COPY_OPTIONS[0], 'link')}>聊天</Button>
-              <Button size="small" onClick={(e) => handleOpenMenu(e, 'link')}>
-                <IconCaretDownFilled size={'16px'} />
-              </Button>
+              <Button color="primary" onClick={(e) => handleCopy(COPY_OPTIONS[0], 'link')}>解析球星卡</Button>
+              {/*<Button size="small" onClick={(e) => handleOpenMenu(e, 'link')}>*/}
+              {/*  <IconCaretDownFilled size={'16px'} />*/}
+              {/*</Button>*/}
             </ButtonGroup>
             <IconButton onClick={(e) => handleOpenMenu(e, 'action')} sx={{ color: 'rgb(99, 115, 129)' }}>
               <IconDotsVertical />
