@@ -3,6 +3,7 @@ import { lazy } from 'react';
 // project imports
 import Loadable from 'ui-component/Loadable';
 import MinimalLayout from 'layout/MinimalLayout';
+// import { Navigate } from 'react-router';
 
 // login option 3 routing
 const AuthLogin = Loadable(lazy(() => import('views/Authentication/Auth/Login')));
@@ -25,6 +26,10 @@ const OtherRoutes = {
       path: '',
       element: <Home />
     },
+    // {
+    //   path: '',
+    //   element: <Navigate to="/login" replace />
+    // },
     {
       path: '/about',
       element: <About />

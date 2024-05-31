@@ -40,6 +40,7 @@ const OperationSetting = () => {
     DisplayTokenStatEnabled: "",
     ApproximateTokenEnabled: "",
     RetryTimes: 0,
+    prompt: "",
   });
   const [originInputs, setOriginInputs] = useState({});
   let [loading, setLoading] = useState(false);
@@ -102,7 +103,13 @@ const OperationSetting = () => {
   };
 
   const submitConfig = async (group) => {
+    // eslint-disable-next-line default-case
     switch (group) {
+      case "prompt":
+        if (originInputs["prompt"] !== inputs.prompt) {
+          await updateOption("prompt", inputs.prompt);
+        }
+      break;
       case "monitor":
         if (
           originInputs["ChannelDisableThreshold"] !==
@@ -192,6 +199,32 @@ const OperationSetting = () => {
 
   return (
     <Stack spacing={2}>
+      <SubCard title="提示词设置">
+        <Stack justifyContent="flex-start" alignItems="flex-start" spacing={2}>
+          <FormControl fullWidth>
+            <TextField
+              multiline
+              maxRows={15}
+              id="channel-prompt-label"
+              label="提示词"
+              value={inputs.prompt}
+              name="prompt"
+              onChange={handleInputChange}
+              aria-describedby="helper-text-channel-prompt-label"
+              minRows={5}
+              placeholder="设置模型提示词"
+            />
+          </FormControl>
+          <Button
+            variant="contained"
+            onClick={() => {
+              submitConfig("prompt").then();
+            }}
+          >
+            保存提示词设置
+          </Button>
+        </Stack>
+      </SubCard>
       <SubCard title="通用设置">
         <Stack justifyContent="flex-start" alignItems="flex-start" spacing={2}>
           <Stack

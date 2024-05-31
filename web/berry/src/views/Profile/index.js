@@ -12,13 +12,12 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
-  Divider,
-  SvgIcon
+  Divider
 } from '@mui/material';
 import Grid from '@mui/material/Unstable_Grid2';
 import SubCard from 'ui-component/cards/SubCard';
-import { IconBrandWechat, IconBrandGithub, IconMail } from '@tabler/icons-react';
-import Label from 'ui-component/Label';
+// import { IconBrandWechat, IconBrandGithub, IconMail } from '@tabler/icons-react';
+// import Label from 'ui-component/Label';
 import { API } from 'utils/api';
 import { showError, showSuccess } from 'utils/common';
 import { onGitHubOAuthClicked, onLarkOAuthClicked } from 'utils/common';
@@ -27,7 +26,7 @@ import WechatModal from 'views/Authentication/AuthForms/WechatModal';
 import { useSelector } from 'react-redux';
 import EmailModal from './component/EmailModal';
 import Turnstile from 'react-turnstile';
-import { ReactComponent as Lark } from 'assets/images/icons/lark.svg';
+// import { ReactComponent as Lark } from 'assets/images/icons/lark.svg';
 
 const validationSchema = Yup.object().shape({
   username: Yup.string().required('用户名 不能为空').min(3, '用户名 不能小于 3 个字符'),
@@ -130,18 +129,18 @@ export default function Profile() {
         <Card sx={{ paddingTop: '20px' }}>
           <Stack spacing={2}>
             <Stack direction="row" alignItems="center" justifyContent="center" spacing={2} sx={{ paddingBottom: '20px' }}>
-              <Label variant="ghost" color={inputs.wechat_id ? 'primary' : 'default'}>
-                <IconBrandWechat /> {inputs.wechat_id || '未绑定'}
-              </Label>
-              <Label variant="ghost" color={inputs.github_id ? 'primary' : 'default'}>
-                <IconBrandGithub /> {inputs.github_id || '未绑定'}
-              </Label>
-              <Label variant="ghost" color={inputs.email ? 'primary' : 'default'}>
-                <IconMail /> {inputs.email || '未绑定'}
-              </Label>
-              <Label variant="ghost" color={inputs.lark_id ? 'primary' : 'default'}>
-                <SvgIcon component={Lark} inheritViewBox="0 0 24 24" /> {inputs.lark_id || '未绑定'}
-              </Label>
+              {/*<Label variant="ghost" color={inputs.wechat_id ? 'primary' : 'default'}>*/}
+              {/*  <IconBrandWechat /> {inputs.wechat_id || '未绑定'}*/}
+              {/*</Label>*/}
+              {/*<Label variant="ghost" color={inputs.github_id ? 'primary' : 'default'}>*/}
+              {/*  <IconBrandGithub /> {inputs.github_id || '未绑定'}*/}
+              {/*</Label>*/}
+              {/*<Label variant="ghost" color={inputs.email ? 'primary' : 'default'}>*/}
+              {/*  <IconMail /> {inputs.email || '未绑定'}*/}
+              {/*</Label>*/}
+              {/*<Label variant="ghost" color={inputs.lark_id ? 'primary' : 'default'}>*/}
+              {/*  <SvgIcon component={Lark} inheritViewBox="0 0 24 24" /> {inputs.lark_id || '未绑定'}*/}
+              {/*</Label>*/}
             </Stack>
             <SubCard title="个人信息">
               <Grid container spacing={2}>

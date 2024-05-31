@@ -13,7 +13,7 @@ import {
   DialogContent,
   DialogActions,
   Divider,
-  Alert,
+  // Alert,
   Autocomplete,
   TextField
 } from '@mui/material';
@@ -177,53 +177,53 @@ const SystemSetting = () => {
     await updateOption('EmailDomainWhitelist', inputs.EmailDomainWhitelist.join(','));
   };
 
-  const submitWeChat = async () => {
-    if (originInputs['WeChatServerAddress'] !== inputs.WeChatServerAddress) {
-      await updateOption('WeChatServerAddress', removeTrailingSlash(inputs.WeChatServerAddress));
-    }
-    if (originInputs['WeChatAccountQRCodeImageURL'] !== inputs.WeChatAccountQRCodeImageURL) {
-      await updateOption('WeChatAccountQRCodeImageURL', inputs.WeChatAccountQRCodeImageURL);
-    }
-    if (originInputs['WeChatServerToken'] !== inputs.WeChatServerToken && inputs.WeChatServerToken !== '') {
-      await updateOption('WeChatServerToken', inputs.WeChatServerToken);
-    }
-  };
-
-  const submitGitHubOAuth = async () => {
-    if (originInputs['GitHubClientId'] !== inputs.GitHubClientId) {
-      await updateOption('GitHubClientId', inputs.GitHubClientId);
-    }
-    if (originInputs['GitHubClientSecret'] !== inputs.GitHubClientSecret && inputs.GitHubClientSecret !== '') {
-      await updateOption('GitHubClientSecret', inputs.GitHubClientSecret);
-    }
-  };
-
-  const submitTurnstile = async () => {
-    if (originInputs['TurnstileSiteKey'] !== inputs.TurnstileSiteKey) {
-      await updateOption('TurnstileSiteKey', inputs.TurnstileSiteKey);
-    }
-    if (originInputs['TurnstileSecretKey'] !== inputs.TurnstileSecretKey && inputs.TurnstileSecretKey !== '') {
-      await updateOption('TurnstileSecretKey', inputs.TurnstileSecretKey);
-    }
-  };
-
-  const submitMessagePusher = async () => {
-    if (originInputs['MessagePusherAddress'] !== inputs.MessagePusherAddress) {
-      await updateOption('MessagePusherAddress', removeTrailingSlash(inputs.MessagePusherAddress));
-    }
-    if (originInputs['MessagePusherToken'] !== inputs.MessagePusherToken && inputs.MessagePusherToken !== '') {
-      await updateOption('MessagePusherToken', inputs.MessagePusherToken);
-    }
-  };
-
-  const submitLarkOAuth = async () => {
-    if (originInputs['LarkClientId'] !== inputs.LarkClientId) {
-      await updateOption('LarkClientId', inputs.LarkClientId);
-    }
-    if (originInputs['LarkClientSecret'] !== inputs.LarkClientSecret && inputs.LarkClientSecret !== '') {
-      await updateOption('LarkClientSecret', inputs.LarkClientSecret);
-    }
-  };
+  // const submitWeChat = async () => {
+  //   if (originInputs['WeChatServerAddress'] !== inputs.WeChatServerAddress) {
+  //     await updateOption('WeChatServerAddress', removeTrailingSlash(inputs.WeChatServerAddress));
+  //   }
+  //   if (originInputs['WeChatAccountQRCodeImageURL'] !== inputs.WeChatAccountQRCodeImageURL) {
+  //     await updateOption('WeChatAccountQRCodeImageURL', inputs.WeChatAccountQRCodeImageURL);
+  //   }
+  //   if (originInputs['WeChatServerToken'] !== inputs.WeChatServerToken && inputs.WeChatServerToken !== '') {
+  //     await updateOption('WeChatServerToken', inputs.WeChatServerToken);
+  //   }
+  // };
+  //
+  // const submitGitHubOAuth = async () => {
+  //   if (originInputs['GitHubClientId'] !== inputs.GitHubClientId) {
+  //     await updateOption('GitHubClientId', inputs.GitHubClientId);
+  //   }
+  //   if (originInputs['GitHubClientSecret'] !== inputs.GitHubClientSecret && inputs.GitHubClientSecret !== '') {
+  //     await updateOption('GitHubClientSecret', inputs.GitHubClientSecret);
+  //   }
+  // };
+  //
+  // const submitTurnstile = async () => {
+  //   if (originInputs['TurnstileSiteKey'] !== inputs.TurnstileSiteKey) {
+  //     await updateOption('TurnstileSiteKey', inputs.TurnstileSiteKey);
+  //   }
+  //   if (originInputs['TurnstileSecretKey'] !== inputs.TurnstileSecretKey && inputs.TurnstileSecretKey !== '') {
+  //     await updateOption('TurnstileSecretKey', inputs.TurnstileSecretKey);
+  //   }
+  // };
+  //
+  // const submitMessagePusher = async () => {
+  //   if (originInputs['MessagePusherAddress'] !== inputs.MessagePusherAddress) {
+  //     await updateOption('MessagePusherAddress', removeTrailingSlash(inputs.MessagePusherAddress));
+  //   }
+  //   if (originInputs['MessagePusherToken'] !== inputs.MessagePusherToken && inputs.MessagePusherToken !== '') {
+  //     await updateOption('MessagePusherToken', inputs.MessagePusherToken);
+  //   }
+  // };
+  //
+  // const submitLarkOAuth = async () => {
+  //   if (originInputs['LarkClientId'] !== inputs.LarkClientId) {
+  //     await updateOption('LarkClientId', inputs.LarkClientId);
+  //   }
+  //   if (originInputs['LarkClientSecret'] !== inputs.LarkClientSecret && inputs.LarkClientSecret !== '') {
+  //     await updateOption('LarkClientSecret', inputs.LarkClientSecret);
+  //   }
+  // };
 
   return (
     <>
@@ -285,32 +285,32 @@ const SystemSetting = () => {
                 }
               />
             </Grid>
-            <Grid xs={12} md={3}>
-              <FormControlLabel
-                label="允许通过 GitHub 账户登录 & 注册"
-                control={<Checkbox checked={inputs.GitHubOAuthEnabled === 'true'} onChange={handleInputChange} name="GitHubOAuthEnabled" />}
-              />
-            </Grid>
-            <Grid xs={12} md={3}>
-              <FormControlLabel
-                label="允许通过微信登录 & 注册"
-                control={<Checkbox checked={inputs.WeChatAuthEnabled === 'true'} onChange={handleInputChange} name="WeChatAuthEnabled" />}
-              />
-            </Grid>
+            {/*<Grid xs={12} md={3}>*/}
+            {/*  <FormControlLabel*/}
+            {/*    label="允许通过 GitHub 账户登录 & 注册"*/}
+            {/*    control={<Checkbox checked={inputs.GitHubOAuthEnabled === 'true'} onChange={handleInputChange} name="GitHubOAuthEnabled" />}*/}
+            {/*  />*/}
+            {/*</Grid>*/}
+            {/*<Grid xs={12} md={3}>*/}
+            {/*  <FormControlLabel*/}
+            {/*    label="允许通过微信登录 & 注册"*/}
+            {/*    control={<Checkbox checked={inputs.WeChatAuthEnabled === 'true'} onChange={handleInputChange} name="WeChatAuthEnabled" />}*/}
+            {/*  />*/}
+            {/*</Grid>*/}
             <Grid xs={12} md={3}>
               <FormControlLabel
                 label="允许新用户注册（此项为否时，新用户将无法以任何方式进行注册）"
                 control={<Checkbox checked={inputs.RegisterEnabled === 'true'} onChange={handleInputChange} name="RegisterEnabled" />}
               />
             </Grid>
-            <Grid xs={12} md={3}>
-              <FormControlLabel
-                label="启用 Turnstile 用户校验"
-                control={
-                  <Checkbox checked={inputs.TurnstileCheckEnabled === 'true'} onChange={handleInputChange} name="TurnstileCheckEnabled" />
-                }
-              />
-            </Grid>
+            {/*<Grid xs={12} md={3}>*/}
+            {/*  <FormControlLabel*/}
+            {/*    label="启用 Turnstile 用户校验"*/}
+            {/*    control={*/}
+            {/*      <Checkbox checked={inputs.TurnstileCheckEnabled === 'true'} onChange={handleInputChange} name="TurnstileCheckEnabled" />*/}
+            {/*    }*/}
+            {/*  />*/}
+            {/*</Grid>*/}
           </Grid>
         </SubCard>
         <SubCard title="配置邮箱域名白名单" subTitle="用以防止恶意用户利用临时邮箱批量注册">
@@ -444,276 +444,276 @@ const SystemSetting = () => {
             </Grid>
           </Grid>
         </SubCard>
-        <SubCard
-          title="配置 GitHub OAuth App"
-          subTitle={
-            <span>
-              {' '}
-              用以支持通过 GitHub 进行登录注册，
-              <a href="https://github.com/settings/developers" target="_blank" rel="noopener noreferrer">
-                点击此处
-              </a>
-              管理你的 GitHub OAuth App
-            </span>
-          }
-        >
-          <Grid container spacing={{ xs: 3, sm: 2, md: 4 }}>
-            <Grid xs={12}>
-              <Alert severity="info" sx={{ wordWrap: 'break-word' }}>
-                Homepage URL 填 <b>{inputs.ServerAddress}</b>
-                ，Authorization callback URL 填 <b>{`${inputs.ServerAddress}/oauth/github`}</b>
-              </Alert>
-            </Grid>
-            <Grid xs={12} md={6}>
-              <FormControl fullWidth>
-                <InputLabel htmlFor="GitHubClientId">GitHub Client ID</InputLabel>
-                <OutlinedInput
-                  id="GitHubClientId"
-                  name="GitHubClientId"
-                  value={inputs.GitHubClientId || ''}
-                  onChange={handleInputChange}
-                  label="GitHub Client ID"
-                  placeholder="输入你注册的 GitHub OAuth APP 的 ID"
-                  disabled={loading}
-                />
-              </FormControl>
-            </Grid>
-            <Grid xs={12} md={6}>
-              <FormControl fullWidth>
-                <InputLabel htmlFor="GitHubClientSecret">GitHub Client Secret</InputLabel>
-                <OutlinedInput
-                  id="GitHubClientSecret"
-                  name="GitHubClientSecret"
-                  value={inputs.GitHubClientSecret || ''}
-                  onChange={handleInputChange}
-                  label="GitHub Client Secret"
-                  placeholder="敏感信息不会发送到前端显示"
-                  disabled={loading}
-                />
-              </FormControl>
-            </Grid>
-            <Grid xs={12}>
-              <Button variant="contained" onClick={submitGitHubOAuth}>
-                保存 GitHub OAuth 设置
-              </Button>
-            </Grid>
-          </Grid>
-        </SubCard>
-        <SubCard
-          title="配置飞书授权登录"
-          subTitle={
-            <span>
-              {' '}
-              用以支持通过飞书进行登录注册，
-              <a href="https://open.feishu.cn/app" target="_blank" rel="noreferrer">
-                点击此处
-              </a>
-              管理你的飞书应用
-            </span>
-          }
-        >
-          <Grid container spacing={{ xs: 3, sm: 2, md: 4 }}>
-            <Grid xs={12}>
-              <Alert severity="info" sx={{ wordWrap: 'break-word' }}>
-                主页链接填 <code>{inputs.ServerAddress}</code>
-                ，重定向 URL 填 <code>{`${inputs.ServerAddress}/oauth/lark`}</code>
-              </Alert>
-            </Grid>
-            <Grid xs={12} md={6}>
-              <FormControl fullWidth>
-                <InputLabel htmlFor="LarkClientId">App ID</InputLabel>
-                <OutlinedInput
-                  id="LarkClientId"
-                  name="LarkClientId"
-                  value={inputs.LarkClientId || ''}
-                  onChange={handleInputChange}
-                  label="App ID"
-                  placeholder="输入 App ID"
-                  disabled={loading}
-                />
-              </FormControl>
-            </Grid>
-            <Grid xs={12} md={6}>
-              <FormControl fullWidth>
-                <InputLabel htmlFor="LarkClientSecret">App Secret</InputLabel>
-                <OutlinedInput
-                  id="LarkClientSecret"
-                  name="LarkClientSecret"
-                  value={inputs.LarkClientSecret || ''}
-                  onChange={handleInputChange}
-                  label="App Secret"
-                  placeholder="敏感信息不会发送到前端显示"
-                  disabled={loading}
-                />
-              </FormControl>
-            </Grid>
-            <Grid xs={12}>
-              <Button variant="contained" onClick={submitLarkOAuth}>
-                保存飞书 OAuth 设置
-              </Button>
-            </Grid>
-          </Grid>
-        </SubCard>
-        <SubCard
-          title="配置 WeChat Server"
-          subTitle={
-            <span>
-              用以支持通过微信进行登录注册，
-              <a href="https://github.com/songquanpeng/wechat-server" target="_blank" rel="noopener noreferrer">
-                点击此处
-              </a>
-              了解 WeChat Server
-            </span>
-          }
-        >
-          <Grid container spacing={{ xs: 3, sm: 2, md: 4 }}>
-            <Grid xs={12} md={4}>
-              <FormControl fullWidth>
-                <InputLabel htmlFor="WeChatServerAddress">WeChat Server 服务器地址</InputLabel>
-                <OutlinedInput
-                  id="WeChatServerAddress"
-                  name="WeChatServerAddress"
-                  value={inputs.WeChatServerAddress || ''}
-                  onChange={handleInputChange}
-                  label="WeChat Server 服务器地址"
-                  placeholder="例如：https://yourdomain.com"
-                  disabled={loading}
-                />
-              </FormControl>
-            </Grid>
-            <Grid xs={12} md={4}>
-              <FormControl fullWidth>
-                <InputLabel htmlFor="WeChatServerToken">WeChat Server 访问凭证</InputLabel>
-                <OutlinedInput
-                  id="WeChatServerToken"
-                  name="WeChatServerToken"
-                  value={inputs.WeChatServerToken || ''}
-                  onChange={handleInputChange}
-                  label="WeChat Server 访问凭证"
-                  placeholder="敏感信息不会发送到前端显示"
-                  disabled={loading}
-                />
-              </FormControl>
-            </Grid>
-            <Grid xs={12} md={4}>
-              <FormControl fullWidth>
-                <InputLabel htmlFor="WeChatAccountQRCodeImageURL">微信公众号二维码图片链接</InputLabel>
-                <OutlinedInput
-                  id="WeChatAccountQRCodeImageURL"
-                  name="WeChatAccountQRCodeImageURL"
-                  value={inputs.WeChatAccountQRCodeImageURL || ''}
-                  onChange={handleInputChange}
-                  label="微信公众号二维码图片链接"
-                  placeholder="输入一个图片链接"
-                  disabled={loading}
-                />
-              </FormControl>
-            </Grid>
-            <Grid xs={12}>
-              <Button variant="contained" onClick={submitWeChat}>
-                保存 WeChat Server 设置
-              </Button>
-            </Grid>
-          </Grid>
-        </SubCard>
-        <SubCard
-          title="配置 Message Pusher"
-          subTitle={
-            <span>
-              用以推送报警信息，
-              <a href="https://github.com/songquanpeng/message-pusher" target="_blank" rel="noreferrer">
-                点击此处
-              </a>
-              了解 Message Pusher
-            </span>
-          }
-        >
-          <Grid container spacing={{ xs: 3, sm: 2, md: 4 }}>
-            <Grid xs={12} md={6}>
-              <FormControl fullWidth>
-                <InputLabel htmlFor="MessagePusherAddress">Message Pusher 推送地址</InputLabel>
-                <OutlinedInput
-                  id="MessagePusherAddress"
-                  name="MessagePusherAddress"
-                  value={inputs.MessagePusherAddress || ''}
-                  onChange={handleInputChange}
-                  label="Message Pusher 推送地址"
-                  placeholder="例如：https://msgpusher.com/push/your_username"
-                  disabled={loading}
-                />
-              </FormControl>
-            </Grid>
-            <Grid xs={12} md={6}>
-              <FormControl fullWidth>
-                <InputLabel htmlFor="MessagePusherToken">Message Pusher 访问凭证</InputLabel>
-                <OutlinedInput
-                  id="MessagePusherToken"
-                  name="MessagePusherToken"
-                  type="password"
-                  value={inputs.MessagePusherToken || ''}
-                  onChange={handleInputChange}
-                  label="Message Pusher 访问凭证"
-                  placeholder="敏感信息不会发送到前端显示"
-                  disabled={loading}
-                />
-              </FormControl>
-            </Grid>
-            <Grid xs={12}>
-              <Button variant="contained" onClick={submitMessagePusher}>
-                保存 Message Pusher 设置
-              </Button>
-            </Grid>
-          </Grid>
-        </SubCard>
-        <SubCard
-          title="配置 Turnstile"
-          subTitle={
-            <span>
-              用以支持用户校验，
-              <a href="https://dash.cloudflare.com/" target="_blank" rel="noopener noreferrer">
-                点击此处
-              </a>
-              管理你的 Turnstile Sites，推荐选择 Invisible Widget Type
-            </span>
-          }
-        >
-          <Grid container spacing={{ xs: 3, sm: 2, md: 4 }}>
-            <Grid xs={12} md={6}>
-              <FormControl fullWidth>
-                <InputLabel htmlFor="TurnstileSiteKey">Turnstile Site Key</InputLabel>
-                <OutlinedInput
-                  id="TurnstileSiteKey"
-                  name="TurnstileSiteKey"
-                  value={inputs.TurnstileSiteKey || ''}
-                  onChange={handleInputChange}
-                  label="Turnstile Site Key"
-                  placeholder="输入你注册的 Turnstile Site Key"
-                  disabled={loading}
-                />
-              </FormControl>
-            </Grid>
-            <Grid xs={12} md={6}>
-              <FormControl fullWidth>
-                <InputLabel htmlFor="TurnstileSecretKey">Turnstile Secret Key</InputLabel>
-                <OutlinedInput
-                  id="TurnstileSecretKey"
-                  name="TurnstileSecretKey"
-                  type="password"
-                  value={inputs.TurnstileSecretKey || ''}
-                  onChange={handleInputChange}
-                  label="Turnstile Secret Key"
-                  placeholder="敏感信息不会发送到前端显示"
-                  disabled={loading}
-                />
-              </FormControl>
-            </Grid>
-            <Grid xs={12}>
-              <Button variant="contained" onClick={submitTurnstile}>
-                保存 Turnstile 设置
-              </Button>
-            </Grid>
-          </Grid>
-        </SubCard>
+        {/*<SubCard*/}
+        {/*  title="配置 GitHub OAuth App"*/}
+        {/*  subTitle={*/}
+        {/*    <span>*/}
+        {/*      {' '}*/}
+        {/*      用以支持通过 GitHub 进行登录注册，*/}
+        {/*      <a href="https://github.com/settings/developers" target="_blank" rel="noopener noreferrer">*/}
+        {/*        点击此处*/}
+        {/*      </a>*/}
+        {/*      管理你的 GitHub OAuth App*/}
+        {/*    </span>*/}
+        {/*  }*/}
+        {/*>*/}
+        {/*  <Grid container spacing={{ xs: 3, sm: 2, md: 4 }}>*/}
+        {/*    <Grid xs={12}>*/}
+        {/*      <Alert severity="info" sx={{ wordWrap: 'break-word' }}>*/}
+        {/*        Homepage URL 填 <b>{inputs.ServerAddress}</b>*/}
+        {/*        ，Authorization callback URL 填 <b>{`${inputs.ServerAddress}/oauth/github`}</b>*/}
+        {/*      </Alert>*/}
+        {/*    </Grid>*/}
+        {/*    <Grid xs={12} md={6}>*/}
+        {/*      <FormControl fullWidth>*/}
+        {/*        <InputLabel htmlFor="GitHubClientId">GitHub Client ID</InputLabel>*/}
+        {/*        <OutlinedInput*/}
+        {/*          id="GitHubClientId"*/}
+        {/*          name="GitHubClientId"*/}
+        {/*          value={inputs.GitHubClientId || ''}*/}
+        {/*          onChange={handleInputChange}*/}
+        {/*          label="GitHub Client ID"*/}
+        {/*          placeholder="输入你注册的 GitHub OAuth APP 的 ID"*/}
+        {/*          disabled={loading}*/}
+        {/*        />*/}
+        {/*      </FormControl>*/}
+        {/*    </Grid>*/}
+        {/*    <Grid xs={12} md={6}>*/}
+        {/*      <FormControl fullWidth>*/}
+        {/*        <InputLabel htmlFor="GitHubClientSecret">GitHub Client Secret</InputLabel>*/}
+        {/*        <OutlinedInput*/}
+        {/*          id="GitHubClientSecret"*/}
+        {/*          name="GitHubClientSecret"*/}
+        {/*          value={inputs.GitHubClientSecret || ''}*/}
+        {/*          onChange={handleInputChange}*/}
+        {/*          label="GitHub Client Secret"*/}
+        {/*          placeholder="敏感信息不会发送到前端显示"*/}
+        {/*          disabled={loading}*/}
+        {/*        />*/}
+        {/*      </FormControl>*/}
+        {/*    </Grid>*/}
+        {/*    <Grid xs={12}>*/}
+        {/*      <Button variant="contained" onClick={submitGitHubOAuth}>*/}
+        {/*        保存 GitHub OAuth 设置*/}
+        {/*      </Button>*/}
+        {/*    </Grid>*/}
+        {/*  </Grid>*/}
+        {/*</SubCard>*/}
+        {/*<SubCard*/}
+        {/*  title="配置飞书授权登录"*/}
+        {/*  subTitle={*/}
+        {/*    <span>*/}
+        {/*      {' '}*/}
+        {/*      用以支持通过飞书进行登录注册，*/}
+        {/*      <a href="https://open.feishu.cn/app" target="_blank" rel="noreferrer">*/}
+        {/*        点击此处*/}
+        {/*      </a>*/}
+        {/*      管理你的飞书应用*/}
+        {/*    </span>*/}
+        {/*  }*/}
+        {/*>*/}
+        {/*  <Grid container spacing={{ xs: 3, sm: 2, md: 4 }}>*/}
+        {/*    <Grid xs={12}>*/}
+        {/*      <Alert severity="info" sx={{ wordWrap: 'break-word' }}>*/}
+        {/*        主页链接填 <code>{inputs.ServerAddress}</code>*/}
+        {/*        ，重定向 URL 填 <code>{`${inputs.ServerAddress}/oauth/lark`}</code>*/}
+        {/*      </Alert>*/}
+        {/*    </Grid>*/}
+        {/*    <Grid xs={12} md={6}>*/}
+        {/*      <FormControl fullWidth>*/}
+        {/*        <InputLabel htmlFor="LarkClientId">App ID</InputLabel>*/}
+        {/*        <OutlinedInput*/}
+        {/*          id="LarkClientId"*/}
+        {/*          name="LarkClientId"*/}
+        {/*          value={inputs.LarkClientId || ''}*/}
+        {/*          onChange={handleInputChange}*/}
+        {/*          label="App ID"*/}
+        {/*          placeholder="输入 App ID"*/}
+        {/*          disabled={loading}*/}
+        {/*        />*/}
+        {/*      </FormControl>*/}
+        {/*    </Grid>*/}
+        {/*    <Grid xs={12} md={6}>*/}
+        {/*      <FormControl fullWidth>*/}
+        {/*        <InputLabel htmlFor="LarkClientSecret">App Secret</InputLabel>*/}
+        {/*        <OutlinedInput*/}
+        {/*          id="LarkClientSecret"*/}
+        {/*          name="LarkClientSecret"*/}
+        {/*          value={inputs.LarkClientSecret || ''}*/}
+        {/*          onChange={handleInputChange}*/}
+        {/*          label="App Secret"*/}
+        {/*          placeholder="敏感信息不会发送到前端显示"*/}
+        {/*          disabled={loading}*/}
+        {/*        />*/}
+        {/*      </FormControl>*/}
+        {/*    </Grid>*/}
+        {/*    <Grid xs={12}>*/}
+        {/*      <Button variant="contained" onClick={submitLarkOAuth}>*/}
+        {/*        保存飞书 OAuth 设置*/}
+        {/*      </Button>*/}
+        {/*    </Grid>*/}
+        {/*  </Grid>*/}
+        {/*</SubCard>*/}
+        {/*<SubCard*/}
+        {/*  title="配置 WeChat Server"*/}
+        {/*  subTitle={*/}
+        {/*    <span>*/}
+        {/*      用以支持通过微信进行登录注册，*/}
+        {/*      <a href="https://github.com/songquanpeng/wechat-server" target="_blank" rel="noopener noreferrer">*/}
+        {/*        点击此处*/}
+        {/*      </a>*/}
+        {/*      了解 WeChat Server*/}
+        {/*    </span>*/}
+        {/*  }*/}
+        {/*>*/}
+        {/*  <Grid container spacing={{ xs: 3, sm: 2, md: 4 }}>*/}
+        {/*    <Grid xs={12} md={4}>*/}
+        {/*      <FormControl fullWidth>*/}
+        {/*        <InputLabel htmlFor="WeChatServerAddress">WeChat Server 服务器地址</InputLabel>*/}
+        {/*        <OutlinedInput*/}
+        {/*          id="WeChatServerAddress"*/}
+        {/*          name="WeChatServerAddress"*/}
+        {/*          value={inputs.WeChatServerAddress || ''}*/}
+        {/*          onChange={handleInputChange}*/}
+        {/*          label="WeChat Server 服务器地址"*/}
+        {/*          placeholder="例如：https://yourdomain.com"*/}
+        {/*          disabled={loading}*/}
+        {/*        />*/}
+        {/*      </FormControl>*/}
+        {/*    </Grid>*/}
+        {/*    <Grid xs={12} md={4}>*/}
+        {/*      <FormControl fullWidth>*/}
+        {/*        <InputLabel htmlFor="WeChatServerToken">WeChat Server 访问凭证</InputLabel>*/}
+        {/*        <OutlinedInput*/}
+        {/*          id="WeChatServerToken"*/}
+        {/*          name="WeChatServerToken"*/}
+        {/*          value={inputs.WeChatServerToken || ''}*/}
+        {/*          onChange={handleInputChange}*/}
+        {/*          label="WeChat Server 访问凭证"*/}
+        {/*          placeholder="敏感信息不会发送到前端显示"*/}
+        {/*          disabled={loading}*/}
+        {/*        />*/}
+        {/*      </FormControl>*/}
+        {/*    </Grid>*/}
+        {/*    <Grid xs={12} md={4}>*/}
+        {/*      <FormControl fullWidth>*/}
+        {/*        <InputLabel htmlFor="WeChatAccountQRCodeImageURL">微信公众号二维码图片链接</InputLabel>*/}
+        {/*        <OutlinedInput*/}
+        {/*          id="WeChatAccountQRCodeImageURL"*/}
+        {/*          name="WeChatAccountQRCodeImageURL"*/}
+        {/*          value={inputs.WeChatAccountQRCodeImageURL || ''}*/}
+        {/*          onChange={handleInputChange}*/}
+        {/*          label="微信公众号二维码图片链接"*/}
+        {/*          placeholder="输入一个图片链接"*/}
+        {/*          disabled={loading}*/}
+        {/*        />*/}
+        {/*      </FormControl>*/}
+        {/*    </Grid>*/}
+        {/*    <Grid xs={12}>*/}
+        {/*      <Button variant="contained" onClick={submitWeChat}>*/}
+        {/*        保存 WeChat Server 设置*/}
+        {/*      </Button>*/}
+        {/*    </Grid>*/}
+        {/*  </Grid>*/}
+        {/*</SubCard>*/}
+        {/*<SubCard*/}
+        {/*  title="配置 Message Pusher"*/}
+        {/*  subTitle={*/}
+        {/*    <span>*/}
+        {/*      用以推送报警信息，*/}
+        {/*      <a href="https://github.com/songquanpeng/message-pusher" target="_blank" rel="noreferrer">*/}
+        {/*        点击此处*/}
+        {/*      </a>*/}
+        {/*      了解 Message Pusher*/}
+        {/*    </span>*/}
+        {/*  }*/}
+        {/*>*/}
+        {/*  <Grid container spacing={{ xs: 3, sm: 2, md: 4 }}>*/}
+        {/*    <Grid xs={12} md={6}>*/}
+        {/*      <FormControl fullWidth>*/}
+        {/*        <InputLabel htmlFor="MessagePusherAddress">Message Pusher 推送地址</InputLabel>*/}
+        {/*        <OutlinedInput*/}
+        {/*          id="MessagePusherAddress"*/}
+        {/*          name="MessagePusherAddress"*/}
+        {/*          value={inputs.MessagePusherAddress || ''}*/}
+        {/*          onChange={handleInputChange}*/}
+        {/*          label="Message Pusher 推送地址"*/}
+        {/*          placeholder="例如：https://msgpusher.com/push/your_username"*/}
+        {/*          disabled={loading}*/}
+        {/*        />*/}
+        {/*      </FormControl>*/}
+        {/*    </Grid>*/}
+        {/*    <Grid xs={12} md={6}>*/}
+        {/*      <FormControl fullWidth>*/}
+        {/*        <InputLabel htmlFor="MessagePusherToken">Message Pusher 访问凭证</InputLabel>*/}
+        {/*        <OutlinedInput*/}
+        {/*          id="MessagePusherToken"*/}
+        {/*          name="MessagePusherToken"*/}
+        {/*          type="password"*/}
+        {/*          value={inputs.MessagePusherToken || ''}*/}
+        {/*          onChange={handleInputChange}*/}
+        {/*          label="Message Pusher 访问凭证"*/}
+        {/*          placeholder="敏感信息不会发送到前端显示"*/}
+        {/*          disabled={loading}*/}
+        {/*        />*/}
+        {/*      </FormControl>*/}
+        {/*    </Grid>*/}
+        {/*    <Grid xs={12}>*/}
+        {/*      <Button variant="contained" onClick={submitMessagePusher}>*/}
+        {/*        保存 Message Pusher 设置*/}
+        {/*      </Button>*/}
+        {/*    </Grid>*/}
+        {/*  </Grid>*/}
+        {/*</SubCard>*/}
+        {/*<SubCard*/}
+        {/*  title="配置 Turnstile"*/}
+        {/*  subTitle={*/}
+        {/*    <span>*/}
+        {/*      用以支持用户校验，*/}
+        {/*      <a href="https://dash.cloudflare.com/" target="_blank" rel="noopener noreferrer">*/}
+        {/*        点击此处*/}
+        {/*      </a>*/}
+        {/*      管理你的 Turnstile Sites，推荐选择 Invisible Widget Type*/}
+        {/*    </span>*/}
+        {/*  }*/}
+        {/*>*/}
+        {/*  <Grid container spacing={{ xs: 3, sm: 2, md: 4 }}>*/}
+        {/*    <Grid xs={12} md={6}>*/}
+        {/*      <FormControl fullWidth>*/}
+        {/*        <InputLabel htmlFor="TurnstileSiteKey">Turnstile Site Key</InputLabel>*/}
+        {/*        <OutlinedInput*/}
+        {/*          id="TurnstileSiteKey"*/}
+        {/*          name="TurnstileSiteKey"*/}
+        {/*          value={inputs.TurnstileSiteKey || ''}*/}
+        {/*          onChange={handleInputChange}*/}
+        {/*          label="Turnstile Site Key"*/}
+        {/*          placeholder="输入你注册的 Turnstile Site Key"*/}
+        {/*          disabled={loading}*/}
+        {/*        />*/}
+        {/*      </FormControl>*/}
+        {/*    </Grid>*/}
+        {/*    <Grid xs={12} md={6}>*/}
+        {/*      <FormControl fullWidth>*/}
+        {/*        <InputLabel htmlFor="TurnstileSecretKey">Turnstile Secret Key</InputLabel>*/}
+        {/*        <OutlinedInput*/}
+        {/*          id="TurnstileSecretKey"*/}
+        {/*          name="TurnstileSecretKey"*/}
+        {/*          type="password"*/}
+        {/*          value={inputs.TurnstileSecretKey || ''}*/}
+        {/*          onChange={handleInputChange}*/}
+        {/*          label="Turnstile Secret Key"*/}
+        {/*          placeholder="敏感信息不会发送到前端显示"*/}
+        {/*          disabled={loading}*/}
+        {/*        />*/}
+        {/*      </FormControl>*/}
+        {/*    </Grid>*/}
+        {/*    <Grid xs={12}>*/}
+        {/*      <Button variant="contained" onClick={submitTurnstile}>*/}
+        {/*        保存 Turnstile 设置*/}
+        {/*      </Button>*/}
+        {/*    </Grid>*/}
+        {/*  </Grid>*/}
+        {/*</SubCard>*/}
       </Stack>
       <Dialog open={showPasswordWarningModal} onClose={() => setShowPasswordWarningModal(false)} maxWidth={'md'}>
         <DialogTitle sx={{ margin: '0px', fontWeight: 700, lineHeight: '1.55556', padding: '24px', fontSize: '1.125rem' }}>

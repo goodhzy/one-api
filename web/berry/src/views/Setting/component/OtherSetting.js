@@ -6,13 +6,12 @@ import {
     InputLabel,
     OutlinedInput,
     Button,
-    Alert,
     TextField,
     Dialog,
     DialogTitle,
     DialogActions,
     DialogContent,
-    Divider, Link
+    Divider
 } from '@mui/material';
 import Grid from '@mui/material/Unstable_Grid2';
 import { showError, showSuccess } from 'utils/common'; //,
@@ -89,9 +88,9 @@ const OtherSetting = () => {
     await updateOption('SystemName', inputs.SystemName);
   };
 
-  const submitTheme = async () => {
-    await updateOption('Theme', inputs.Theme);
-  };
+  // const submitTheme = async () => {
+  //   await updateOption('Theme', inputs.Theme);
+  // };
 
   const submitLogo = async () => {
     await updateOption('Logo', inputs.Logo);
@@ -176,25 +175,25 @@ const OtherSetting = () => {
                 设置系统名称
               </Button>
             </Grid>
-            <Grid xs={12}>
-              <FormControl fullWidth>
-                <InputLabel htmlFor="Theme">主题名称</InputLabel>
-                <OutlinedInput
-                    id="Theme"
-                    name="Theme"
-                    value={inputs.Theme || ''}
-                    onChange={handleInputChange}
-                    label="主题名称"
-                    placeholder="请输入主题名称"
-                    disabled={loading}
-                />
-              </FormControl>
-            </Grid>
-            <Grid xs={12}>
-              <Button variant="contained" onClick={submitTheme}>
-                设置主题（重启生效）
-              </Button>
-            </Grid>
+            {/*<Grid xs={12}>*/}
+            {/*  <FormControl fullWidth>*/}
+            {/*    <InputLabel htmlFor="Theme">主题名称</InputLabel>*/}
+            {/*    <OutlinedInput*/}
+            {/*        id="Theme"*/}
+            {/*        name="Theme"*/}
+            {/*        value={inputs.Theme || ''}*/}
+            {/*        onChange={handleInputChange}*/}
+            {/*        label="主题名称"*/}
+            {/*        placeholder="请输入主题名称"*/}
+            {/*        disabled={loading}*/}
+            {/*    />*/}
+            {/*  </FormControl>*/}
+            {/*</Grid>*/}
+            {/*<Grid xs={12}>*/}
+            {/*  <Button variant="contained" onClick={submitTheme}>*/}
+            {/*    设置主题（重启生效）*/}
+            {/*  </Button>*/}
+            {/*</Grid>*/}
             <Grid xs={12}>
               <FormControl fullWidth>
                 <InputLabel htmlFor="Logo">Logo 图片地址</InputLabel>
@@ -254,11 +253,11 @@ const OtherSetting = () => {
                 保存关于
               </Button>
             </Grid>
-            <Grid xs={12}>
-              <Alert severity="warning">
-                移除 One API 的版权标识必须首先获得授权，项目维护需要花费大量精力，如果本项目对你有意义，请主动支持本项目。
-              </Alert>
-            </Grid>
+            {/*<Grid xs={12}>*/}
+            {/*  <Alert severity="warning">*/}
+            {/*    移除 One API 的版权标识必须首先获得授权，项目维护需要花费大量精力，如果本项目对你有意义，请主动支持本项目。*/}
+            {/*  </Alert>*/}
+            {/*</Grid>*/}
             <Grid xs={12}>
               <FormControl fullWidth>
                 <TextField
