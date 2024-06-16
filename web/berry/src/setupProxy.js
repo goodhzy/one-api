@@ -4,8 +4,7 @@ module.exports = function(app) {
   app.use(
     '/api',
     createProxyMiddleware({
-      // target: 'http://127.0.0.1:3000',
-      target: 'https://admin.robbanaititle.com',
+      target: 'http://127.0.0.1:3000/api',
       changeOrigin: true,
     })
   );
