@@ -143,16 +143,16 @@ export default function Token() {
     <>
       <Stack direction="row" alignItems="center" justifyContent="space-between" mb={2.5}>
         <Typography variant="h4">令牌</Typography>
-        <Button
-          variant="contained"
-          color="primary"
-          onClick={() => {
-            handleOpenModal(0);
-          }}
-          startIcon={<IconPlus />}
-        >
-          新建令牌
-        </Button>
+        {/*<Button*/}
+        {/*  variant="contained"*/}
+        {/*  color="primary"*/}
+        {/*  onClick={() => {*/}
+        {/*    handleOpenModal(0);*/}
+        {/*  }}*/}
+        {/*  startIcon={<IconPlus />}*/}
+        {/*>*/}
+        {/*  新建令牌*/}
+        {/*</Button>*/}
       </Stack>
       {/*<Stack mb={2}>*/}
       {/*  <Alert severity="info">*/}

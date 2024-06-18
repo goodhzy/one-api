@@ -3,6 +3,7 @@ import { lazy } from 'react';
 // project imports
 import Loadable from 'ui-component/Loadable';
 import MinimalLayout from 'layout/MinimalLayout';
+import { Navigate } from 'react-router';
 // import { Navigate } from 'react-router';
 
 // login option 3 routing
@@ -24,15 +25,7 @@ const OtherRoutes = {
   children: [
     {
       path: '',
-      element: <Home />
-    },
-    // {
-    //   path: '',
-    //   element: <Navigate to="/login" replace />
-    // },
-    {
-      path: '/about',
-      element: <About />
+      element: <Navigate to="/panel" replace />
     },
     {
       path: '/login',

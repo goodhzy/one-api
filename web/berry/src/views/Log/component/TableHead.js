@@ -1,5 +1,6 @@
 import PropTypes from 'prop-types';
 import { TableCell, TableHead, TableRow } from '@mui/material';
+import { isAdmin } from '../../../utils/common';
 
 const LogTableHead = ({ userIsAdmin }) => {
   return (
@@ -14,7 +15,9 @@ const LogTableHead = ({ userIsAdmin }) => {
         <TableCell>提示</TableCell>
         <TableCell>补全</TableCell>
         <TableCell>额度</TableCell>
-        <TableCell>详情</TableCell>
+        {
+          isAdmin() && <TableCell>详情</TableCell>
+        }
       </TableRow>
     </TableHead>
   );

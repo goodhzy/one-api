@@ -20,7 +20,7 @@ import SubCard from 'ui-component/cards/SubCard';
 // import Label from 'ui-component/Label';
 import { API } from 'utils/api';
 import { showError, showSuccess } from 'utils/common';
-import { onGitHubOAuthClicked, onLarkOAuthClicked } from 'utils/common';
+import { onGitHubOAuthClicked, onLarkOAuthClicked, copy } from 'utils/common';
 import * as Yup from 'yup';
 import WechatModal from 'views/Authentication/AuthForms/WechatModal';
 import { useSelector } from 'react-redux';
@@ -89,8 +89,7 @@ export default function Profile() {
     const { success, message, data } = res.data;
     if (success) {
       setInputs((inputs) => ({ ...inputs, access_token: data }));
-      navigator.clipboard.writeText(data);
-      showSuccess(`令牌已重置并已复制到剪贴板`);
+      copy(data, '访问令牌');
     } else {
       showError(message);
     }
@@ -129,9 +128,6 @@ export default function Profile() {
         <Card sx={{ paddingTop: '20px' }}>
           <Stack spacing={2}>
             <Stack direction="row" alignItems="center" justifyContent="center" spacing={2} sx={{ paddingBottom: '20px' }}>
-              {/*<Label variant="ghost" color={inputs.wechat_id ? 'primary' : 'default'}>*/}
-              {/*  <IconBrandWechat /> {inputs.wechat_id || '未绑定'}*/}
-              {/*</Label>*/}
               {/*<Label variant="ghost" color={inputs.github_id ? 'primary' : 'default'}>*/}
               {/*  <IconBrandGithub /> {inputs.github_id || '未绑定'}*/}
               {/*</Label>*/}
@@ -140,7 +136,10 @@ export default function Profile() {
               {/*</Label>*/}
               {/*<Label variant="ghost" color={inputs.lark_id ? 'primary' : 'default'}>*/}
               {/*  <SvgIcon component={Lark} inheritViewBox="0 0 24 24" /> {inputs.lark_id || '未绑定'}*/}
+              {/*</Label>*/}              {/*<Label variant="ghost" color={inputs.wechat_id ? 'primary' : 'default'}>*/}
+              {/*  <IconBrandWechat /> {inputs.wechat_id || '未绑定'}*/}
               {/*</Label>*/}
+
             </Stack>
             <SubCard title="个人信息">
               <Grid container spacing={2}>
@@ -238,38 +237,6 @@ export default function Profile() {
                 </Grid>
               </Grid>
             </SubCard>
-            <SubCard title="其他">
-              <Grid container spacing={2}>
-                <Grid xs={12}>
-                  <Alert severity="info">注意，此处生成的令牌用于系统管理，而非用于请求 OpenAI 相关的服务，请知悉。</Alert>
-                </Grid>
-                {inputs.access_token && (
-                  <Grid xs={12}>
-                    <Alert severity="error">
-                      你的访问令牌是: <b>{inputs.access_token}</b> <br />
-                      请妥善保管。如有泄漏，请立即重置。
-                    </Alert>
-                  </Grid>
-                )}
-                <Grid xs={12}>
-                  <Button variant="contained" onClick={generateAccessToken}>
-                    {inputs.access_token ? '重置访问令牌' : '生成访问令牌'}
-                  </Button>
-                </Grid>
-
-                <Grid xs={12}>
-                  <Button
-                    variant="contained"
-                    color="error"
-                    onClick={() => {
-                      setShowAccountDeleteModal(true);
-                    }}
-                  >
-                    删除帐号
-                  </Button>
-                </Grid>
-              </Grid>
-            </SubCard>
           </Stack>
         </Card>
       </UserCard>
@@ -294,6 +261,7 @@ export default function Profile() {
       <WechatModal open={openWechat} handleClose={handleWechatClose} wechatLogin={bindWeChat} qrCode={status.wechat_qrcode} />
       <EmailModal
         open={openEmail}
+        turnstileEnabled={turnstileEnabled}
         turnstileToken={turnstileToken}
         handleClose={() => {
           setOpenEmail(false);

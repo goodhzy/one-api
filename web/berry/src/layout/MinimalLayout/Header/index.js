@@ -71,12 +71,6 @@ const Header = () => {
           </>
         ) : (
           <>
-            <Button component={Link} variant="text" to="/" color={pathname === '/' ? 'primary' : 'inherit'}>
-              首页
-            </Button>
-            <Button component={Link} variant="text" to="/about" color={pathname === '/about' ? 'primary' : 'inherit'}>
-              关于
-            </Button>
             <ThemeButton />
             {account.user ? (
               <>

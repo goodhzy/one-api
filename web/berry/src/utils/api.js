@@ -4,8 +4,6 @@ import { store } from 'store/index';
 import { LOGIN } from 'store/actions';
 import config from 'config';
 
-console.log(process.env.REACT_APP_SERVER,'-------------------',process.env.REACT_APP_SERVER);
-
 export const API = axios.create({
   baseURL: process.env.REACT_APP_SERVER ? process.env.REACT_APP_SERVER : '/'
   // baseURL: 'http://localhost:3000'

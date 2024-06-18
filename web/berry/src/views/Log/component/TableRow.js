@@ -2,7 +2,7 @@ import PropTypes from 'prop-types';
 
 import { TableRow, TableCell } from '@mui/material';
 
-import { timestamp2string, renderQuota } from 'utils/common';
+import { timestamp2string, renderQuota, isAdmin } from 'utils/common';
 import Label from 'ui-component/Label';
 import LogType from '../type/LogType';
 
@@ -57,7 +57,9 @@ export default function LogTableRow({ item, userIsAdmin }) {
         <TableCell>{item.prompt_tokens || ''}</TableCell>
         <TableCell>{item.completion_tokens || ''}</TableCell>
         <TableCell>{item.quota ? renderQuota(item.quota, 6) : ''}</TableCell>
-        <TableCell>{item.content}</TableCell>
+        {
+          isAdmin() && <TableCell>{item.content}</TableCell>
+        }
       </TableRow>
     </>
   );
