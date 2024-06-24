@@ -9,6 +9,7 @@ const Log = Loadable(lazy(() => import('views/Log')));
 const Redemption = Loadable(lazy(() => import('views/Redemption')));
 const Setting = Loadable(lazy(() => import('views/Setting')));
 const Token = Loadable(lazy(() => import('views/Token')));
+const Identify = Loadable(lazy(() => import('views/Identify')));
 const Topup = Loadable(lazy(() => import('views/Topup')));
 const User = Loadable(lazy(() => import('views/User')));
 const Profile = Loadable(lazy(() => import('views/Profile')));
@@ -50,6 +51,10 @@ const MainRoutes = {
     {
       path: 'token',
       element: <Token />
+    },
+    {
+      path: 'identify',
+      element: <Identify />
     },
     {
       path: 'topup',
