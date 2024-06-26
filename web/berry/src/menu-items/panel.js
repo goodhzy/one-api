@@ -8,11 +8,11 @@ import {
   IconKey,
   IconGardenCart,
   IconUser,
-  IconUserScan
+  IconUserScan, IconCards
 } from '@tabler/icons-react';
 
 // constant
-const icons = { IconDashboard, IconSitemap, IconArticle, IconCoin, IconAdjustments, IconKey, IconGardenCart, IconUser, IconUserScan };
+const icons = { IconCards,IconDashboard, IconSitemap, IconArticle, IconCoin, IconAdjustments, IconKey, IconGardenCart, IconUser, IconUserScan };
 
 // ==============================|| DASHBOARD MENU ITEMS ||============================== //
 
@@ -45,6 +45,14 @@ const panel = {
       url: '/panel/token',
       icon: icons.IconKey,
       breadcrumbs: false
+    },
+    {
+      id:'identify',
+      title:'卡片识别',
+      type:'item',
+      url:'/panel/identify',
+      icon:icons.IconCards,
+      breadcrumbs:false
     },
     {
       id: 'log',
