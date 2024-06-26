@@ -101,6 +101,8 @@ const RegisterForm = ({ ...others }) => {
           username: '',
           password: '',
           confirmPassword: '',
+          phone:'',
+          phone_code:'',
           email: showEmailVerification ? '' : undefined,
           verification_code: showEmailVerification ? '' : undefined,
           submit: null
@@ -108,6 +110,7 @@ const RegisterForm = ({ ...others }) => {
         validationSchema={Yup.object().shape({
           username: Yup.string().max(255).required('用户名是必填项'),
           password: Yup.string().max(255).required('密码是必填项'),
+          phone:Yup.string().max(255).required('手机号是必填项'),
           confirmPassword: Yup.string()
             .required('确认密码是必填项')
             .oneOf([Yup.ref('password'), null], '两次输入的密码不一致'),
@@ -208,6 +211,9 @@ const RegisterForm = ({ ...others }) => {
                   {errors.confirmPassword}
                 </FormHelperText>
               )}
+            </FormControl>
+            <FormControl fullWidth error={Boolean(touched.phone && errors.fullWidth)}>
+
             </FormControl>
 
             {strength !== 0 && (
