@@ -164,6 +164,8 @@ func Register(c *gin.Context) {
 		Password:    user.Password,
 		DisplayName: user.Username,
 		InviterId:   inviterId,
+		Phone:       user.Phone,
+		PhoneCode:   user.PhoneCode,
 	}
 	if config.EmailVerificationEnabled {
 		cleanUser.Email = user.Email

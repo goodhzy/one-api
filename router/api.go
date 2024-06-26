@@ -30,7 +30,9 @@ func SetApiRouter(router *gin.Engine) {
 		apiRouter.GET("/oauth/email/bind", middleware.CriticalRateLimit(), middleware.UserAuth(), controller.EmailBind)
 		apiRouter.POST("/topup", middleware.AdminAuth(), controller.AdminTopUp)
 		apiRouter.GET("/prompt", controller.GetPrompt)
-		apiRouter.GET("/country_codes", controller.GetCountryCodes)
+		apiRouter.GET("/all_country_codes", controller.GetAllCountryCodes)
+		apiRouter.GET("/insert-all-countryCodes", controller.InsertAllCountryCodes)
+
 		userRoute := apiRouter.Group("/user")
 		{
 			userRoute.POST("/register", middleware.CriticalRateLimit(), middleware.TurnstileCheck(), controller.Register)
