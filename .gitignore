@@ -11,3 +11,5 @@ data
 cmd.md
 one-api.tar
 /tmp
+set_env_vars.sh
+set_env_window.sh

@@ -32,7 +32,7 @@ func SetApiRouter(router *gin.Engine) {
 		apiRouter.GET("/prompt", controller.GetPrompt)
 		apiRouter.GET("/all_country_codes", controller.GetAllCountryCodes)
 		apiRouter.GET("/insert-all-countryCodes", controller.InsertAllCountryCodes)
-
+		apiRouter.POST("/upload", controller.Upload)
 		userRoute := apiRouter.Group("/user")
 		{
 			userRoute.POST("/register", middleware.CriticalRateLimit(), middleware.TurnstileCheck(), controller.Register)
