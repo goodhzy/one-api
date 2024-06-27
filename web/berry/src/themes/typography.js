@@ -86,6 +86,7 @@ export default function themeTypography(theme) {
         top: 0
       }
     },
+
     otherInput: {
       marginTop: 1,
       marginBottom: 1

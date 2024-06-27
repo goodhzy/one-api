@@ -3,6 +3,7 @@ import { useSelector } from 'react-redux';
 import useRegister from 'hooks/useRegister';
 import Turnstile from 'react-turnstile';
 import { useSearchParams } from 'react-router-dom';
+import { API } from "utils/api";
 // import { useSelector } from 'react-redux';
 
 // material-ui
@@ -17,7 +18,9 @@ import {
   InputAdornment,
   InputLabel,
   OutlinedInput,
-  Typography
+  Typography,
+  Select,
+  MenuItem
 } from '@mui/material';
 
 // third party
@@ -50,9 +53,19 @@ const RegisterForm = ({ ...others }) => {
   const [strength, setStrength] = useState(0);
   const [level, setLevel] = useState();
 
+  const [selectedCountryCodes, setSelectedCountryCodes] = useState([]);
+
+  const getCountryCodes = async () =>{
+    const res =  await API.get('/api/all_country_codes');
+    if(Array.isArray(res.data.data)){
+      setSelectedCountryCodes(res.data.data);
+    }
+  }
+
   const handleClickShowPassword = () => {
     setShowPassword(!showPassword);
   };
+
 
   const handleMouseDownPassword = (event) => {
     event.preventDefault();
@@ -81,12 +94,12 @@ const RegisterForm = ({ ...others }) => {
     }
   };
 
-  useEffect(() => {
+  useEffect( () => {
+    getCountryCodes().then()
     let affCode = searchParams.get('aff');
     if (affCode) {
       localStorage.setItem('aff', affCode);
     }
-
     setShowEmailVerification(siteInfo.email_verification);
     if (siteInfo.turnstile_check) {
       setTurnstileEnabled(true);
@@ -102,7 +115,7 @@ const RegisterForm = ({ ...others }) => {
           password: '',
           confirmPassword: '',
           phone:'',
-          phone_code:'',
+          phone_code:'86',
           email: showEmailVerification ? '' : undefined,
           verification_code: showEmailVerification ? '' : undefined,
           submit: null
@@ -111,6 +124,7 @@ const RegisterForm = ({ ...others }) => {
           username: Yup.string().max(255).required('用户名是必填项'),
           password: Yup.string().max(255).required('密码是必填项'),
           phone:Yup.string().max(255).required('手机号是必填项'),
+          phone_code:Yup.string().max(255).required('区号是必选项'),
           confirmPassword: Yup.string()
             .required('确认密码是必填项')
             .oneOf([Yup.ref('password'), null], '两次输入的密码不一致'),
@@ -118,6 +132,7 @@ const RegisterForm = ({ ...others }) => {
           verification_code: showEmailVerification ? Yup.string().max(255).required('验证码是必填项') : Yup.mixed()
         })}
         onSubmit={async (values, { setErrors, setStatus, setSubmitting }) => {
+          console.log(values);
           if (turnstileEnabled && turnstileToken === '') {
             showInfo('请稍后几秒重试，Turnstile 正在检查用户环境！');
             setSubmitting(false);
@@ -212,8 +227,45 @@ const RegisterForm = ({ ...others }) => {
                 </FormHelperText>
               )}
             </FormControl>
-            <FormControl fullWidth error={Boolean(touched.phone && errors.fullWidth)}>
 
+            <FormControl error={Boolean(touched.phone_code && errors.phone_code)}  sx={{ marginTop: 1,
+              marginBottom: 1,width:'38%' }}>
+              <InputLabel htmlFor="outlined-adornment-phone_code-register">区号</InputLabel>
+              <Select
+                id="outlined-adornment-phone_code-register"
+                value={values.phone_code}
+                name="phone_code"
+                onBlur={handleBlur}
+                onChange={handleChange}
+              >
+                {selectedCountryCodes.map((item) => (
+                  <MenuItem key={item.id} value={item.phone_code}>{'+' + item.phone_code+item.chinese_name}</MenuItem>
+                ))}
+              </Select>
+              {touched.phone_code && errors.phone_code && (
+                <FormHelperText error id="standard-weight-helper-text--register">
+                  {errors.phone_code}
+                </FormHelperText>
+              )}
+            </FormControl>
+            <div style={{width:'2%',display:'inline-block'}}></div>
+            <FormControl  error={Boolean(touched.phone && errors.phone)} sx={{ marginTop: 1,
+              marginBottom: 1,width:'60%'}}>
+              <InputLabel htmlFor="outlined-adornment-phone-register">手机号</InputLabel>
+              <OutlinedInput
+                id="outlined-adornment-phone-register"
+                type="text"
+                value={values.phone}
+                name="phone"
+                onBlur={handleBlur}
+                onChange={handleChange}
+                inputProps={{ autoComplete: 'phone' }}
+              />
+              {touched.phone && errors.phone && (
+                <FormHelperText error id="standard-weight-helper-text--register">
+                  {errors.phone}
+                </FormHelperText>
+              )}
             </FormControl>
 
             {strength !== 0 && (
