@@ -5,8 +5,9 @@ import { LOGIN } from 'store/actions';
 import config from 'config';
 
 export const API = axios.create({
-  // baseURL: process.env.REACT_APP_SERVER ? process.env.REACT_APP_SERVER : '/'
-  baseURL: 'http://192.168.1.72:3000'
+  baseURL: process.env.REACT_APP_SERVER ? process.env.REACT_APP_SERVER : '/'
+  // baseURL: 'http://192.168.1.72:3000'
+  // baseURL: 'http://localhost:3000'
 });
 
 API.interceptors.response.use(
