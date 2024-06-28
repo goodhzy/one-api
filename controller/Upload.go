@@ -2,15 +2,16 @@ package controller
 
 import (
 	"fmt"
-	"github.com/gin-gonic/gin"
-	"github.com/songquanpeng/one-api/common/config"
-	"github.com/songquanpeng/one-api/common/helper"
 	"image"
 	"io"
 	"math/rand"
 	"net/http"
 	"path/filepath"
 	"time"
+
+	"github.com/gin-gonic/gin"
+	"github.com/songquanpeng/one-api/common/config"
+	"github.com/songquanpeng/one-api/common/helper"
 )
 
 func generateRandomString(n int) string {
@@ -36,6 +37,10 @@ func handleError(c *gin.Context, err error) {
 		"success": false,
 		"message": err.Error(),
 	})
+}
+
+func getObjectName(ext string) string {
+	return "uploads/" + time.Now().Format("2006/01/02") + "/" + generateRandomString(16) + ext
 }
 
 func Upload(c *gin.Context) {
@@ -79,8 +84,16 @@ func Upload(c *gin.Context) {
 		fmt.Println("Error:", err)
 	}
 
+	if helper.IsVideo(src) {
+		width, height, err := helper.GetVideoDimensions(src)
+		if err != nil {
+			handleError(c, err)
+		}
+		fmt.Printf("Video dimensions: %d x %d\n", width, height)
+	}
+
 	// 根据文件名生成objectName， 需要有年月日作为目录, 文件名生成随机的16位字符串, 需要加上文件后缀
-	objectName := "uploads/" + time.Now().Format("2006/01/02") + "/" + generateRandomString(16) + ext
+	objectName := getObjectName(ext)
 	fmt.Println(objectName)
 	bucket, err := client.Bucket(config.BucketName)
 	if err != nil {
