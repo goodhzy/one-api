@@ -86,6 +86,7 @@ func SetApiRouter(router *gin.Engine) {
 			channelRoute.DELETE("/disabled", controller.DeleteDisabledChannel)
 			channelRoute.DELETE("/:id", controller.DeleteChannel)
 		}
+
 		tokenRoute := apiRouter.Group("/token")
 		tokenRoute.Use(middleware.UserAuth())
 		{
@@ -96,6 +97,18 @@ func SetApiRouter(router *gin.Engine) {
 			tokenRoute.PUT("/", controller.UpdateToken)
 			tokenRoute.DELETE("/:id", controller.DeleteToken)
 		}
+
+		bannerRoute := apiRouter.Group("/banner")
+		tokenRoute.Use(middleware.AdminAuth())
+		{
+			bannerRoute.GET("/", controller.GetAllBanner)
+			bannerRoute.GET("/:id", controller.GetBanner)
+			bannerRoute.POST("/", controller.AddBanner)
+			bannerRoute.PUT("/", controller.UpdateBanner)
+			bannerRoute.PUT("/disabled", controller.DeleteDisabledChannel)
+			bannerRoute.DELETE("/:id", controller.DeleteBanner)
+		}
+
 		redemptionRoute := apiRouter.Group("/redemption")
 		redemptionRoute.Use(middleware.AdminAuth())
 		{
