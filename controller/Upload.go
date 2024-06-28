@@ -2,15 +2,15 @@ package controller
 
 import (
 	"fmt"
-	"image"
-	"io"
+	"github.com/songquanpeng/one-api/common/config"
+	"github.com/songquanpeng/one-api/model"
 	"math/rand"
 	"net/http"
+	"os"
 	"path/filepath"
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/songquanpeng/one-api/common/config"
 	"github.com/songquanpeng/one-api/common/helper"
 )
 
@@ -21,15 +21,6 @@ func generateRandomString(n int) string {
 		b[i] = letterBytes[rand.Intn(len(letterBytes))]
 	}
 	return string(b)
-}
-
-func getImageDimensions(file io.Reader) (int, int, error) {
-	img, _, err := image.Decode(file)
-	if err != nil {
-		return 0, 0, err
-	}
-
-	return img.Bounds().Dx(), img.Bounds().Dy(), nil
 }
 
 func handleError(c *gin.Context, err error) {
@@ -57,7 +48,6 @@ func Upload(c *gin.Context) {
 		handleError(c, err)
 		return
 	}
-
 	mimeType, err := helper.GetFileMimeType(src)
 	if err != nil {
 		handleError(c, err)
@@ -68,7 +58,6 @@ func Upload(c *gin.Context) {
 	ext := filepath.Ext(file.Filename)
 
 	var width, height int
-
 	// 获取图片的宽高
 	if helper.IsImage(src) {
 		width, height, err = helper.GetImageInfo(src)
@@ -78,36 +67,59 @@ func Upload(c *gin.Context) {
 		}
 		fmt.Printf("Image dimensions: %d x %d\n", width, height)
 	}
+	if helper.IsVideo(src) {
+		filePath := "./tmp/" + file.Filename
+		if err := c.SaveUploadedFile(file, filePath); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to save file"})
+			return
+		}
+		defer func(name string) {
+			err := os.Remove(name)
+			if err != nil {
+				handleError(c, err)
+			}
+		}(filePath) // 确保在函数结束后删除文件
 
+		// 获取视频的宽高
+		width, height, err = helper.GetVideoDimensions(filePath)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get video dimensions"})
+			return
+		}
+		fmt.Printf("video dimensions: %d x %d\n", width, height)
+	}
 	client, err := helper.CreateOssClient()
 	if err != nil {
-		fmt.Println("Error:", err)
-	}
-
-	if helper.IsVideo(src) {
-		width, height, err := helper.GetVideoDimensions(src)
-		if err != nil {
-			handleError(c, err)
-		}
-		fmt.Printf("Video dimensions: %d x %d\n", width, height)
+		handleError(c, err)
 	}
 
 	// 根据文件名生成objectName， 需要有年月日作为目录, 文件名生成随机的16位字符串, 需要加上文件后缀
 	objectName := getObjectName(ext)
-	fmt.Println(objectName)
 	bucket, err := client.Bucket(config.BucketName)
 	if err != nil {
 		handleError(c, err)
 	}
-	// 上传文件。
+
 	err = bucket.PutObject(objectName, src)
+	if err != nil {
+		handleError(c, err)
+	}
+	insertFile, err := model.InsertFile(&model.Files{
+		FileName:  file.Filename,
+		FilePath:  objectName,
+		MimeType:  mimeType,
+		Size:      file.Size,
+		Width:     width,
+		Height:    height,
+		CreatedAt: helper.GetTimestamp(),
+	})
 	if err != nil {
 		handleError(c, err)
 	}
 	c.JSON(http.StatusOK, gin.H{
 		"success": true,
-		"message": "",
-		"data":    gin.H{"url": objectName, "width": width, "height": height, "size": file.Size},
+		"message": "上传成功",
+		"data":    insertFile,
 	})
 
 }
