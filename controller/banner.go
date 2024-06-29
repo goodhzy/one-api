@@ -96,8 +96,8 @@ func AddBanner(c *gin.Context) {
 
 func DeleteBanner(c *gin.Context) {
 	id, _ := strconv.Atoi(c.Param("id"))
-	userId := c.GetInt(ctxkey.Id)
-	err := model.DeleteBannerById(int64(id), int64(userId))
+	userId := c.GetInt64(ctxkey.Id)
+	err := model.DeleteBannerById(int64(id), userId)
 	if err != nil {
 		c.JSON(http.StatusOK, gin.H{
 			"success": false,

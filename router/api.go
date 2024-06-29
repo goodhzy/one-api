@@ -99,7 +99,7 @@ func SetApiRouter(router *gin.Engine) {
 		}
 
 		bannerRoute := apiRouter.Group("/banner")
-		tokenRoute.Use(middleware.AdminAuth())
+		bannerRoute.Use(middleware.AdminAuth())
 		{
 			bannerRoute.GET("/", controller.GetAllBanner)
 			bannerRoute.GET("/:id", controller.GetBanner)

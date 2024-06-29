@@ -12,6 +12,7 @@ import (
 	"gorm.io/driver/postgres"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
+	logger2 "gorm.io/gorm/logger"
 	"os"
 	"strings"
 	"time"
@@ -60,6 +61,7 @@ func CreateRootAccountIfNeed() error {
 }
 
 func chooseDB(envName string) (*gorm.DB, error) {
+
 	if os.Getenv(envName) != "" {
 		dsn := os.Getenv(envName)
 		if strings.HasPrefix(dsn, "postgres://") {
@@ -78,7 +80,7 @@ func chooseDB(envName string) (*gorm.DB, error) {
 		common.UsingMySQL = true
 		return gorm.Open(mysql.Open(dsn), &gorm.Config{
 			PrepareStmt: true, // precompile SQL
-
+			Logger:      logger2.Default.LogMode(logger2.Info),
 		})
 	}
 	// Use SQLite

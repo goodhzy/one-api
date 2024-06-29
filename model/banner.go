@@ -2,28 +2,33 @@ package model
 
 import (
 	"errors"
+	"fmt"
+	"gorm.io/gorm"
 )
 
 type Banner struct {
-	Id          int64  `json:"id"`
-	Type        int    `json:"type" validate:"required"`    // 轮播图类型
-	FileID      int64  `json:"file_id" validate:"required"` // 文件 ID
-	Title       string `json:"title"`                       // 轮播图标题
-	Description string `json:"description"`                 // 轮播图描述
-	Link        string `json:"link"`                        // 轮播图链接
-	Sort        int    `json:"sort"`                        // 轮播图排序
-	IsActive    bool   `json:"is_active"`                   // 是否激活
-	CreatedAt   int64  `json:"created_at"`                  // 创建时间
-	UpdatedAt   int64  `json:"updated_at"`                  // 更新时间
-	CreatedBy   int64  `json:"created_by"`                  // 创建者用户 ID
-	UpdatedBy   int64  `json:"updated_by"`                  // 更新者用户 ID
+	Id          int64          `json:"id"`
+	Type        int            `json:"type" validate:"required"`                    // 轮播图类型
+	FileID      int64          `json:"file_id" validate:"required"`                 // 文件 ID
+	Files       Files          `json:"file" gorm:"foreignKey:ID;references:FileID"` // 添加关联字段
+	Title       string         `json:"title"`                                       // 轮播图标题
+	Description string         `json:"description"`                                 // 轮播图描述
+	Link        string         `json:"link"`                                        // 轮播图链接
+	Sort        int            `json:"sort"`                                        // 轮播图排序
+	IsActive    int            `json:"is_active"`                                   // 是否激活
+	CreatedAt   int64          `json:"created_at"`                                  // 创建时间
+	UpdatedAt   int64          `json:"updated_at"`                                  // 更新时间
+	DeletedAt   gorm.DeletedAt `json:"deleted_at"`                                  // 删除时间
+	CreatedBy   int64          `json:"created_by"`                                  // 创建者用户 ID
+	UpdatedBy   int64          `json:"updated_by"`                                  // 更新者用户 ID
 }
 
 func GetAllBanner(startIdx int, num int) ([]*Banner, error) {
 	var banner []*Banner
 	var err error
 
-	err = DB.Limit(num).Offset(startIdx).Find(&banner).Error
+	err = DB.Preload("Files").Limit(num).Offset(startIdx).Find(&banner).Error
+	fmt.Println(DB.Explain("all"))
 	return banner, err
 }
 
@@ -33,12 +38,13 @@ func GetBannerById(id int64) (*Banner, error) {
 	}
 	banner := Banner{Id: id}
 	var err error = nil
-	err = DB.First(&banner, "id = ?", id).Error
+	err = DB.Preload("Files").First(&banner, "id = ?", id).Error
 	return &banner, err
 }
 
 func (banner *Banner) Insert() error {
 	var err error
+	fmt.Printf("banner: %v\n", banner)
 	err = DB.Create(banner).Error
 	return err
 }
