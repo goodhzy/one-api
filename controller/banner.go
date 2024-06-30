@@ -34,6 +34,24 @@ func GetAllBanner(c *gin.Context) {
 	return
 }
 
+func GetBannerList(c *gin.Context) {
+	banners, err := model.GetBannerList()
+
+	if err != nil {
+		c.JSON(http.StatusOK, gin.H{
+			"success": false,
+			"message": err.Error(),
+		})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"message": "",
+		"data":    banners,
+	})
+	return
+}
+
 func GetBanner(c *gin.Context) {
 	id, err := strconv.Atoi(c.Param("id"))
 	if err != nil {

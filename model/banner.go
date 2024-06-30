@@ -79,3 +79,12 @@ func DeleteBannerById(id int64, userId int64) (err error) {
 	}
 	return banner.Delete()
 }
+
+func GetBannerList() ([]*Banner, error) {
+	var banner []*Banner
+	var err error
+
+	err = DB.Preload("Files").Limit(99).Where("is_active = ?", 1).Order("sort asc").Find(&banner).Error
+	fmt.Println(DB.Explain("all"))
+	return banner, err
+}
