@@ -23,9 +23,13 @@ const OtherRoutes = {
   path: '/',
   element: <MinimalLayout />,
   children: [
+    // {
+    //   path: '',
+    //   element: <Navigate to="/panel" replace />
+    // },
     {
       path: '',
-      element: <Navigate to="/panel" replace />
+      element: <Home />
     },
     {
       path: '/login',
