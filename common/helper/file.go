@@ -14,6 +14,7 @@ type File interface {
 }
 
 // GetFileMimeType 获取文件的 MIME 类型
+// TODO 目前获取不准确， 如.mov视频文件会识别成mp4
 func GetFileMimeType(file File) (string, error) {
 	// 检查 file 是否实现了 io.Seeker 接口
 	seeker, ok := file.(io.Seeker)
