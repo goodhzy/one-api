@@ -160,5 +160,6 @@ func Handler(c *gin.Context, resp *http.Response, promptTokens int, modelName st
 			TotalTokens:      promptTokens + completionTokens,
 		}
 	}
+	textResponse.Usage.Result = (textResponse.Choices[0].Content).(string)
 	return nil, &textResponse.Usage
 }

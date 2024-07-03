@@ -93,6 +93,7 @@ func RelayTextHelper(c *gin.Context) *model.ErrorWithStatusCode {
 
 	// do response
 	usage, respErr := adaptor.DoResponse(c, resp, meta)
+
 	if respErr != nil {
 		logger.Errorf(ctx, "respErr is not nil: %+v", respErr)
 		billing.ReturnPreConsumedQuota(ctx, preConsumedQuota, meta.TokenId)
