@@ -4,9 +4,12 @@ import { gridSpacing } from 'store/constant';
 import StatisticalLineChartCard from './component/StatisticalLineChartCard';
 import StatisticalBarChart from './component/StatisticalBarChart';
 import { generateChartOptions, getLastSevenDays } from 'utils/chart';
-import { API } from 'utils/api';
+import { API,ImageUrl } from 'utils/api';
 import { showError, calculateQuota, renderNumber } from 'utils/common';
 import UserCard from 'ui-component/cards/UserCard';
+import { Swiper, SwiperSlide } from 'swiper/react';
+import { Autoplay,  Navigation } from 'swiper/modules';
+import 'swiper/css';
 
 const Dashboard = () => {
   const [isLoading, setLoading] = useState(true);
@@ -15,6 +18,7 @@ const Dashboard = () => {
   const [quotaChart, setQuotaChart] = useState(null);
   const [tokenChart, setTokenChart] = useState(null);
   const [users, setUsers] = useState([]);
+  const [bannerList ,setBannerList] = useState([])
 
   const userDashboard = async () => {
     const res = await API.get('/api/user/dashboard');
@@ -33,6 +37,16 @@ const Dashboard = () => {
     setLoading(false);
   };
 
+  const getBanner = async ()=>{
+    const res = await API.get('/api/banner/list')
+    const {success, message, data} = res.data
+    if (success){
+      setBannerList(data)
+    }else {
+      showError(message)
+    }
+  }
+
   const loadUser = async () => {
     let res = await API.get(`/api/user/self`);
     const { success, message, data } = res.data;
@@ -46,10 +60,22 @@ const Dashboard = () => {
   useEffect(() => {
     userDashboard();
     loadUser();
+    getBanner().then()
   }, []);
 
   return (
     <Grid container spacing={gridSpacing}>
+      <Grid item xs={12}>
+        <Grid container >
+          <Swiper autoplay={true} modules={[Autoplay,Navigation]}>
+            {bannerList.map((item)=>(
+              <SwiperSlide key={item.id}>
+                <img src={ImageUrl+item.file.file_path} alt="banner" style={{height:'100%',width:'100%'}}/>
+              </SwiperSlide>
+            ))}
+          </Swiper>
+        </Grid>
+      </Grid>
       <Grid item xs={12}>
         <Grid container spacing={gridSpacing}>
           <Grid item lg={4} xs={12}>
@@ -191,9 +217,12 @@ function getLineCardOption(lineDataGroup, field) {
       case 'PromptTokens':
         tmp.value += item.CompletionTokens;
         break;
+      default:
+        // 其他情况不做处理
+        break;
     }
 
-    if (index == lastItem) {
+    if (index === lastItem) {
       todayValue = tmp.value;
     }
     return tmp;
@@ -211,6 +240,8 @@ function getLineCardOption(lineDataGroup, field) {
     case 'PromptTokens':
       chartData = generateChartOptions(lineData, '');
       todayValue = renderNumber(todayValue);
+      break;
+    default:
       break;
   }
 

@@ -10,6 +10,8 @@ export const API = axios.create({
   // baseURL: 'http://localhost:3000'
 });
 
+export const ImageUrl = 'https://ball-star-card.oss-cn-guangzhou.aliyuncs.com/'
+
 API.interceptors.response.use(
   (response) => response,
   (error) => {

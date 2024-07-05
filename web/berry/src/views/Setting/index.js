@@ -1,10 +1,11 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect,useMemo  } from 'react';
 import PropTypes from 'prop-types';
 import { Tabs, Tab, Box, Card } from '@mui/material';
-import { IconSettings2, IconActivity, IconSettings } from '@tabler/icons-react';
+import { IconSettings2, IconActivity, IconSettings,  IconChartCandle } from '@tabler/icons-react';
 import OperationSetting from './component/OperationSetting';
 import SystemSetting from './component/SystemSetting';
 import OtherSetting from './component/OtherSetting';
+import BannerSetting from './component/BannerSetting';
 import AdminContainer from 'ui-component/AdminContainer';
 import { useLocation, useNavigate } from 'react-router-dom';
 
@@ -35,11 +36,12 @@ const Setting = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const hash = location.hash.replace('#', '');
-  const tabMap = {
+  const tabMap =  useMemo(() => ({
     operation: 0,
     system: 1,
-    other: 2
-  };
+    other: 2,
+    banner: 3
+  }), []);
   const [value, setValue] = useState(tabMap[hash] || 0);
 
   const handleChange = (event, newValue) => {
@@ -64,11 +66,12 @@ const Setting = () => {
       <Card>
         <AdminContainer>
           <Box sx={{ width: '100%' }}>
-            <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
+            <Box sx={{ bFBottom: 1, borderColor: 'divider' }}>
               <Tabs value={value} onChange={handleChange} variant="scrollable" scrollButtons="auto">
                 <Tab label="运营设置" {...a11yProps(0)} icon={<IconActivity />} iconPosition="start" />
                 <Tab label="系统设置" {...a11yProps(1)} icon={<IconSettings />} iconPosition="start" />
                 <Tab label="其他设置" {...a11yProps(2)} icon={<IconSettings2 />} iconPosition="start" />
+                <Tab label="轮播图设置" {...a11yProps(3)} icon={<IconChartCandle />} iconPosition="start" />
               </Tabs>
             </Box>
             <CustomTabPanel value={value} index={0}>
@@ -79,6 +82,9 @@ const Setting = () => {
             </CustomTabPanel>
             <CustomTabPanel value={value} index={2}>
               <OtherSetting />
+            </CustomTabPanel>
+            <CustomTabPanel value={value} index={3}>
+              <BannerSetting />
             </CustomTabPanel>
           </Box>
         </AdminContainer>
