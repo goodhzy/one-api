@@ -34,6 +34,7 @@ func SetApiRouter(router *gin.Engine) {
 		apiRouter.GET("/insert-all-countryCodes", controller.InsertAllCountryCodes)
 		apiRouter.POST("/upload", controller.Upload)
 		apiRouter.GET("/banner/list", controller.GetBannerList)
+		apiRouter.POST("test_base64", controller.TestUpload)
 		userRoute := apiRouter.Group("/user")
 		{
 			userRoute.POST("/register", middleware.CriticalRateLimit(), middleware.TurnstileCheck(), controller.Register)
