@@ -37,6 +37,7 @@ func getObjectName(ext string) string {
 func Upload(c *gin.Context) {
 	// 获取前端上传的文件
 	file, err := c.FormFile("file")
+
 	if err != nil {
 		handleError(c, err)
 		return
@@ -48,11 +49,8 @@ func Upload(c *gin.Context) {
 		handleError(c, err)
 		return
 	}
-	mimeType, err := helper.GetFileMimeType(src)
-	if err != nil {
-		handleError(c, err)
-		return
-	}
+	mimeType := file.Header.Get("Content-Type")
+
 	fmt.Printf("MIME type: %s\n", mimeType)
 
 	ext := filepath.Ext(file.Filename)
