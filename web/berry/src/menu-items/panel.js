@@ -48,7 +48,7 @@ const panel = {
     },
     {
       id:'identify',
-      title:'卡片识别',
+      title:'AI标题',
       type:'item',
       url:'/panel/identify',
       icon:icons.IconCards,

@@ -38,7 +38,7 @@ const Dashboard = () => {
   };
 
   const getBanner = async ()=>{
-    const res = await API.get('/api/banner/list')
+    const res = await API.get('/api/banner/list/?p=0')
     const {success, message, data} = res.data
     if (success){
       setBannerList(data)
