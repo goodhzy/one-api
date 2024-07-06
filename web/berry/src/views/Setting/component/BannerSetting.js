@@ -18,7 +18,7 @@ const BannerSetting = ()=>{
   const [bannerList, setBannerList] = useState([])
 
   const getBannerList = async ()=>{
-    const res = await API.get('/api/banner')
+    const res = await API.get('/api/banner/?p=0')
     const {success, message, data} = res.data
     console.log(data);
     if (success){
