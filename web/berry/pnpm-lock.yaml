@@ -47,6 +47,7 @@ specifiers:
   react-turnstile: ^1.1.2
   redux: ^4.2.0
   sass: ^1.53.0
+  swiper: ^11.1.4
   yup: ^0.32.11
 
 dependencies:
@@ -82,6 +83,7 @@ dependencies:
   react-scripts: 5.0.1_2hjm33kpoq3sp3x4uvb2nxttlq
   react-turnstile: 1.1.3_nnrd3gsncyragczmpvfhocinkq
   redux: 4.2.1
+  swiper: 11.1.4
   yup: 0.32.11
 
 devDependencies:
@@ -10337,6 +10339,11 @@ packages:
       csso: 4.2.0
       picocolors: 1.0.1
       stable: 0.1.8
+    dev: false
+
+  /swiper/11.1.4:
+    resolution: {integrity: sha512-1n7kbYJB2dFEpUHRFszq7gys/ofIBrMNibwTiMvPHwneKND/t9kImnHt6CfGPScMHgI+dWMbGTycCKGMoOO1KA==}
+    engines: {node: '>= 4.7.0'}
     dev: false
 
   /symbol-tree/3.2.4:
