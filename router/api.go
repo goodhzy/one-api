@@ -22,11 +22,10 @@ func SetApiRouter(router *gin.Engine) {
 		apiRouter.GET("/verification", middleware.CriticalRateLimit(), middleware.TurnstileCheck(), controller.SendEmailVerification)
 		apiRouter.GET("/reset_password", middleware.CriticalRateLimit(), middleware.TurnstileCheck(), controller.SendPasswordResetEmail)
 		apiRouter.POST("/user/reset", middleware.CriticalRateLimit(), controller.ResetPassword)
-		apiRouter.GET("/oauth/github", middleware.CriticalRateLimit(), auth.GitHubOAuth)
-		apiRouter.GET("/oauth/ebay", middleware.CriticalRateLimit(), auth.EbayOAuth)
 		apiRouter.GET("/oauth/lark", middleware.CriticalRateLimit(), auth.LarkOAuth)
 		apiRouter.GET("/oauth/state", middleware.CriticalRateLimit(), auth.GenerateOAuthCode)
 		apiRouter.GET("/oauth/wechat", middleware.CriticalRateLimit(), auth.WeChatAuth)
+		apiRouter.GET("/oauth/ebay", middleware.CriticalRateLimit(), auth.EbayOAuth)
 		apiRouter.GET("/oauth/wechat/bind", middleware.CriticalRateLimit(), middleware.UserAuth(), auth.WeChatBind)
 		apiRouter.GET("/oauth/email/bind", middleware.CriticalRateLimit(), middleware.UserAuth(), controller.EmailBind)
 		apiRouter.POST("/topup", middleware.AdminAuth(), controller.AdminTopUp)
@@ -36,6 +35,14 @@ func SetApiRouter(router *gin.Engine) {
 		apiRouter.POST("/upload", controller.Upload)
 		apiRouter.GET("/banner/list", controller.GetBannerList)
 		apiRouter.POST("test_base64", controller.TestUpload)
+
+		ebayRoute := apiRouter.Group("/ebay")
+		ebayRoute.Use(middleware.UserAuth())
+		{
+			ebayRoute.GET("/config", controller.GetConfig)
+			ebayRoute.GET("/oauth", controller.EbayAuth)
+		}
+
 		userRoute := apiRouter.Group("/user")
 		{
 			userRoute.POST("/register", middleware.CriticalRateLimit(), middleware.TurnstileCheck(), controller.Register)
@@ -130,6 +137,7 @@ func SetApiRouter(router *gin.Engine) {
 		logRoute.GET("/search", middleware.AdminAuth(), controller.SearchAllLogs)
 		logRoute.GET("/self", middleware.UserAuth(), controller.GetUserLogs)
 		logRoute.GET("/self/search", middleware.UserAuth(), controller.SearchUserLogs)
+		logRoute.POST("/to_ebay", middleware.UserAuth(), controller.LogToEbayGoods)
 		groupRoute := apiRouter.Group("/group")
 		groupRoute.Use(middleware.AdminAuth())
 		{
