@@ -44,8 +44,8 @@ export default function Profile() {
   const [turnstileToken, setTurnstileToken] = useState('');
   const [openWechat, setOpenWechat] = useState(false);
   const [openEmail, setOpenEmail] = useState(false);
-  const [openEbay , setOpenEbay] = useState(false)
   const status = useSelector((state) => state.siteInfo);
+  const [ebayConfig, setEbayConfig] = useState(null);
 
   const handleWechatOpen = () => {
     setOpenWechat(true);
@@ -65,6 +65,16 @@ export default function Profile() {
     const { success, message, data } = res.data;
     if (success) {
       setInputs(data);
+    } else {
+      showError(message);
+    }
+  };
+
+  const loadEbayConfig = async () => {
+    let res = await API.get(`/api/ebay/config`);
+    const { success, message, data } = res.data;
+    if (success) {
+      setEbayConfig(data);
     } else {
       showError(message);
     }
@@ -123,6 +133,47 @@ export default function Profile() {
     loadUser().then();
   }, [status]);
 
+  useEffect(() => {
+    loadEbayConfig().then();
+  }, []);
+
+  const handleBindEbay = async () => {
+    let url = new URL(ebayConfig.auth_url);
+    delete ebayConfig.auth_url;
+    const searchParams = new URLSearchParams(url.search);
+    for (const [key, value] of Object.entries(ebayConfig)) {
+      if (key === 'scope') {
+        searchParams.append(key, value.join(' '));
+      } else {
+        searchParams.append(key, value);
+      }
+    }
+    url.search = searchParams.toString();
+    window.open(url.href, '_blank');
+
+    // let queryString = '';
+    // let firstParam = true;
+    //
+    // for (const [key, value] of Object.entries(ebayConfig)) {
+    //   if (!firstParam) {
+    //     queryString += '&';
+    //   }
+    //   if(key === 'scope') {
+    //     queryString += `${key}=${value.join(' ')}`;
+    //   }else
+    //   {
+    //     queryString += `${key}=${value}`;
+    //   }
+    //   firstParam = false;
+    // }
+    //
+    // if (queryString) {
+    //   url += '?' + queryString;
+    // }
+    // console.log(url);
+    // window.open(url, '_blank');
+  };
+
   return (
     <>
       <UserCard>
@@ -137,10 +188,9 @@ export default function Profile() {
               {/*</Label>*/}
               {/*<Label variant="ghost" color={inputs.lark_id ? 'primary' : 'default'}>*/}
               {/*  <SvgIcon component={Lark} inheritViewBox="0 0 24 24" /> {inputs.lark_id || '未绑定'}*/}
-              {/*</Label>*/}              {/*<Label variant="ghost" color={inputs.wechat_id ? 'primary' : 'default'}>*/}
+              {/*</Label>*/} {/*<Label variant="ghost" color={inputs.wechat_id ? 'primary' : 'default'}>*/}
               {/*  <IconBrandWechat /> {inputs.wechat_id || '未绑定'}*/}
               {/*</Label>*/}
-
             </Stack>
             <SubCard title="个人信息">
               <Grid container spacing={2}>
@@ -236,18 +286,28 @@ export default function Profile() {
                     <></>
                   )}
                 </Grid>
-
-                <Grid xs={12} md={4}>
-                  <Button
+                {ebayConfig ? (
+                  <Grid xs={12} md={4}>
+                    <Button
                       variant="contained"
                       onClick={() => {
-                        setOpenEbay(true);
+                        handleBindEbay();
                       }}
-                  >
-                    {inputs.ebay?'更换ebay账号':'绑定ebay账号'}
-                  </Button>
-                </Grid>
-
+                    >
+                      绑定ebay
+                    </Button>
+                    {turnstileEnabled ? (
+                      <Turnstile
+                        sitekey={turnstileSiteKey}
+                        onVerify={(token) => {
+                          setTurnstileToken(token);
+                        }}
+                      />
+                    ) : (
+                      <></>
+                    )}
+                  </Grid>
+                ) : null}
               </Grid>
             </SubCard>
           </Stack>

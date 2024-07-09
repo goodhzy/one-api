@@ -150,3 +150,7 @@ var UserContentRequestProxy = env.String("USER_CONTENT_REQUEST_PROXY", "")
 var UserContentRequestTimeout = env.Int("USER_CONTENT_REQUEST_TIMEOUT", 30)
 
 var BucketName = "ball-star-card"
+
+var EbayOauthUrl = "https://auth.sandbox.ebay.com"
+var EbayApiUrl = "https://api.sandbox.ebay.com"
+var EbayRedirectUri = "--sjkjspor-SBX-7-geklbwywy"
