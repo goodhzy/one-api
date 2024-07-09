@@ -44,6 +44,7 @@ export default function Profile() {
   const [turnstileToken, setTurnstileToken] = useState('');
   const [openWechat, setOpenWechat] = useState(false);
   const [openEmail, setOpenEmail] = useState(false);
+  const [openEbay , setOpenEbay] = useState(false)
   const status = useSelector((state) => state.siteInfo);
 
   const handleWechatOpen = () => {
@@ -235,6 +236,18 @@ export default function Profile() {
                     <></>
                   )}
                 </Grid>
+
+                <Grid xs={12} md={4}>
+                  <Button
+                      variant="contained"
+                      onClick={() => {
+                        setOpenEbay(true);
+                      }}
+                  >
+                    {inputs.ebay?'更换ebay账号':'绑定ebay账号'}
+                  </Button>
+                </Grid>
+
               </Grid>
             </SubCard>
           </Stack>
