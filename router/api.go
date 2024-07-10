@@ -144,5 +144,10 @@ func SetApiRouter(router *gin.Engine) {
 		{
 			groupRoute.GET("/", controller.GetGroups)
 		}
+
+		feedbackRoute := apiRouter.Group("/feedback")
+		feedbackRoute.POST("/", middleware.UserAuth(), controller.AddFeedback)
+		feedbackRoute.GET("/", middleware.UserAuth(), controller.GetAllFeedback)
+
 	}
 }
