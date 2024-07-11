@@ -20,10 +20,10 @@ export default function Identify() {
       </Stack>
 
         <Card>
-            <Stack direction='row' alignItems='center'>
-                <Button onClick={startIdentify}>开始识别</Button>
-            </Stack>
-            <iframe src='https://gptupload.prompts666.com/#/?settings={"key":"sk-2yYQTVtkgvYmHYnx6028D902E785494487B86403B2D843D0"}' width='100%' height={1000}></iframe>
+            {/*<Stack direction='row' alignItems='center'>*/}
+            {/*    <Button onClick={startIdentify}>开始识别</Button>*/}
+            {/*</Stack>*/}
+            <iframe src='https://gptupload.prompts666.com/#/?settings={"key":"sk-2yYQTVtkgvYmHYnx6028D902E785494487B86403B2D843D0"}' width='100%' height={1000} style={{border:'none'}}></iframe>
         </Card>
     </>
   )
