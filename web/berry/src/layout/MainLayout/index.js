@@ -11,6 +11,7 @@ import AdminContainer from 'ui-component/AdminContainer';
 import Breadcrumbs from 'ui-component/extended/Breadcrumbs';
 import Header from './Header';
 import Sidebar from './Sidebar';
+import FeedbackButton   from "./FeedbackButton";
 import navigation from 'menu-items';
 import { drawerWidth } from 'store/constant';
 import { SET_MENU } from 'store/actions';
@@ -49,7 +50,8 @@ const Main = styled('main', { shouldForwardProp: (prop) => prop !== 'open' })(({
     width: `calc(100% - ${drawerWidth}px)`,
     padding: '16px',
     marginRight: '10px'
-  }
+  },
+    position: 'relative'//相对定位
 }));
 
 // ==============================|| MAIN LAYOUT ||============================== //
@@ -67,6 +69,7 @@ const MainLayout = () => {
   return (
     <Box sx={{ display: 'flex' }}>
       <CssBaseline />
+        1111111
       {/* header */}
       <AppBar
         enableColorOnDark
@@ -95,6 +98,7 @@ const MainLayout = () => {
             <Outlet />
           </AdminContainer>
         </AuthGuard>
+          <FeedbackButton></FeedbackButton>
       </Main>
     </Box>
   );
