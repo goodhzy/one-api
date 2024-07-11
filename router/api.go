@@ -41,6 +41,7 @@ func SetApiRouter(router *gin.Engine) {
 		{
 			ebayRoute.GET("/config", controller.GetConfig)
 			ebayRoute.GET("/oauth", controller.EbayAuth)
+			ebayRoute.POST("/bulk_create_or_replace_inventory_item", controller.BulkCreateOrReplaceInventoryItem)
 		}
 
 		userRoute := apiRouter.Group("/user")
@@ -143,5 +144,10 @@ func SetApiRouter(router *gin.Engine) {
 		{
 			groupRoute.GET("/", controller.GetGroups)
 		}
+
+		feedbackRoute := apiRouter.Group("/feedback")
+		feedbackRoute.POST("/", middleware.UserAuth(), controller.AddFeedback)
+		feedbackRoute.GET("/", middleware.UserAuth(), controller.GetAllFeedback)
+
 	}
 }

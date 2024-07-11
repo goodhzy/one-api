@@ -50,6 +50,7 @@ type User struct {
 	InviterId        int    `json:"inviter_id" gorm:"type:int;column:inviter_id;index"`
 	Phone            string `json:"phone" gorm:"type:varchar(20);column:phone;index"`
 	PhoneCode        string `json:"phone_code" gorm:"default:''"`
+	EbayBind         bool   `json:"ebay_bind" gorm:"-"`
 }
 
 func GetMaxUserId() int {

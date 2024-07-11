@@ -1,5 +1,9 @@
 package model
 
+import (
+	"gorm.io/gorm"
+)
+
 type EbayConsentConfig struct {
 	AuthUrl      string   `json:"auth_url"`
 	ClientId     string   `json:"client_id"`
@@ -45,12 +49,30 @@ type EbayProduct struct {
 
 func (ebay *Ebay) Insert() error {
 	var err error
-	err = DB.Create(ebay).Error
+	err = DB.First(&ebay, "user_id = ?", ebay.UserId).Error
+	if err != nil && err.Error() == gorm.ErrRecordNotFound.Error() {
+		err = DB.Create(ebay).Error
+	} else {
+		err = DB.Model(&ebay).Where("user_id = ?", ebay.UserId).Updates(ebay).Error
+	}
 	return err
 }
 
 func (ebayProduct *EbayProduct) InsertBatch(items []EbayProduct) error {
 	var err error
 	err = DB.Create(&items).Error
+	return err
+}
+
+func GetEbayBindInfoByUserId(userId int64) (*Ebay, error) {
+	ebay := Ebay{UserId: userId}
+	var err error = nil
+	err = DB.First(&ebay, "user_id = ?", userId).Error
+	return &ebay, err
+}
+
+func UpdateAccessToken(userId int64, accessToken string) error {
+	ebay := Ebay{}
+	err := DB.Model(&ebay).Where("user_id = ?", userId).Update("AccessToken", accessToken).Error
 	return err
 }
