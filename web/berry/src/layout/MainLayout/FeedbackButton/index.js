@@ -24,9 +24,12 @@ const FeedbackButton = ()=>{
                 </IconButton>
             </Tooltip>
 
-            <FeedbackModal open={openFeedback}  handleClose={() => {
+            <FeedbackModal
+                open={openFeedback}
+                handleClose={() => {
                 setOpenFeedback(false);
-            }}></FeedbackModal>
+                }}
+            ></FeedbackModal>
         </FeedbackButtonContainer>
     )
 
