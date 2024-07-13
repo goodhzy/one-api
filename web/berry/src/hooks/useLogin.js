@@ -89,12 +89,14 @@ const useLogin = () => {
 
   const ebayLogin = async (code) =>{
     try {
-      const res = await API.get(`/ebay/oauth?code=${code}`);
-      const { success, message, data } = res.data;
+      console.log(code,'-------------------')
+      const encodedCode = encodeURIComponent(code)
+      const res = await API.get(`/api/ebay_oauth?code=${encodedCode}`);
+      const { success, message } = res.data;
       if (success) {
-        dispatch({ type: LOGIN, payload: data });
-        localStorage.setItem('user', JSON.stringify(data));
-        showSuccess('登录成功！');
+        // dispatch({ type: LOGIN, payload: data });
+        // localStorage.setItem('user', JSON.stringify(data));
+        showSuccess('绑定成功！');
         navigate('/panel');
       }
       return { success, message };
