@@ -50,6 +50,13 @@ const FeedbackModal = ({open,handleClose})=>{
             showError('最多只能上传2张图片');
             return;
         }
+        //判断图片尺寸是否大于2m
+        for (let i = 0; i < files.length; i++) {
+            if (files[i].size > 2 * 1024 * 1024) {
+                showError('图片尺寸不能大于2M');
+                return;
+            }
+        }
         const newImages = [];
         for (let i = 0; i < files.length; i++) {
             setUploadFile((prevFile)=>[...prevFile,files[i]])
@@ -83,7 +90,7 @@ const FeedbackModal = ({open,handleClose})=>{
                 }})
                 const {success, message, data} = res.data
                 if(success){
-                    imagesList.push(data.id)
+                    imagesList.push(data.file_path)
                 }else {
                     showError(message)
                 }

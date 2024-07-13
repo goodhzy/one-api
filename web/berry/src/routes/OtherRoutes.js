@@ -10,6 +10,7 @@ import { Navigate } from 'react-router';
 const AuthLogin = Loadable(lazy(() => import('views/Authentication/Auth/Login')));
 const AuthRegister = Loadable(lazy(() => import('views/Authentication/Auth/Register')));
 const GitHubOAuth = Loadable(lazy(() => import('views/Authentication/Auth/GitHubOAuth')));
+const EbayAuth = Loadable(lazy(() => import('views/Authentication/Auth/EbayAuth')));
 const LarkOAuth = Loadable(lazy(() => import('views/Authentication/Auth/LarkOAuth')));
 const ForgetPassword = Loadable(lazy(() => import('views/Authentication/Auth/ForgetPassword')));
 const ResetPassword = Loadable(lazy(() => import('views/Authentication/Auth/ResetPassword')));
@@ -38,6 +39,10 @@ const OtherRoutes = {
     {
       path: '/register',
       element: <AuthRegister />
+    },
+    {
+      path: '/ebayAuth',
+      element: <EbayAuth/>
     },
     {
       path: '/reset',

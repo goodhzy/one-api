@@ -71,7 +71,7 @@ export default function Profile() {
   };
 
   const loadEbayConfig = async () => {
-    let res = await API.get(`/api/ebay/config`);
+    let res = await API.get(`/api/ebay_config`);
     const { success, message, data } = res.data;
     if (success) {
       setEbayConfig(data);
