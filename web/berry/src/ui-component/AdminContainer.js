@@ -6,6 +6,7 @@ const AdminContainer = styled(Container)(({ theme }) => ({
     paddingLeft: '0px',
     paddingRight: '0px',
   },
+  // maxWidth:"1500px !important"
 }));
 
 export default AdminContainer;
