@@ -1,6 +1,6 @@
 import { Link,  useSearchParams } from 'react-router-dom';
 import React, { useEffect, useState } from 'react';
-import { showError } from 'utils/common';
+import { showError,showSuccess } from 'utils/common';
 import useLogin from 'hooks/useLogin';
 
 // material-ui
@@ -23,9 +23,9 @@ const EbayAuth = () =>{
   const sendCode = async (code) => {
     const { success, message } = await ebayLogin(code);
     if(success){
-      if(message){
-        showError(message)
-      }
+      showSuccess('绑定成功')
+    }else {
+      showError(message)
     }
   }
 

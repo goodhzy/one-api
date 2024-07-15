@@ -3,6 +3,7 @@ import { lazy } from 'react';
 // project imports
 import MainLayout from 'layout/MainLayout';
 import Loadable from 'ui-component/Loadable';
+import loadable from "ui-component/Loadable";
 
 const Channel = Loadable(lazy(() => import('views/Channel')));
 const Log = Loadable(lazy(() => import('views/Log')));
@@ -10,6 +11,7 @@ const Redemption = Loadable(lazy(() => import('views/Redemption')));
 const Setting = Loadable(lazy(() => import('views/Setting')));
 const Token = Loadable(lazy(() => import('views/Token')));
 const Identify = Loadable(lazy(() => import('views/Identify')));
+const EbayControl = loadable(lazy(()=>import ('views/EbayControl')))
 const Topup = Loadable(lazy(() => import('views/Topup')));
 const User = Loadable(lazy(() => import('views/User')));
 const Profile = Loadable(lazy(() => import('views/Profile')));
@@ -55,6 +57,10 @@ const MainRoutes = {
     {
       path: 'identify',
       element: <Identify />
+    },
+    {
+      path: 'ebayControl',
+      element: <EbayControl/>
     },
     {
       path: 'topup',

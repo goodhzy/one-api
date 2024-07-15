@@ -3,7 +3,7 @@ import { Outlet } from 'react-router-dom';
 import AuthGuard from 'utils/route-guard/AuthGuard';
 
 // material-ui
-import { styled, useTheme } from '@mui/material/styles';
+import { styled, useTheme} from '@mui/material/styles';
 import { AppBar, Box, CssBaseline, Toolbar, useMediaQuery } from '@mui/material';
 import AdminContainer from 'ui-component/AdminContainer';
 
@@ -18,6 +18,7 @@ import { SET_MENU } from 'store/actions';
 
 // assets
 import { IconChevronRight } from '@tabler/icons-react';
+import {minWidth} from "@mui/system";
 
 // styles
 const Main = styled('main', { shouldForwardProp: (prop) => prop !== 'open' })(({ theme, open }) => ({
@@ -38,18 +39,20 @@ const Main = styled('main', { shouldForwardProp: (prop) => prop !== 'open' })(({
   ),
   [theme.breakpoints.up('md')]: {
     marginLeft: open ? 0 : -(drawerWidth - 20),
-    width: `calc(100% - ${drawerWidth}px)`
+    width: `calc(100% - ${drawerWidth}px)`,
   },
   [theme.breakpoints.down('md')]: {
     marginLeft: '20px',
     width: `calc(100% - ${drawerWidth}px)`,
-    padding: '16px'
+    padding: '16px',
+
   },
   [theme.breakpoints.down('sm')]: {
     marginLeft: '10px',
     width: `calc(100% - ${drawerWidth}px)`,
     padding: '16px',
-    marginRight: '10px'
+    marginRight: '10px',
+
   },
     position: 'relative'//相对定位
 }));
@@ -69,7 +72,6 @@ const MainLayout = () => {
   return (
     <Box sx={{ display: 'flex' }}>
       <CssBaseline />
-        1111111
       {/* header */}
       <AppBar
         enableColorOnDark
@@ -90,15 +92,15 @@ const MainLayout = () => {
       <Sidebar drawerOpen={!matchDownMd ? leftDrawerOpened : !leftDrawerOpened} drawerToggle={handleLeftDrawerToggle} />
 
       {/* main content */}
-      <Main theme={theme} open={leftDrawerOpened}>
+      <Main theme={theme} open={leftDrawerOpened} >
         {/* breadcrumb */}
         <Breadcrumbs separator={IconChevronRight} navigation={navigation} icon title rightAlign />
         <AuthGuard>
           <AdminContainer>
             <Outlet />
           </AdminContainer>
+            <FeedbackButton></FeedbackButton>
         </AuthGuard>
-          <FeedbackButton></FeedbackButton>
       </Main>
     </Box>
   );
