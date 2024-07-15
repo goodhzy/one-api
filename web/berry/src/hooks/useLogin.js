@@ -87,6 +87,25 @@ const useLogin = () => {
     }
   };
 
+  const ebayLogin = async (code) =>{
+    try {
+      console.log(code,'-------------------')
+      const encodedCode = encodeURIComponent(code)
+      const res = await API.get(`/api/ebay_oauth?code=${encodedCode}`);
+      const { success, message } = res.data;
+      if (success) {
+        // dispatch({ type: LOGIN, payload: data });
+        // localStorage.setItem('user', JSON.stringify(data));
+        showSuccess('绑定成功！');
+        navigate('/panel');
+      }
+      return { success, message };
+    } catch (err) {
+      // 请求失败，设置错误信息
+      return { success: false, message: '' };
+    }
+  }
+
   const logout = async () => {
     await API.get('/api/user/logout');
     localStorage.removeItem('user');
@@ -94,7 +113,7 @@ const useLogin = () => {
     navigate('/');
   };
 
-  return { login, logout, githubLogin, wechatLogin, larkLogin };
+  return { login, logout, githubLogin, wechatLogin, larkLogin,ebayLogin };
 };
 
 export default useLogin;

@@ -71,7 +71,7 @@ export default function Profile() {
   };
 
   const loadEbayConfig = async () => {
-    let res = await API.get(`/api/ebay/config`);
+    let res = await API.get(`/api/ebay_config`);
     const { success, message, data } = res.data;
     if (success) {
       setEbayConfig(data);
@@ -294,7 +294,7 @@ export default function Profile() {
                         handleBindEbay();
                       }}
                     >
-                      绑定ebay
+                      {inputs.ebay_bind?'更换ebay绑定':'绑定ebay'}
                     </Button>
                     {turnstileEnabled ? (
                       <Turnstile
