@@ -38,10 +38,11 @@ func SetApiRouter(router *gin.Engine) {
 
 		ebayRoute := apiRouter.Group("/ebay")
 		ebayRoute.Use(middleware.UserAuth())
+
 		{
-			ebayRoute.GET("/config", controller.GetConfig)
-			ebayRoute.GET("/oauth", controller.EbayAuth)
-			ebayRoute.POST("/bulk_create_or_replace_inventory_item", controller.BulkCreateOrReplaceInventoryItem)
+			apiRouter.GET("/ebay_config", middleware.UserAuth(), controller.GetConfig)
+			apiRouter.GET("/ebay_oauth", middleware.UserAuth(), controller.EbayAuth)
+			apiRouter.POST("/ebay_bulk_create_or_replace_inventory_item", middleware.UserAuth(), controller.BulkCreateOrReplaceInventoryItem)
 		}
 
 		userRoute := apiRouter.Group("/user")
