@@ -12,7 +12,7 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
-  Divider
+  Divider, DialogContentText
 } from '@mui/material';
 import Grid from '@mui/material/Unstable_Grid2';
 import SubCard from 'ui-component/cards/SubCard';
@@ -39,13 +39,14 @@ const validationSchema = Yup.object().shape({
 export default function Profile() {
   const [inputs, setInputs] = useState([]);
   const [showAccountDeleteModal, setShowAccountDeleteModal] = useState(false);
+  const [showReBandEbay,setShowReBandEbay] = useState(false)
   const [turnstileEnabled, setTurnstileEnabled] = useState(false);
   const [turnstileSiteKey, setTurnstileSiteKey] = useState('');
   const [turnstileToken, setTurnstileToken] = useState('');
   const [openWechat, setOpenWechat] = useState(false);
   const [openEmail, setOpenEmail] = useState(false);
   const status = useSelector((state) => state.siteInfo);
-  const [ebayConfig, setEbayConfig] = useState(null);
+  const [ebayConfig, setEbayConfig] = useState({});
 
   const handleWechatOpen = () => {
     setOpenWechat(true);
@@ -138,8 +139,12 @@ export default function Profile() {
   }, []);
 
   const handleBindEbay = async () => {
+    if(showReBandEbay){
+      setShowReBandEbay(false)
+    }
+    console.log(ebayConfig)
     let url = new URL(ebayConfig.auth_url);
-    delete ebayConfig.auth_url;
+    // delete ebayConfig.auth_url;
     const searchParams = new URLSearchParams(url.search);
     for (const [key, value] of Object.entries(ebayConfig)) {
       if (key === 'scope') {
@@ -291,7 +296,11 @@ export default function Profile() {
                     <Button
                       variant="contained"
                       onClick={() => {
-                        handleBindEbay();
+                        if(inputs.ebay_bind){
+                          setShowReBandEbay(true)
+                        }else {
+                          handleBindEbay();
+                        }
                       }}
                     >
                       {inputs.ebay_bind?'更换ebay绑定':'绑定ebay'}
@@ -313,6 +322,7 @@ export default function Profile() {
           </Stack>
         </Card>
       </UserCard>
+
       <Dialog open={showAccountDeleteModal} onClose={() => setShowAccountDeleteModal(false)} maxWidth={'md'}>
         <DialogTitle sx={{ margin: '0px', fontWeight: 500, lineHeight: '1.55556', padding: '24px', fontSize: '1.125rem' }}>
           危险操作
@@ -328,6 +338,19 @@ export default function Profile() {
             }}
           >
             确定
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog open={showReBandEbay} onClose={()=> setShowReBandEbay(false)}>
+        <DialogTitle>绑定ebay</DialogTitle>
+        <DialogContent>
+          <DialogContentText>是否重新绑定？</DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={()=>setShowReBandEbay(false)}>关闭</Button>
+          <Button onClick={handleBindEbay} sx={{ color: 'error.main' }} autoFocus>
+            是的
           </Button>
         </DialogActions>
       </Dialog>

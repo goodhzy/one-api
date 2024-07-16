@@ -8,11 +8,12 @@ import {
   IconKey,
   IconGardenCart,
   IconUser,
-  IconUserScan, IconCards
+  IconUserScan, IconCards,
+  IconShoppingBag
 } from '@tabler/icons-react';
 
 // constant
-const icons = { IconCards,IconDashboard, IconSitemap, IconArticle, IconCoin, IconAdjustments, IconKey, IconGardenCart, IconUser, IconUserScan };
+const icons = {IconShoppingBag, IconCards,IconDashboard, IconSitemap, IconArticle, IconCoin, IconAdjustments, IconKey, IconGardenCart, IconUser, IconUserScan };
 
 // ==============================|| DASHBOARD MENU ITEMS ||============================== //
 
@@ -37,6 +38,15 @@ const panel = {
       icon: icons.IconSitemap,
       breadcrumbs: false,
       isAdmin: true
+    },
+    {
+      id:'ebayControl',
+      title: 'ebay',
+      type:'item',
+      url:'/panel/ebayControl',
+      icon:icons.IconShoppingBag,
+      breadcrumbs: false,
+      isAdmin: false
     },
     {
       id: 'token',
