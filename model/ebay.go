@@ -330,6 +330,18 @@ type OfferResponse struct {
 
 // offer model end
 
+// EbaySite site model start
+type EbaySite struct {
+	Id        int64  `json:"id"`
+	GlobalId  string `json:"globalId"`
+	Language  string `json:"language"`
+	Territory string `json:"territory"`
+	Name      string `json:"name"`
+	SiteId    int    `json:"siteId"`
+}
+
+// site model end
+
 func (ebay *Ebay) Insert() error {
 	var err error
 	err = DB.First(&ebay, "user_id = ?", ebay.UserId).Error
@@ -358,4 +370,10 @@ func UpdateAccessToken(userId int64, accessToken string) error {
 	ebay := Ebay{}
 	err := DB.Model(&ebay).Where("user_id = ?", userId).Update("AccessToken", accessToken).Error
 	return err
+}
+
+func GetSites() ([]*EbaySite, error) {
+	var sites []*EbaySite
+	err := DB.Model(&EbaySite{}).Find(&sites).Error
+	return sites, err
 }

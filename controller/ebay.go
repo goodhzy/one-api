@@ -21,7 +21,7 @@ const (
 	Listed    = 2
 )
 
-func doEbayRequest(c *gin.Context, method string, path string, body io.Reader, queryParams map[string]string) (*http.Response, error) {
+func doEbayRequest(c *gin.Context, method string, path string, body []byte, queryParams map[string]string) (*http.Response, error) {
 
 	var reqUrl = config.EbayApiUrl + path
 
@@ -47,15 +47,12 @@ func doEbayRequest(c *gin.Context, method string, path string, body io.Reader, q
 	case "GET":
 		req, err = http.NewRequest("GET", reqUrl, nil)
 	case "POST":
-		req, err = http.NewRequest("POST", reqUrl, body)
+		req, err = http.NewRequest("POST", reqUrl, bytes.NewBuffer(body))
 		req.Header.Set("Content-Type", "application/json") // 设置请求体的Content-Type，可以根据需要调整
 	default:
 		return nil, fmt.Errorf("unsupported method: %s", method)
 	}
 
-	if err != nil {
-		return nil, err
-	}
 	if err != nil {
 		return nil, err
 	}
@@ -67,14 +64,14 @@ func doEbayRequest(c *gin.Context, method string, path string, body io.Reader, q
 	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", ebay.AccessToken))
 	var client *http.Client
 
-	//uri := url.URL{}
-	//uriProxy, _ := uri.Parse("http://127.0.0.1:8888")
-	//client = &http.Client{
-	//	Transport: &http.Transport{
-	//		Proxy: http.ProxyURL(uriProxy),
-	//	},
-	//}
-	client = &http.Client{}
+	uri := url.URL{}
+	uriProxy, _ := uri.Parse("http://127.0.0.1:8888")
+	client = &http.Client{
+		Transport: &http.Transport{
+			Proxy: http.ProxyURL(uriProxy),
+		},
+	}
+	//client = &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
 		return nil, err
@@ -82,22 +79,27 @@ func doEbayRequest(c *gin.Context, method string, path string, body io.Reader, q
 
 	if resp.StatusCode >= 400 {
 		if resp.StatusCode == http.StatusUnauthorized {
-			_, err := RefreshToken(c)
+			accessToken, err := RefreshToken(c)
 			if err != nil {
 				return nil, err
 			}
+			req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", accessToken))
+			req.Body = io.NopCloser(bytes.NewBuffer(body))
 			resp, err = client.Do(req)
 			if err != nil {
 				return nil, err
 			}
 		}
-		if resp.StatusCode != http.StatusUnauthorized {
+		if resp.StatusCode > http.StatusUnauthorized {
 			var respBody = model.EbayResponse{}
 			err = handleRespBody(c, resp, &respBody)
 			if err != nil {
 				return nil, err
 			}
-			return nil, fmt.Errorf("ebay request error: %s", respBody.Errors[0].Message)
+			if respBody.Errors != nil && len(respBody.Errors) > 0 {
+				return nil, fmt.Errorf("ebay request error: %s", respBody.Errors[0].Message)
+			}
+			return nil, fmt.Errorf("ebay request error: %s", resp.Status)
 		}
 	}
 	return resp, err
@@ -121,7 +123,6 @@ func handleRespBody[T any](c *gin.Context, resp *http.Response, respBody *T) err
 
 func GetConfig(c *gin.Context) {
 	var ebayConfig = model.EbayConsentConfig{}
-	//ebayConfig.AuthUrl = "https://auth.ebay.com/oauth2/authorize"
 	ebayConfig.AuthUrl = config.EbayOauthUrl + "/oauth2/authorize"
 	ebayConfig.ClientId = os.Getenv("EBAY_APP_ID")
 	ebayConfig.RedirectUri = config.EbayRedirectUri
@@ -133,6 +134,7 @@ func GetConfig(c *gin.Context) {
 			"https://api.ebay.com/oauth/api_scope/sell.marketing",                    // View and manage your eBay marketing activities, such as ad campaigns and listing promotions
 			"https://api.ebay.com/oauth/api_scope/sell.inventory",                    // View and manage your inventory and offers
 			"https://api.ebay.com/oauth/api_scope/sell.account",                      // View and manage your eBay seller account
+			"https://api.ebay.com/oauth/api_scope/sell.account.readonly",             // View and manage your eBay seller account
 			"https://api.ebay.com/oauth/api_scope/sell.fulfillment.readonly",         // View your order fulfillments
 			"https://api.ebay.com/oauth/api_scope/sell.fulfillment",                  // View and manage your order fulfillments
 			"https://api.ebay.com/oauth/api_scope/sell.analytics.readonly",           // View your selling analytics data, such as performance reports
@@ -199,7 +201,7 @@ func EbayAuth(c *gin.Context) {
 	defer func(Body io.ReadCloser) {
 		err := Body.Close()
 		if err != nil {
-
+			return
 		}
 	}(resp.Body)
 
@@ -323,7 +325,7 @@ func BulkCreateOrReplaceInventoryItem(c *gin.Context) {
 		return
 	}
 	var path = "/sell/inventory/v1/bulk_create_or_replace_inventory_item"
-	resp, err := doEbayRequest(c, "POST", path, bytes.NewBuffer(payloadBytes), nil)
+	resp, err := doEbayRequest(c, "POST", path, payloadBytes, nil)
 	if err != nil {
 		c.JSON(http.StatusOK, gin.H{
 			"success": false,
@@ -399,7 +401,7 @@ func CreateOffer(c *gin.Context) {
 		return
 	}
 	var path = "/sell/inventory/v1/offer"
-	resp, err := doEbayRequest(c, "POST", path, bytes.NewBuffer(payloadBytes), nil)
+	resp, err := doEbayRequest(c, "POST", path, payloadBytes, nil)
 	if err != nil {
 		c.JSON(http.StatusOK, gin.H{
 			"success": false,
@@ -438,11 +440,6 @@ func RefreshToken(c *gin.Context) (string, error) {
 	// 创建HTTP请求
 	req, err := http.NewRequest("POST", urlStr, bytes.NewBuffer([]byte(encodedFormData)))
 	if err != nil {
-		fmt.Println("Error creating request:", err)
-		c.JSON(http.StatusOK, gin.H{
-			"success": false,
-			"message": "request error",
-		})
 		return "", err
 	}
 
@@ -454,10 +451,6 @@ func RefreshToken(c *gin.Context) (string, error) {
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
-		c.JSON(http.StatusOK, gin.H{
-			"success": false,
-			"message": "request error",
-		})
 		return "", err
 	}
 	var bodyData model.EbayOauthRes
@@ -479,4 +472,61 @@ func RefreshToken(c *gin.Context) (string, error) {
 		return "", err
 	}
 	return bodyData.AccessToken, nil
+}
+
+func GetSites(c *gin.Context) {
+	sites, err := model.GetSites()
+	if err != nil {
+		c.JSON(http.StatusOK, gin.H{
+			"success": false,
+			"message": err.Error(),
+		})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"message": "get sites success",
+		"data":    sites,
+	})
+}
+
+func GetFormatTypes(c *gin.Context) {
+	// 创建带label, value的数组
+	formats := []map[string]string{
+		{"label": "拍卖", "value": "AUCTION"},
+		{"label": "固价", "value": "FIXED_PRICE"},
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"message": "get format types success",
+		"data":    formats,
+	})
+}
+
+func GetStores(c *gin.Context) {
+	urlStr := "/sell/stores/v1/store"
+	resp, err := doEbayRequest(c, "GET", urlStr, nil, nil)
+	if err != nil {
+		c.JSON(http.StatusOK, gin.H{
+			"success": false,
+			"message": err.Error(),
+		})
+		return
+	}
+	var respBody any
+	err = handleRespBody(c, resp, &respBody)
+	if err != nil {
+		c.JSON(http.StatusOK, gin.H{
+			"success": false,
+			"message": err.Error(),
+		})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"message": "get stores success",
+		"data":    respBody,
+	})
+	return
 }

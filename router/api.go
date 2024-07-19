@@ -40,6 +40,9 @@ func SetApiRouter(router *gin.Engine) {
 		apiRouter.POST("/ebay_bulk_create_or_replace_inventory_item", middleware.UserAuth(), controller.BulkCreateOrReplaceInventoryItem)
 		apiRouter.POST("/ebay_create_offer", middleware.UserAuth(), controller.CreateOffer)
 		apiRouter.GET("/ebay_get_fulfillment_policies", middleware.UserAuth(), controller.GetFulfillmentPolicies)
+		apiRouter.GET("/ebay_sites", middleware.UserAuth(), controller.GetSites)
+		apiRouter.GET("/ebay_format_type", middleware.UserAuth(), controller.GetFormatTypes)
+		apiRouter.GET("/ebay_stores", middleware.UserAuth(), controller.GetStores)
 
 		userRoute := apiRouter.Group("/user")
 		{
