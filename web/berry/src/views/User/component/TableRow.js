@@ -121,7 +121,7 @@ export default function UsersTableRow({ item, manageUser, handleOpenModal, setMo
         </TableCell>
 
         <TableCell>
-          {' '}
+          {/*{' '}*/}
           <TableSwitch id={`switch-${item.id}`} checked={statusSwitch === 1} onChange={handleStatus} />
         </TableCell>
         <TableCell>

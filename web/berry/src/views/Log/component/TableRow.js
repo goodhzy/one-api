@@ -30,8 +30,10 @@ export default function LogTableRow({ item, userIsAdmin }) {
     <>
       <TableRow tabIndex={item.id}>
         <TableCell>{timestamp2string(item.created_at)}</TableCell>
+        <TableCell>图片图片</TableCell>
+        <TableCell>{item.result}</TableCell>
 
-        {userIsAdmin && <TableCell>{item.channel || ''}</TableCell>}
+        {/*{userIsAdmin && <TableCell>{item.channel || ''}</TableCell>}*/}
         {userIsAdmin && (
           <TableCell>
             <Label color="default" variant="outlined">
@@ -39,27 +41,26 @@ export default function LogTableRow({ item, userIsAdmin }) {
             </Label>
           </TableCell>
         )}
-        <TableCell>
-          {item.token_name && (
-            <Label color="default" variant="soft">
-              {item.token_name}
-            </Label>
-          )}
-        </TableCell>
+        {/*<TableCell>*/}
+        {/*  {item.token_name && (*/}
+        {/*    <Label color="default" variant="soft">*/}
+        {/*      {item.token_name}*/}
+        {/*    </Label>*/}
+        {/*  )}*/}
+        {/*</TableCell>*/}
         <TableCell>{renderType(item.type)}</TableCell>
-        <TableCell>
-          {item.model_name && (
-            <Label color="primary" variant="outlined">
-              {item.model_name}
-            </Label>
-          )}
-        </TableCell>
-        <TableCell>{item.prompt_tokens || ''}</TableCell>
-        <TableCell>{item.completion_tokens || ''}</TableCell>
+        {/*<TableCell>*/}
+        {/*  {item.model_name && (*/}
+        {/*    <Label color="primary" variant="outlined">*/}
+        {/*      {item.model_name}*/}
+        {/*    </Label>*/}
+        {/*  )}*/}
+        {/*</TableCell>*/}
+        {/*<TableCell>{item.prompt_tokens || ''}</TableCell>*/}
+        {/*<TableCell>{item.completion_tokens || ''}</TableCell>*/}
         <TableCell>{item.quota ? renderQuota(item.quota, 6) : ''}</TableCell>
-        {
-          isAdmin() && <TableCell>{item.content}</TableCell>
-        }
+        {/*{isAdmin() && <TableCell>{item.content}</TableCell>}*/}
+        <TableCell>刊登</TableCell>
       </TableRow>
     </>
   );
