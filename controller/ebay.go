@@ -530,3 +530,30 @@ func GetStores(c *gin.Context) {
 	})
 	return
 }
+
+func GetStoreCategories(c *gin.Context) {
+	urlStr := "/sell/stores/v1/store/categories"
+	resp, err := doEbayRequest(c, "GET", urlStr, nil, nil)
+	if err != nil {
+		c.JSON(http.StatusOK, gin.H{
+			"success": false,
+			"message": err.Error(),
+		})
+		return
+	}
+	var respBody any
+	err = handleRespBody(c, resp, &respBody)
+	if err != nil {
+		c.JSON(http.StatusOK, gin.H{
+			"success": false,
+			"message": err.Error(),
+		})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"message": "get stores success",
+		"data":    respBody,
+	})
+	return
+}
