@@ -6,6 +6,7 @@ const LogTableHead = ({ userIsAdmin }) => {
   return (
     <TableHead>
       <TableRow>
+        <TableCell></TableCell>
         <TableCell>时间</TableCell>
         <TableCell>卡片</TableCell>
         <TableCell>标题</TableCell>
