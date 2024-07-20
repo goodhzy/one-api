@@ -19,6 +19,8 @@ import {
 import TableSwitch from 'ui-component/Switch';
 import { IconDotsVertical, IconEdit, IconTrash, IconUser } from '@tabler/icons-react';
 import UsersTableRow from '../../../User/component/TableRow';
+import {PhotoProvider, PhotoView} from "react-photo-view";
+import {ImageUrl} from "../../../../utils/api";
 
 export default function PublishTableRow({item,handleOpenModal,setModalGoodsId}){
   const [statusSwitch, setStatusSwitch] = useState(item.status);
@@ -58,7 +60,11 @@ export default function PublishTableRow({item,handleOpenModal,setModalGoodsId}){
     <>
       <TableRow tabIndex={item.id}>
         <TableCell>
-          <img style={{width:'70px',height:'100px'}} alt='出错' src='https://res.firstui.cn/static/images/component/waterfall/P_001.jpeg'/>
+          <PhotoProvider maskOpacity={0.2}>
+            <PhotoView key={item.id} src='https://res.firstui.cn/static/images/component/waterfall/P_001.jpeg'>
+              <img alt='' style={{width:'70px',height:'100px'}} src='https://res.firstui.cn/static/images/component/waterfall/P_001.jpeg'/>
+            </PhotoView>
+          </PhotoProvider>
         </TableCell>
 
         <TableCell>

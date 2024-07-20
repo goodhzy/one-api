@@ -35,6 +35,7 @@ export default function Log() {
   const [searching, setSearching] = useState(false);
   const [searchKeyword, setSearchKeyword] = useState(originalKeyword);
   const [initPage, setInitPage] = useState(true);
+  const [selected, setSelected] = useState([]);
   const userIsAdmin = isAdmin();
 
   const loadLogs = async (startIdx) => {
@@ -136,9 +137,13 @@ export default function Log() {
             <Table sx={{ minWidth: 800 }}>
               <LogTableHead userIsAdmin={userIsAdmin} />
               <TableBody>
-                {logs.slice(activePage * ITEMS_PER_PAGE, (activePage + 1) * ITEMS_PER_PAGE).map((row, index) => (
-                  <LogTableRow item={row} key={`${row.id}_${index}`} userIsAdmin={userIsAdmin} />
-                ))}
+                {logs.slice(activePage * ITEMS_PER_PAGE, (activePage + 1) * ITEMS_PER_PAGE).map((row, index) =>{
+                  const labelId = `enhanced-table-checkbox-${index}`
+                  return(
+                    <LogTableRow item={row} key={`${row.id}_${index}`} labelId={labelId} userIsAdmin={userIsAdmin} />
+                  )
+                }
+                )}
               </TableBody>
             </Table>
           </TableContainer>

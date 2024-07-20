@@ -9,9 +9,10 @@ import Routes from 'routes';
 
 // defaultTheme
 import themes from 'themes';
-
 // project imports
 import NavigationScroll from 'layout/NavigationScroll';
+
+import 'react-photo-view/dist/react-photo-view.css'
 
 // auth
 import UserProvider from 'contexts/UserContext';

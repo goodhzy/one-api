@@ -1,10 +1,13 @@
 import PropTypes from 'prop-types';
 
-import { TableRow, TableCell } from '@mui/material';
+import { TableRow, TableCell,Button,Checkbox } from '@mui/material';
 
 import { timestamp2string, renderQuota, isAdmin } from 'utils/common';
 import Label from 'ui-component/Label';
 import LogType from '../type/LogType';
+import { ImageUrl } from 'utils/api';
+import {  PhotoView,PhotoProvider } from 'react-photo-view';
+
 
 function renderType(type) {
   const typeOption = LogType[type];
@@ -25,12 +28,23 @@ function renderType(type) {
   }
 }
 
-export default function LogTableRow({ item, userIsAdmin }) {
+export default function LogTableRow({ item, userIsAdmin,labelId }) {
   return (
     <>
       <TableRow tabIndex={item.id}>
+        <TableCell>
+          <Checkbox
+              inputProps={{ 'aria-labelledby': labelId }}
+          />
+        </TableCell>
         <TableCell>{timestamp2string(item.created_at)}</TableCell>
-        <TableCell>图片图片</TableCell>
+        <TableCell>
+          <PhotoProvider maskOpacity={0.2}>
+            <PhotoView key='1' src={ImageUrl+item.oss_image}>
+              <img alt='' style={{width:'180px',height:'120px'}} src={ImageUrl+item.oss_image}/>
+            </PhotoView>
+          </PhotoProvider>
+        </TableCell>
         <TableCell>{item.result}</TableCell>
 
         {/*{userIsAdmin && <TableCell>{item.channel || ''}</TableCell>}*/}
@@ -60,7 +74,9 @@ export default function LogTableRow({ item, userIsAdmin }) {
         {/*<TableCell>{item.completion_tokens || ''}</TableCell>*/}
         <TableCell>{item.quota ? renderQuota(item.quota, 6) : ''}</TableCell>
         {/*{isAdmin() && <TableCell>{item.content}</TableCell>}*/}
-        <TableCell>刊登</TableCell>
+        <TableCell>
+          <Button variant="contained">刊登</Button>
+        </TableCell>
       </TableRow>
     </>
   );

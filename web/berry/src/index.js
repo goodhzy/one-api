@@ -13,6 +13,7 @@ import { store } from 'store';
 import 'assets/scss/style.scss';
 import config from './config';
 
+
 // ==============================|| REACT DOM RENDER  ||============================== //
 
 const container = document.getElementById('root');
