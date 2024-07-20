@@ -80,6 +80,10 @@ func doEbayRequest(c *gin.Context, method string, path string, body []byte, quer
 	if resp.StatusCode >= 400 {
 		if resp.StatusCode == http.StatusUnauthorized {
 			accessToken, err := RefreshToken(c)
+			if accessToken == "" {
+				// TODO 这里应该去重新授权获取token
+				return nil, fmt.Errorf("ebay request error: %s", "refresh token error")
+			}
 			if err != nil {
 				return nil, err
 			}
@@ -426,10 +430,6 @@ func RefreshToken(c *gin.Context) (string, error) {
 	urlStr := config.EbayApiUrl + "/identity/v1/oauth2/token"
 	ebay, err := model.GetEbayBindInfoByUserId(int64(c.GetInt(ctxkey.Id)))
 	if err != nil {
-		c.JSON(http.StatusOK, gin.H{
-			"success": false,
-			"message": err.Error(),
-		})
 		return "", err
 	}
 	formData := url.Values{}
@@ -461,10 +461,6 @@ func RefreshToken(c *gin.Context) (string, error) {
 	}
 
 	if bodyData.Error != "" {
-		c.JSON(http.StatusOK, gin.H{
-			"success": false,
-			"message": bodyData.ErrorDescription,
-		})
 		return "", err
 	}
 	err = model.UpdateAccessToken(int64(c.GetInt(ctxkey.Id)), bodyData.AccessToken)
@@ -552,7 +548,7 @@ func GetStoreCategories(c *gin.Context) {
 	}
 	c.JSON(http.StatusOK, gin.H{
 		"success": true,
-		"message": "get stores success",
+		"message": "get store categories success",
 		"data":    respBody,
 	})
 	return
