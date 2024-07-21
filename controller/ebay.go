@@ -14,6 +14,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"strconv"
 )
 
 // status枚举 1未刊登 2:已刊登
@@ -22,11 +23,11 @@ const (
 	Listed    = 2
 )
 
-const HEADER_EBAY_USER_ID = "ebay_user_id"
+const HeaderEbayId = "ebay_id"
 
 func doEbayRequest(c *gin.Context, method string, path string, body []byte, queryParams map[string]string, accessToken string) (*http.Response, error) {
 	// 获取ebay_user_id
-	ebayUserId := c.GetHeader(HEADER_EBAY_USER_ID)
+	ebayId, _ := strconv.Atoi(c.GetHeader(HeaderEbayId))
 	// 如果path带有http或者https
 	var reqUrl = ""
 	if len(path) > 4 && (path[:4] == "http" || path[:5] == "https") {
@@ -68,7 +69,7 @@ func doEbayRequest(c *gin.Context, method string, path string, body []byte, quer
 	}
 	cAccessToken := accessToken
 	if accessToken == "" {
-		ebay, err := model.GetEbayBindInfoByUserIdAndEbayUserId(int64(c.GetInt(ctxkey.Id)), ebayUserId)
+		ebay, err := model.GetEbayBindInfoByUserIdAndEbayUserId(int64(c.GetInt(ctxkey.Id)), int64(ebayId))
 		if err != nil {
 			return nil, err
 		}
@@ -78,14 +79,14 @@ func doEbayRequest(c *gin.Context, method string, path string, body []byte, quer
 	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", cAccessToken))
 	var client *http.Client
 	//
-	//uri := url.URL{}
-	//uriProxy, _ := uri.Parse("http://127.0.0.1:8888")
-	//client = &http.Client{
-	//	Transport: &http.Transport{
-	//		Proxy: http.ProxyURL(uriProxy),
-	//	},
-	//}
-	client = &http.Client{}
+	uri := url.URL{}
+	uriProxy, _ := uri.Parse("http://127.0.0.1:8888")
+	client = &http.Client{
+		Transport: &http.Transport{
+			Proxy: http.ProxyURL(uriProxy),
+		},
+	}
+	//client = &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
 		return nil, err
@@ -468,8 +469,8 @@ func CreateOffer(c *gin.Context) {
 func RefreshToken(c *gin.Context) (string, error) {
 	// 设置请求的目标URL
 	urlStr := config.EbayApiUrl + "/identity/v1/oauth2/token"
-	ebayUserId := c.GetHeader(HEADER_EBAY_USER_ID)
-	ebay, err := model.GetEbayBindInfoByUserIdAndEbayUserId(int64(c.GetInt(ctxkey.Id)), ebayUserId)
+	ebayId, _ := strconv.Atoi(c.GetHeader(HeaderEbayId))
+	ebay, err := model.GetEbayBindInfoByUserIdAndEbayUserId(int64(c.GetInt(ctxkey.Id)), int64(ebayId))
 	if err != nil {
 		return "", err
 	}
@@ -614,4 +615,147 @@ func GetEbayUser(c *gin.Context, accessToken string, identity *model.EbayIdentit
 		return err
 	}
 	return nil
+}
+
+func GetMyEbayAccountList(c *gin.Context) {
+	ebays, err := model.GetAllEbayAccountByUserId(int64(c.GetInt(ctxkey.Id)))
+	if err != nil {
+		c.JSON(http.StatusOK, gin.H{
+			"success": false,
+			"message": err.Error(),
+		})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"message": "get my ebay account list success",
+		"data":    ebays,
+	})
+	return
+}
+
+func DelMyEbayAccount(c *gin.Context) {
+	if c.Query("id") == "" {
+		c.JSON(http.StatusOK, gin.H{
+			"success": false,
+			"message": "id is required",
+		})
+		return
+	}
+	id, _ := strconv.Atoi(c.Query("id"))
+	err := model.DeleteEbayAccountById(int64(id), c.GetInt64(ctxkey.Id))
+	if err != nil {
+		c.JSON(http.StatusOK, gin.H{
+			"success": false,
+			"message": err.Error(),
+		})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"message": "delete my ebay account success",
+	})
+	return
+}
+
+// GetDefaultCategoryTreeId get_default_category_tree_id
+// https://developer.ebay.com/api-docs/commerce/taxonomy/resources/category_tree/methods/getDefaultCategoryTreeId
+func GetDefaultCategoryTreeId(c *gin.Context) {
+	urlStr := "/commerce/taxonomy/v1/get_default_category_tree_id"
+	queryParams := map[string]string{}
+	var marketplaceId = ""
+	if c.Query("marketplace_id") != "" {
+		marketplaceId = c.Query("marketplace_id")
+	} else {
+		marketplaceId = "EBAY_US"
+	}
+	queryParams["marketplace_id"] = marketplaceId
+	resp, err := doEbayRequest(c, "GET", urlStr, nil, queryParams, "")
+	if err != nil {
+		c.JSON(http.StatusOK, gin.H{
+			"success": false,
+			"message": err.Error(),
+		})
+		return
+	}
+	var respBody any
+	err = handleRespBody(c, resp, &respBody)
+	if err != nil {
+		c.JSON(http.StatusOK, gin.H{
+			"success": false,
+			"message": err.Error(),
+		})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"message": "get default category tree id success",
+		"data":    respBody,
+	})
+	return
+}
+
+// GetCategoryTree get_category_tree
+// https://developer.ebay.com/api-docs/commerce/taxonomy/resources/category_tree/methods/getCategoryTree
+func GetCategoryTree(c *gin.Context) {
+	urlStr := "/commerce/taxonomy/v1/category_tree/"
+	categoryTreeId := c.Query("category_tree_id")
+	urlStr += categoryTreeId
+	resp, err := doEbayRequest(c, "GET", urlStr, nil, nil, "")
+	if err != nil {
+		c.JSON(http.StatusOK, gin.H{
+			"success": false,
+			"message": err.Error(),
+		})
+		return
+	}
+	var respBody any
+	err = handleRespBody(c, resp, &respBody)
+	if err != nil {
+		c.JSON(http.StatusOK, gin.H{
+			"success": false,
+			"message": err.Error(),
+		})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"message": "get category tree success",
+		"data":    respBody,
+	})
+	return
+}
+
+// GetCategorySubtree get_category_subtree
+// https://developer.ebay.com/api-docs/commerce/taxonomy/resources/category_tree/methods/getCategorySubtree
+func GetCategorySubtree(c *gin.Context) {
+	///category_tree/{category_tree_id}/get_category_subtree
+	urlStr := "/commerce/taxonomy/v1/category_tree/"
+	categoryTreeId := c.Query("category_tree_id")
+	urlStr += categoryTreeId + "/get_category_subtree"
+	queryParams := map[string]string{}
+	queryParams["category_id"] = c.Query("category_id")
+	resp, err := doEbayRequest(c, "GET", urlStr, nil, queryParams, "")
+	if err != nil {
+		c.JSON(http.StatusOK, gin.H{
+			"success": false,
+			"message": err.Error(),
+		})
+		return
+	}
+	var respBody any
+	err = handleRespBody(c, resp, &respBody)
+	if err != nil {
+		c.JSON(http.StatusOK, gin.H{
+			"success": false,
+			"message": err.Error(),
+		})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"message": "get category subtree success",
+		"data":    respBody,
+	})
+	return
 }

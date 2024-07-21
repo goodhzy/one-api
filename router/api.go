@@ -35,6 +35,7 @@ func SetApiRouter(router *gin.Engine) {
 		apiRouter.POST("/upload", controller.Upload)
 		apiRouter.GET("/banner/list", controller.GetBannerList)
 		apiRouter.POST("test_base64", controller.TestUpload)
+
 		apiRouter.GET("/ebay_config", middleware.UserAuth(), controller.GetConfig)
 		apiRouter.GET("/ebay_oauth", middleware.UserAuth(), controller.EbayAuth)
 		apiRouter.POST("/ebay_bulk_create_or_replace_inventory_item", middleware.UserAuth(), controller.BulkCreateOrReplaceInventoryItem)
@@ -44,6 +45,11 @@ func SetApiRouter(router *gin.Engine) {
 		apiRouter.GET("/ebay_format_type", middleware.UserAuth(), controller.GetFormatTypes)
 		apiRouter.GET("/ebay_stores", middleware.UserAuth(), controller.GetStores)
 		apiRouter.GET("/ebay_get_store_categories", middleware.UserAuth(), controller.GetStoreCategories)
+		apiRouter.GET("/ebay_account_list", middleware.UserAuth(), controller.GetMyEbayAccountList)
+		apiRouter.GET("/ebay_account_delete", middleware.UserAuth(), controller.DelMyEbayAccount)
+		apiRouter.GET("/ebay_get_default_category_tree_id", middleware.UserAuth(), controller.GetDefaultCategoryTreeId)
+		apiRouter.GET("/ebay_category_tree", middleware.UserAuth(), controller.GetCategoryTree)
+		apiRouter.GET("/ebay_category_subtree", middleware.UserAuth(), controller.GetCategorySubtree)
 
 		userRoute := apiRouter.Group("/user")
 		{

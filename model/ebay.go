@@ -1,5 +1,7 @@
 package model
 
+import "gorm.io/gorm"
+
 type EbayConsentConfig struct {
 	AuthUrl      string   `json:"auth_url"`
 	ClientId     string   `json:"client_id"`
@@ -21,19 +23,20 @@ type EbayOauthRes struct {
 }
 
 type Ebay struct {
-	Id                        int64  `json:"id"`
-	UserId                    int64  `json:"user_id"`
-	AccessToken               string `json:"access_token"`
-	ExpiresIn                 int    `json:"expires_in"`
-	RefreshToken              string `json:"refresh_token"`
-	RefreshTokenExpiresIn     int    `json:"refresh_token_expires_in"`
-	TokenType                 string `json:"token_type"`
-	EbayUserId                string `json:"ebay_user_id"`
-	Username                  string `json:"username"`
-	AccountType               string `json:"account_type"`
-	RegistrationMarketplaceId string `json:"registration_marketplace_id"`
-	CreatedAt                 int64  `json:"created_at"`
-	UpdatedAt                 int64  `json:"updated_at"`
+	Id                        int64          `json:"id"`
+	UserId                    int64          `json:"user_id,omitempty"`
+	AccessToken               string         `json:"access_token,omitempty"`
+	ExpiresIn                 int            `json:"expires_in,omitempty"`
+	RefreshToken              string         `json:"refresh_token,omitempty"`
+	RefreshTokenExpiresIn     int            `json:"refresh_token_expires_in,omitempty"`
+	TokenType                 string         `json:"token_type,omitempty"`
+	EbayUserId                string         `json:"ebay_user_id,omitempty"`
+	Username                  string         `json:"username,omitempty"`
+	AccountType               string         `json:"account_type,omitempty"`
+	RegistrationMarketplaceId string         `json:"registration_marketplace_id,omitempty"`
+	CreatedAt                 int64          `json:"created_at"`
+	UpdatedAt                 int64          `json:"updated_at"`
+	DeletedAt                 gorm.DeletedAt `json:"deleted_at,omitempty"` // 删除时间
 }
 
 type EbayProduct struct {
@@ -361,6 +364,33 @@ func (ebay *Ebay) Update() error {
 	return err
 }
 
+type MyEbayAccount struct {
+	Id       int64
+	Username string
+}
+
+func GetAllEbayAccountByUserId(userId int64) (*[]Ebay, error) {
+	var ebays *[]Ebay
+	var err error
+	err = DB.Model(&Ebay{}).Where("user_id = ?", userId).Select("id,username, created_at, updated_at").Find(&ebays).Error
+	return ebays, err
+}
+
+func (ebay *Ebay) Delete() error {
+	var err error
+	err = DB.Delete(ebay).Error
+	return err
+}
+
+func DeleteEbayAccountById(id int64, userId int64) (err error) {
+	ebay := Ebay{Id: id, CreatedAt: userId}
+	err = DB.Where(ebay).First(&ebay).Error
+	if err != nil {
+		return err
+	}
+	return ebay.Delete()
+}
+
 func (ebayProduct *EbayProduct) InsertBatch(items []EbayProduct) error {
 	var err error
 	err = DB.Create(&items).Error
@@ -374,10 +404,10 @@ func GetEbayBindInfoByEbayUserId(ebayUserId string) (*Ebay, error) {
 	return &ebay, err
 }
 
-func GetEbayBindInfoByUserIdAndEbayUserId(userId int64, ebayUserId string) (*Ebay, error) {
-	ebay := Ebay{EbayUserId: ebayUserId}
+func GetEbayBindInfoByUserIdAndEbayUserId(userId int64, ebayId int64) (*Ebay, error) {
+	ebay := Ebay{Id: ebayId}
 	var err error = nil
-	err = DB.First(&ebay, "user_id = ? and ebay_user_id = ?", userId, ebayUserId).Error
+	err = DB.First(&ebay, "user_id = ? and id = ?", userId, ebayId).Error
 	return &ebay, err
 }
 

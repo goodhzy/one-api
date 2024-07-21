@@ -72,7 +72,7 @@ func DeleteBannerById(id int64, userId int64) (err error) {
 	if id == 0 {
 		return errors.New("id 为空！")
 	}
-	banner := Banner{Id: id, UpdatedAt: userId}
+	banner := Banner{Id: id, CreatedAt: userId}
 	err = DB.Where(banner).First(&banner).Error
 	if err != nil {
 		return err
