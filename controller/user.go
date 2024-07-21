@@ -3,7 +3,6 @@ package controller
 import (
 	"encoding/json"
 	"fmt"
-	"gorm.io/gorm"
 	"net/http"
 	"strconv"
 	"time"
@@ -375,23 +374,6 @@ func GetSelf(c *gin.Context) {
 			"message": err.Error(),
 		})
 		return
-	}
-	// 通过id联查ebay信息
-	ebay, err := model.GetEbayBindInfoByUserId(int64(id))
-	if err != nil {
-		if err.Error() == gorm.ErrRecordNotFound.Error() {
-			user.EbayBind = false
-		} else {
-			c.JSON(http.StatusOK, gin.H{
-				"success": false,
-				"message": err.Error(),
-			})
-			return
-		}
-	}
-	if ebay.Id != 0 {
-		user.EbayBind = true
-
 	}
 	c.JSON(http.StatusOK, gin.H{
 		"success": true,

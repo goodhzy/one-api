@@ -9,6 +9,7 @@ import (
 	"github.com/songquanpeng/one-api/common/ctxkey"
 	"github.com/songquanpeng/one-api/common/helper"
 	"github.com/songquanpeng/one-api/model"
+	"gorm.io/gorm"
 	"io"
 	"net/http"
 	"net/url"
@@ -21,9 +22,18 @@ const (
 	Listed    = 2
 )
 
-func doEbayRequest(c *gin.Context, method string, path string, body []byte, queryParams map[string]string) (*http.Response, error) {
+const HEADER_EBAY_USER_ID = "ebay_user_id"
 
-	var reqUrl = config.EbayApiUrl + path
+func doEbayRequest(c *gin.Context, method string, path string, body []byte, queryParams map[string]string, accessToken string) (*http.Response, error) {
+	// 获取ebay_user_id
+	ebayUserId := c.GetHeader(HEADER_EBAY_USER_ID)
+	// 如果path带有http或者https
+	var reqUrl = ""
+	if len(path) > 4 && (path[:4] == "http" || path[:5] == "https") {
+		reqUrl = path
+	} else {
+		reqUrl = config.EbayApiUrl + path
+	}
 
 	var req *http.Request
 	var err error
@@ -56,27 +66,31 @@ func doEbayRequest(c *gin.Context, method string, path string, body []byte, quer
 	if err != nil {
 		return nil, err
 	}
-	ebay, err := model.GetEbayBindInfoByUserId(int64(c.GetInt(ctxkey.Id)))
-	if err != nil {
-		return nil, err
+	cAccessToken := accessToken
+	if accessToken == "" {
+		ebay, err := model.GetEbayBindInfoByUserIdAndEbayUserId(int64(c.GetInt(ctxkey.Id)), ebayUserId)
+		if err != nil {
+			return nil, err
+		}
+		cAccessToken = ebay.AccessToken
 	}
 	req.Header.Set("Content-Language", "en-US")
-	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", ebay.AccessToken))
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", cAccessToken))
 	var client *http.Client
-
-	uri := url.URL{}
-	uriProxy, _ := uri.Parse("http://127.0.0.1:8888")
-	client = &http.Client{
-		Transport: &http.Transport{
-			Proxy: http.ProxyURL(uriProxy),
-		},
-	}
-	//client = &http.Client{}
+	//
+	//uri := url.URL{}
+	//uriProxy, _ := uri.Parse("http://127.0.0.1:8888")
+	//client = &http.Client{
+	//	Transport: &http.Transport{
+	//		Proxy: http.ProxyURL(uriProxy),
+	//	},
+	//}
+	client = &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
 		return nil, err
 	}
-
+	fmt.Printf("resp: %+v\n", resp)
 	if resp.StatusCode >= 400 {
 		if resp.StatusCode == http.StatusUnauthorized {
 			accessToken, err := RefreshToken(c)
@@ -131,6 +145,7 @@ func GetConfig(c *gin.Context) {
 	ebayConfig.ClientId = os.Getenv("EBAY_APP_ID")
 	ebayConfig.RedirectUri = config.EbayRedirectUri
 	ebayConfig.ResponseType = "code"
+	// https://developer.ebay.com/my/keys
 	ebayConfig.Scope =
 		[]string{
 			"https://api.ebay.com/oauth/api_scope",                                   // View public data from eBay
@@ -144,6 +159,11 @@ func GetConfig(c *gin.Context) {
 			"https://api.ebay.com/oauth/api_scope/sell.analytics.readonly",           // View your selling analytics data, such as performance reports
 			"https://api.ebay.com/oauth/api_scope/commerce.identity.status.readonly", // View your eBay account status
 			"https://api.ebay.com/oauth/api_scope/sell.stores",                       // View and manage eBay stores
+			"https://api.ebay.com/oauth/api_scope/commerce.identity.readonly",
+			"https://api.ebay.com/oauth/api_scope/commerce.identity.name.readonly",
+			"https://api.ebay.com/oauth/api_scope/commerce.identity.address.readonly",
+			"https://api.ebay.com/oauth/api_scope/commerce.identity.email.readonly",
+			"https://api.ebay.com/oauth/api_scope/commerce.identity.phone.readonly",
 		}
 	c.JSON(http.StatusOK, gin.H{
 		"success": true,
@@ -198,30 +218,17 @@ func EbayAuth(c *gin.Context) {
 	if err != nil {
 		c.JSON(http.StatusOK, gin.H{
 			"success": false,
-			"message": "request error",
+			"message": err.Error(),
 		})
-		return
-	}
-	defer func(Body io.ReadCloser) {
-		err := Body.Close()
-		if err != nil {
-			return
-		}
-	}(resp.Body)
-
-	// 读取响应体
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		fmt.Println("Error reading response body:", err)
 		return
 	}
 	// 获取body内容
 	var bodyData model.EbayOauthRes
-	err = json.Unmarshal(body, &bodyData)
+	err = handleRespBody(c, resp, &bodyData)
 	if err != nil {
 		c.JSON(http.StatusOK, gin.H{
 			"success": false,
-			"message": "json unmarshal error",
+			"message": err,
 		})
 		return
 	}
@@ -241,7 +248,40 @@ func EbayAuth(c *gin.Context) {
 		CreatedAt:             helper.GetTimestamp(),
 		UserId:                int64(c.GetInt(ctxkey.Id)),
 	}
-	err = ebay.Insert()
+	// 获取ebay用户信息
+	var identity model.EbayIdentity
+	err = GetEbayUser(c, bodyData.AccessToken, &identity)
+	if err != nil {
+		c.JSON(http.StatusOK, gin.H{
+			"success": false,
+			"message": err.Error(),
+		})
+		return
+	}
+	// 查询是否有绑定信息
+	ebayBind, err := model.GetEbayBindInfoByEbayUserId(identity.UserId)
+	fmt.Printf("ebayBind: %+v\n", ebayBind)
+	fmt.Printf("err: %+v\n", err)
+	fmt.Printf(gorm.ErrRecordNotFound.Error())
+	if err != nil {
+		if err.Error() != gorm.ErrRecordNotFound.Error() {
+			c.JSON(http.StatusOK, gin.H{
+				"success": false,
+				"message": err.Error(),
+			})
+			return
+		}
+	}
+	ebay.Username = identity.Username
+	ebay.RegistrationMarketplaceId = identity.RegistrationMarketplaceId
+	ebay.AccountType = identity.AccountType
+	ebay.EbayUserId = identity.UserId
+	if ebayBind.Id > 0 {
+		err = ebay.Update()
+	} else {
+		err = ebay.Insert()
+
+	}
 	if err != nil {
 		c.JSON(http.StatusOK, gin.H{
 			"success": false,
@@ -329,7 +369,7 @@ func BulkCreateOrReplaceInventoryItem(c *gin.Context) {
 		return
 	}
 	var path = "/sell/inventory/v1/bulk_create_or_replace_inventory_item"
-	resp, err := doEbayRequest(c, "POST", path, payloadBytes, nil)
+	resp, err := doEbayRequest(c, "POST", path, payloadBytes, nil, "")
 	if err != nil {
 		c.JSON(http.StatusOK, gin.H{
 			"success": false,
@@ -360,7 +400,7 @@ func GetFulfillmentPolicies(c *gin.Context) {
 	queryParams := map[string]string{}
 	queryParams["marketplace_id"] = c.Query("marketplace_id")
 	var path = "/sell/account/v1/fulfillment_policy"
-	resp, err := doEbayRequest(c, "GET", path, nil, queryParams)
+	resp, err := doEbayRequest(c, "GET", path, nil, queryParams, "")
 	if err != nil {
 		c.JSON(http.StatusOK, gin.H{
 			"success": false,
@@ -405,7 +445,7 @@ func CreateOffer(c *gin.Context) {
 		return
 	}
 	var path = "/sell/inventory/v1/offer"
-	resp, err := doEbayRequest(c, "POST", path, payloadBytes, nil)
+	resp, err := doEbayRequest(c, "POST", path, payloadBytes, nil, "")
 	if err != nil {
 		c.JSON(http.StatusOK, gin.H{
 			"success": false,
@@ -428,7 +468,8 @@ func CreateOffer(c *gin.Context) {
 func RefreshToken(c *gin.Context) (string, error) {
 	// 设置请求的目标URL
 	urlStr := config.EbayApiUrl + "/identity/v1/oauth2/token"
-	ebay, err := model.GetEbayBindInfoByUserId(int64(c.GetInt(ctxkey.Id)))
+	ebayUserId := c.GetHeader(HEADER_EBAY_USER_ID)
+	ebay, err := model.GetEbayBindInfoByUserIdAndEbayUserId(int64(c.GetInt(ctxkey.Id)), ebayUserId)
 	if err != nil {
 		return "", err
 	}
@@ -502,7 +543,7 @@ func GetFormatTypes(c *gin.Context) {
 
 func GetStores(c *gin.Context) {
 	urlStr := "/sell/stores/v1/store"
-	resp, err := doEbayRequest(c, "GET", urlStr, nil, nil)
+	resp, err := doEbayRequest(c, "GET", urlStr, nil, nil, "")
 	if err != nil {
 		c.JSON(http.StatusOK, gin.H{
 			"success": false,
@@ -529,7 +570,7 @@ func GetStores(c *gin.Context) {
 
 func GetStoreCategories(c *gin.Context) {
 	urlStr := "/sell/stores/v1/store/categories"
-	resp, err := doEbayRequest(c, "GET", urlStr, nil, nil)
+	resp, err := doEbayRequest(c, "GET", urlStr, nil, nil, "")
 	if err != nil {
 		c.JSON(http.StatusOK, gin.H{
 			"success": false,
@@ -552,4 +593,25 @@ func GetStoreCategories(c *gin.Context) {
 		"data":    respBody,
 	})
 	return
+}
+
+func GetEbayUser(c *gin.Context, accessToken string, identity *model.EbayIdentity) error {
+	urlStr := "https://apiz.sandbox.ebay.com/commerce/identity/v1/user/"
+	resp, err := doEbayRequest(c, "GET", urlStr, nil, nil, accessToken)
+	if err != nil {
+		c.JSON(http.StatusOK, gin.H{
+			"success": false,
+			"message": err.Error(),
+		})
+		return err
+	}
+	err = handleRespBody(c, resp, &identity)
+	if err != nil {
+		c.JSON(http.StatusOK, gin.H{
+			"success": false,
+			"message": err.Error(),
+		})
+		return err
+	}
+	return nil
 }

@@ -1,9 +1,5 @@
 package model
 
-import (
-	"gorm.io/gorm"
-)
-
 type EbayConsentConfig struct {
 	AuthUrl      string   `json:"auth_url"`
 	ClientId     string   `json:"client_id"`
@@ -25,15 +21,19 @@ type EbayOauthRes struct {
 }
 
 type Ebay struct {
-	Id                    int64  `json:"id"`
-	UserId                int64  `json:"user_id"`
-	AccessToken           string `json:"access_token"`
-	ExpiresIn             int    `json:"expires_in"`
-	RefreshToken          string `json:"refresh_token"`
-	RefreshTokenExpiresIn int    `json:"refresh_token_expires_in"`
-	TokenType             string `json:"token_type"`
-	CreatedAt             int64  `json:"created_at"`
-	UpdatedAt             int64  `json:"updated_at"`
+	Id                        int64  `json:"id"`
+	UserId                    int64  `json:"user_id"`
+	AccessToken               string `json:"access_token"`
+	ExpiresIn                 int    `json:"expires_in"`
+	RefreshToken              string `json:"refresh_token"`
+	RefreshTokenExpiresIn     int    `json:"refresh_token_expires_in"`
+	TokenType                 string `json:"token_type"`
+	EbayUserId                string `json:"ebay_user_id"`
+	Username                  string `json:"username"`
+	AccountType               string `json:"account_type"`
+	RegistrationMarketplaceId string `json:"registration_marketplace_id"`
+	CreatedAt                 int64  `json:"created_at"`
+	UpdatedAt                 int64  `json:"updated_at"`
 }
 
 type EbayProduct struct {
@@ -342,14 +342,22 @@ type EbaySite struct {
 
 // site model end
 
+type EbayIdentity struct {
+	UserId                    string `json:"userId"`
+	Username                  string `json:"username"`
+	AccountType               string `json:"accountType"`
+	RegistrationMarketplaceId string `json:"registrationMarketplaceId"`
+}
+
 func (ebay *Ebay) Insert() error {
 	var err error
-	err = DB.First(&ebay, "user_id = ?", ebay.UserId).Error
-	if err != nil && err.Error() == gorm.ErrRecordNotFound.Error() {
-		err = DB.Create(ebay).Error
-	} else {
-		err = DB.Model(&ebay).Where("user_id = ?", ebay.UserId).Updates(ebay).Error
-	}
+	err = DB.Create(ebay).Error
+	return err
+}
+
+func (ebay *Ebay) Update() error {
+	var err error
+	err = DB.Model(&ebay).Where("ebay_user_id = ?", ebay.EbayUserId).Updates(ebay).Error
 	return err
 }
 
@@ -359,10 +367,17 @@ func (ebayProduct *EbayProduct) InsertBatch(items []EbayProduct) error {
 	return err
 }
 
-func GetEbayBindInfoByUserId(userId int64) (*Ebay, error) {
-	ebay := Ebay{UserId: userId}
+func GetEbayBindInfoByEbayUserId(ebayUserId string) (*Ebay, error) {
+	ebay := Ebay{EbayUserId: ebayUserId}
 	var err error = nil
-	err = DB.First(&ebay, "user_id = ?", userId).Error
+	err = DB.First(&ebay, "ebay_user_id = ?", ebayUserId).Error
+	return &ebay, err
+}
+
+func GetEbayBindInfoByUserIdAndEbayUserId(userId int64, ebayUserId string) (*Ebay, error) {
+	ebay := Ebay{EbayUserId: ebayUserId}
+	var err error = nil
+	err = DB.First(&ebay, "user_id = ? and ebay_user_id = ?", userId, ebayUserId).Error
 	return &ebay, err
 }
 
