@@ -50,6 +50,7 @@ func SetApiRouter(router *gin.Engine) {
 		apiRouter.GET("/ebay_get_default_category_tree_id", middleware.UserAuth(), controller.GetDefaultCategoryTreeId)
 		apiRouter.GET("/ebay_category_tree", middleware.UserAuth(), controller.GetCategoryTree)
 		apiRouter.GET("/ebay_category_subtree", middleware.UserAuth(), controller.GetCategorySubtree)
+		apiRouter.GET("/ebay_get_category_suggestions", middleware.UserAuth(), controller.GetCategorySuggestions)
 
 		userRoute := apiRouter.Group("/user")
 		{

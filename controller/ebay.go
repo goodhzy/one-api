@@ -759,3 +759,36 @@ func GetCategorySubtree(c *gin.Context) {
 	})
 	return
 }
+
+// GetCategorySuggestions get_category_suggestions
+// https://developer.ebay.com/api-docs/commerce/taxonomy/resources/category_tree/methods/getCategorySuggestions
+func GetCategorySuggestions(c *gin.Context) {
+	urlStr := "/commerce/taxonomy/v1/category_tree/"
+	categoryTreeId := c.Query("category_tree_id")
+	urlStr += categoryTreeId + "/get_category_suggestions"
+	queryParams := map[string]string{}
+	queryParams["q"] = c.Query("q")
+	resp, err := doEbayRequest(c, "GET", urlStr, nil, queryParams, "")
+	if err != nil {
+		c.JSON(http.StatusOK, gin.H{
+			"success": false,
+			"message": err.Error(),
+		})
+		return
+	}
+	var respBody any
+	err = handleRespBody(c, resp, &respBody)
+	if err != nil {
+		c.JSON(http.StatusOK, gin.H{
+			"success": false,
+			"message": err.Error(),
+		})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"message": "get category suggestions success",
+		"data":    respBody,
+	})
+	return
+}
