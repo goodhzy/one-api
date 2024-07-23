@@ -85,6 +85,9 @@ export default function Log() {
     setSearchKeyword({ ...searchKeyword, [event.target.name]: event.target.value });
   };
 
+  const isItemSelected = (row) =>{
+    console.log(row);
+  }
   // 处理刷新
   const handleRefresh = () => {
     setInitPage(true);
@@ -140,7 +143,7 @@ export default function Log() {
                 {logs.slice(activePage * ITEMS_PER_PAGE, (activePage + 1) * ITEMS_PER_PAGE).map((row, index) =>{
                   const labelId = `enhanced-table-checkbox-${index}`
                   return(
-                    <LogTableRow item={row} key={`${row.id}_${index}`} labelId={labelId} userIsAdmin={userIsAdmin} />
+                    <LogTableRow item={row} key={`${row.id}_${index}`} labelId={labelId} userIsAdmin={userIsAdmin} isItemSelected={isItemSelected}/>
                   )
                 }
                 )}

@@ -28,13 +28,14 @@ function renderType(type) {
   }
 }
 
-export default function LogTableRow({ item, userIsAdmin,labelId }) {
+export default function LogTableRow({ item, userIsAdmin,labelId,isItemSelected }) {
   return (
     <>
       <TableRow tabIndex={item.id}>
         <TableCell>
           <Checkbox
-              inputProps={{ 'aria-labelledby': labelId }}
+            onChange={(event)=>isItemSelected(event,item)}
+            inputProps={{ 'aria-labelledby': labelId }}
           />
         </TableCell>
         <TableCell>{timestamp2string(item.created_at)}</TableCell>
