@@ -15,6 +15,7 @@ import (
 	"net/url"
 	"os"
 	"strconv"
+	"strings"
 )
 
 // status枚举 1未刊登 2:已刊登
@@ -788,6 +789,95 @@ func GetCategorySuggestions(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"success": true,
 		"message": "get category suggestions success",
+		"data":    respBody,
+	})
+	return
+}
+
+// GetItemAspectsForCategory 获取类目属性
+// https://developer.ebay.com/api-docs/commerce/taxonomy/resources/category_tree/methods/getItemAspectsForCategory
+func GetItemAspectsForCategory(c *gin.Context) {
+	urlStr := "/commerce/taxonomy/v1/category_tree/"
+	categoryTreeId := c.Query("category_tree_id")
+	urlStr += categoryTreeId + "/get_item_aspects_for_category"
+	queryParams := map[string]string{}
+	queryParams["category_id"] = c.Query("category_id")
+	resp, err := doEbayRequest(c, "GET", urlStr, nil, queryParams, "")
+	if err != nil {
+		c.JSON(http.StatusOK, gin.H{
+			"success": false,
+			"message": err.Error(),
+		})
+		return
+	}
+	var respBody any
+	err = handleRespBody(c, resp, &respBody)
+	if err != nil {
+		c.JSON(http.StatusOK, gin.H{
+			"success": false,
+			"message": err.Error(),
+		})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"message": "get item aspects for category success",
+		"data":    respBody,
+	})
+	return
+}
+
+// Function to generate the filter parameter
+func generateFilter(categoryIds []string) string {
+	// Join the category IDs with '|'
+	categoryIdsStr := strings.Join(categoryIds, "|")
+
+	// Format the string to the required filter format
+	filterStr := fmt.Sprintf("categoryIds:{%s}", categoryIdsStr)
+
+	// URL encode the filter string
+
+	return filterStr
+}
+
+// GetItemConditionPolicies 获取物品状况
+// https://developer.ebay.com/api-docs/sell/metadata/resources/marketplace/methods/getItemConditionPolicies
+func GetItemConditionPolicies(c *gin.Context) {
+
+	urlStr := "/sell/metadata/v1/marketplace/"
+	marketplaceId := c.Query("marketplace_id")
+	urlStr += marketplaceId + "/get_item_condition_policies"
+	queryParams := map[string]string{}
+	categoryIds := c.QueryArray("category_ids")
+	if len(categoryIds) > 0 {
+		queryParams["filter"] = generateFilter(categoryIds)
+	} else {
+		c.JSON(http.StatusOK, gin.H{
+			"success": false,
+			"message": "category_ids is required",
+		})
+	}
+
+	resp, err := doEbayRequest(c, "GET", urlStr, nil, queryParams, "")
+	if err != nil {
+		c.JSON(http.StatusOK, gin.H{
+			"success": false,
+			"message": err.Error(),
+		})
+		return
+	}
+	var respBody any
+	err = handleRespBody(c, resp, &respBody)
+	if err != nil {
+		c.JSON(http.StatusOK, gin.H{
+			"success": false,
+			"message": err.Error(),
+		})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"message": "get item condition policies success",
 		"data":    respBody,
 	})
 	return
