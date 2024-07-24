@@ -38,25 +38,25 @@ export default function TableToolBar({
         padding={"24px"}
         paddingBottom={"0px"}
       >
-        <FormControl>
-          <InputLabel htmlFor="channel-token_name-label">令牌名称</InputLabel>
-          <OutlinedInput
-            id="token_name"
-            name="token_name"
-            sx={{
-              minWidth: "100%",
-            }}
-            label="令牌名称"
-            value={filterName.token_name}
-            onChange={handleFilterName}
-            placeholder="令牌名称"
-            startAdornment={
-              <InputAdornment position="start">
-                <IconKey stroke={1.5} size="20px" color={grey500} />
-              </InputAdornment>
-            }
-          />
-        </FormControl>
+        {/*<FormControl>*/}
+        {/*  <InputLabel htmlFor="channel-token_name-label">令牌名称</InputLabel>*/}
+        {/*  <OutlinedInput*/}
+        {/*    id="token_name"*/}
+        {/*    name="token_name"*/}
+        {/*    sx={{*/}
+        {/*      minWidth: "100%",*/}
+        {/*    }}*/}
+        {/*    label="令牌名称"*/}
+        {/*    value={filterName.token_name}*/}
+        {/*    onChange={handleFilterName}*/}
+        {/*    placeholder="令牌名称"*/}
+        {/*    startAdornment={*/}
+        {/*      <InputAdornment position="start">*/}
+        {/*        <IconKey stroke={1.5} size="20px" color={grey500} />*/}
+        {/*      </InputAdornment>*/}
+        {/*    }*/}
+        {/*  />*/}
+        {/*</FormControl>*/}
         {/*<FormControl>*/}
         {/*  <InputLabel htmlFor="channel-model_name-label">模型名称</InputLabel>*/}
         {/*  <OutlinedInput*/}
@@ -199,34 +199,34 @@ export default function TableToolBar({
           </FormControl>
         )}
 
-        <FormControl sx={{ minWidth: "22%" }}>
-          <InputLabel htmlFor="channel-type-label">类型</InputLabel>
-          <Select
-            id="channel-type-label"
-            label="类型"
-            value={filterName.type}
-            name="type"
-            onChange={handleFilterName}
-            sx={{
-              minWidth: "100%",
-            }}
-            MenuProps={{
-              PaperProps: {
-                style: {
-                  maxHeight: 200,
-                },
-              },
-            }}
-          >
-            {Object.values(LogType).map((option) => {
-              return (
-                <MenuItem key={option.value} value={option.value}>
-                  {option.text}
-                </MenuItem>
-              );
-            })}
-          </Select>
-        </FormControl>
+        {/*<FormControl sx={{ minWidth: "22%" }}>*/}
+        {/*  <InputLabel htmlFor="channel-type-label">类型</InputLabel>*/}
+        {/*  <Select*/}
+        {/*    id="channel-type-label"*/}
+        {/*    label="类型"*/}
+        {/*    value={filterName.type}*/}
+        {/*    name="type"*/}
+        {/*    onChange={handleFilterName}*/}
+        {/*    sx={{*/}
+        {/*      minWidth: "100%",*/}
+        {/*    }}*/}
+        {/*    MenuProps={{*/}
+        {/*      PaperProps: {*/}
+        {/*        style: {*/}
+        {/*          maxHeight: 200,*/}
+        {/*        },*/}
+        {/*      },*/}
+        {/*    }}*/}
+        {/*  >*/}
+        {/*    {Object.values(LogType).map((option) => {*/}
+        {/*      return (*/}
+        {/*        <MenuItem key={option.value} value={option.value}>*/}
+        {/*          {option.text}*/}
+        {/*        </MenuItem>*/}
+        {/*      );*/}
+        {/*    })}*/}
+        {/*  </Select>*/}
+        {/*</FormControl>*/}
       </Stack>
     </>
   );

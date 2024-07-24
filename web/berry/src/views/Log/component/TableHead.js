@@ -1,12 +1,18 @@
 import PropTypes from 'prop-types';
-import { TableCell, TableHead, TableRow } from '@mui/material';
+import { TableCell, TableHead, TableRow,Checkbox } from '@mui/material';
 import { isAdmin } from '../../../utils/common';
 
-const LogTableHead = ({ userIsAdmin }) => {
+const LogTableHead = ({ userIsAdmin,onSelectAllClick,numSelected,rowCount }) => {
   return (
     <TableHead>
       <TableRow>
-        <TableCell></TableCell>
+        <TableCell>
+          <Checkbox
+            indeterminate={numSelected > 0 && numSelected < rowCount}
+            checked={rowCount > 0 && numSelected === rowCount}
+            onChange={onSelectAllClick}
+          />
+        </TableCell>
         <TableCell>时间</TableCell>
         <TableCell>卡片</TableCell>
         <TableCell>标题</TableCell>
@@ -28,5 +34,7 @@ const LogTableHead = ({ userIsAdmin }) => {
 export default LogTableHead;
 
 LogTableHead.propTypes = {
-  userIsAdmin: PropTypes.bool
+  userIsAdmin: PropTypes.bool,
+  rowCount: PropTypes.number,
+  numSelected: PropTypes.number
 };

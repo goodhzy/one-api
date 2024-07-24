@@ -28,13 +28,16 @@ function renderType(type) {
   }
 }
 
-export default function LogTableRow({ item, userIsAdmin,labelId,isItemSelected }) {
+export default function LogTableRow({ item, userIsAdmin,labelId,isSelected,handleClick,handlePublish,isDisabled }) {
   return (
     <>
-      <TableRow tabIndex={item.id}>
+      <TableRow tabIndex={item.id}
+                onClick={(event) => handleClick(event, item.id)}
+                aria-checked={isSelected(item.id)}
+      >
         <TableCell>
           <Checkbox
-            onChange={(event)=>isItemSelected(event,item)}
+            checked={isSelected(item.id)}
             inputProps={{ 'aria-labelledby': labelId }}
           />
         </TableCell>
@@ -76,7 +79,10 @@ export default function LogTableRow({ item, userIsAdmin,labelId,isItemSelected }
         <TableCell>{item.quota ? renderQuota(item.quota, 6) : ''}</TableCell>
         {/*{isAdmin() && <TableCell>{item.content}</TableCell>}*/}
         <TableCell>
-          <Button variant="contained">刊登</Button>
+          <Button variant="contained" disabled={isDisabled} onClick={(event)=>{
+            event.stopPropagation();
+            handlePublish(item.id);
+          }}>刊登</Button>
         </TableCell>
       </TableRow>
     </>
@@ -85,5 +91,7 @@ export default function LogTableRow({ item, userIsAdmin,labelId,isItemSelected }
 
 LogTableRow.propTypes = {
   item: PropTypes.object,
-  userIsAdmin: PropTypes.bool
+  userIsAdmin: PropTypes.bool,
+  handlePublish: PropTypes.func,
+  isDisabled: PropTypes.bool
 };
