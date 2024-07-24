@@ -1,6 +1,7 @@
 import { Link,  useSearchParams } from 'react-router-dom';
 import React, { useEffect, useState } from 'react';
 import { showError,showSuccess } from 'utils/common';
+import { useNavigate } from 'react-router';
 import useLogin from 'hooks/useLogin';
 
 // material-ui
@@ -13,6 +14,7 @@ import AuthCardWrapper from '../AuthCardWrapper';
 import Logo from 'ui-component/Logo';
 
 const EbayAuth = () =>{
+  const navigate = useNavigate();
   const theme = useTheme();
   const matchDownSM = useMediaQuery(theme.breakpoints.down('md'));
 
@@ -20,23 +22,28 @@ const EbayAuth = () =>{
   const [prompt, setPrompt] = useState('处理中...');
   const { ebayLogin } = useLogin();
 
-  const sendCode = async (code) => {
+  const sendCode = async (code,count) => {
     const { success, message } = await ebayLogin(code);
     if(success){
-      showSuccess('绑定成功')
+      // showSuccess('绑定成功')
     }else {
-      showError(message)
+      // showError('绑定失败')
+      count++;
+      setPrompt(`出现错误，第 ${count} 次重试中...`);
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+      await sendCode(code, count);
+      // navigate('/panel');
     }
   }
 
   useEffect(() => {
     let code = searchParams.get('code');
     console.log(code)
-    sendCode(code).then();
+    sendCode(code,0).then();
   }, []);
 
 return(
-    <AuthWrapper>
+    // <AuthWrapper>
       <Grid container direction="column" justifyContent="flex-end">
         <Grid item xs={12}>
           <Grid container justifyContent="center" alignItems="center" sx={{ minHeight: 'calc(100vh - 136px)' }}>
@@ -71,7 +78,7 @@ return(
           </Grid>
         </Grid>
       </Grid>
-    </AuthWrapper>
+    // </AuthWrapper>
 )
 }
 

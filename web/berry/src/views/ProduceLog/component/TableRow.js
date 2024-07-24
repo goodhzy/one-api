@@ -93,5 +93,6 @@ LogTableRow.propTypes = {
   item: PropTypes.object,
   userIsAdmin: PropTypes.bool,
   handlePublish: PropTypes.func,
-  isDisabled: PropTypes.bool
+  isDisabled: PropTypes.bool,
+  handleClick:PropTypes.func
 };

@@ -121,7 +121,6 @@ export default function ProduceLog() {
   const handleClick = (event, id) => {
     const selectedIndex = selected.indexOf(id);
     let newSelected = [];
-
     if (selectedIndex === -1) {
       newSelected = newSelected.concat(selected, id);
     } else if (selectedIndex === 0) {
@@ -135,6 +134,7 @@ export default function ProduceLog() {
       );
     }
     setSelected(newSelected);
+    console.log(newSelected);
   };
 
   // 处理刷新

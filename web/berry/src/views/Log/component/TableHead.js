@@ -1,31 +1,20 @@
 import PropTypes from 'prop-types';
-import { TableCell, TableHead, TableRow,Checkbox } from '@mui/material';
-import { isAdmin } from '../../../utils/common';
+import { TableCell, TableHead, TableRow } from '@mui/material';
 
-const LogTableHead = ({ userIsAdmin,onSelectAllClick,numSelected,rowCount }) => {
+const LogTableHead = ({ userIsAdmin }) => {
   return (
     <TableHead>
       <TableRow>
-        <TableCell>
-          <Checkbox
-            indeterminate={numSelected > 0 && numSelected < rowCount}
-            checked={rowCount > 0 && numSelected === rowCount}
-            onChange={onSelectAllClick}
-          />
-        </TableCell>
         <TableCell>时间</TableCell>
-        <TableCell>卡片</TableCell>
-        <TableCell>标题</TableCell>
-        {/*{userIsAdmin && <TableCell>渠道</TableCell>}*/}
+        {userIsAdmin && <TableCell>渠道</TableCell>}
         {userIsAdmin && <TableCell>用户</TableCell>}
-        {/*<TableCell>令牌</TableCell>*/}
+        <TableCell>令牌</TableCell>
         <TableCell>类型</TableCell>
-        {/*<TableCell>模型</TableCell>*/}
-        {/*<TableCell>提示</TableCell>*/}
-        {/*<TableCell>补全</TableCell>*/}
+        <TableCell>模型</TableCell>
+        <TableCell>提示</TableCell>
+        <TableCell>补全</TableCell>
         <TableCell>额度</TableCell>
-        {/*{isAdmin() && <TableCell>详情</TableCell>}*/}
-        <TableCell>操作</TableCell>
+        <TableCell>详情</TableCell>
       </TableRow>
     </TableHead>
   );
@@ -34,7 +23,5 @@ const LogTableHead = ({ userIsAdmin,onSelectAllClick,numSelected,rowCount }) => 
 export default LogTableHead;
 
 LogTableHead.propTypes = {
-  userIsAdmin: PropTypes.bool,
-  rowCount: PropTypes.number,
-  numSelected: PropTypes.number
+  userIsAdmin: PropTypes.bool
 };

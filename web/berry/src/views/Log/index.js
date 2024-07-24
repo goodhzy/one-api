@@ -27,7 +27,7 @@ export default function Log() {
     model_name: '',
     start_timestamp: 0,
     end_timestamp: new Date().getTime() / 1000 + 3600,
-    type: 2,
+    type: 0,
     channel: ''
   };
   const [logs, setLogs] = useState([]);
@@ -86,57 +86,6 @@ export default function Log() {
     setSearchKeyword({ ...searchKeyword, [event.target.name]: event.target.value });
   };
 
-  const handlePublish = async (id) => {
-    if (selected.length === 0) {
-      showError('请至少选择一条记录');
-      return;
-    }
-    setIsDisabled(true)
-    setSearching(true)
-    const url = '/api/log/to_ebay';
-    const data = { ids: id?[id]:selected };
-    const res = await API.post(url, data);
-    const { success, message } = res.data;
-    if (success) {
-      handleRefresh()
-      showSuccess('刊登成功');
-    } else {
-      showError(message)
-    }
-    setIsDisabled(false)
-    setSearching(false)
-  }
-
-  const handleSelectAllClick = (event) => {
-    if (event.target.checked) {
-      const newSelecteds = logs.map((n) => n.id);
-      setSelected(newSelecteds);
-      return;
-    }
-    setSelected([]);
-  };
-
-  const isSelected = (id) => selected.indexOf(id) !== -1;
-
-  const handleClick = (event, id) => {
-    const selectedIndex = selected.indexOf(id);
-    let newSelected = [];
-
-    if (selectedIndex === -1) {
-      newSelected = newSelected.concat(selected, id);
-    } else if (selectedIndex === 0) {
-      newSelected = newSelected.concat(selected.slice(1));
-    } else if (selectedIndex === selected.length - 1) {
-      newSelected = newSelected.concat(selected.slice(0, -1));
-    } else if (selectedIndex > 0) {
-      newSelected = newSelected.concat(
-        selected.slice(0, selectedIndex),
-        selected.slice(selectedIndex + 1),
-      );
-    }
-    setSelected(newSelected);
-  };
-
   // 处理刷新
   const handleRefresh = () => {
     setInitPage(true);
@@ -155,11 +104,11 @@ export default function Log() {
 
   return (
     <>
-      <Stack direction="row" alignItems="center" justifyContent="space-between" mb={2.5}>
+      <Stack direction="row" alignItems="center" justifyContent="space-between" mb={5}>
         <Typography variant="h4">日志</Typography>
       </Stack>
       <Card>
-        <Box component="form" onSubmit={searchLogs} noValidate sx={{marginTop: 2}}>
+        <Box component="form" onSubmit={searchLogs} noValidate>
           <TableToolBar filterName={searchKeyword} handleFilterName={handleSearchKeyword} userIsAdmin={userIsAdmin} />
         </Box>
         <Toolbar
@@ -171,15 +120,8 @@ export default function Log() {
             p: (theme) => theme.spacing(0, 1, 0, 3)
           }}
         >
-          <Container sx={{textAlign: 'left'}}>
-            <Button variant="contained" disabled={isDisabled} onClick={()=>{
-              handlePublish();
-            }}>批量刊登</Button>
-          </Container>
-
-
           <Container>
-            <ButtonGroup variant="outlined" aria-label="outlined small primary button group" sx={{marginBottom: 2}}>
+            <ButtonGroup variant="outlined" aria-label="outlined small primary button group">
               <Button onClick={handleRefresh} startIcon={<IconRefresh width={'18px'} />}>
                 刷新/清除搜索条件
               </Button>
@@ -189,28 +131,16 @@ export default function Log() {
               </Button>
             </ButtonGroup>
           </Container>
-
-
         </Toolbar>
         {searching && <LinearProgress />}
         <PerfectScrollbar component="div">
           <TableContainer sx={{ overflow: 'unset' }}>
             <Table sx={{ minWidth: 800 }}>
-              <LogTableHead userIsAdmin={userIsAdmin}
-                            rowCount={logs.length}
-                            numSelected={selected.length}
-                            onSelectAllClick={handleSelectAllClick}
-              />
+              <LogTableHead userIsAdmin={userIsAdmin} />
               <TableBody>
-                {logs.slice(activePage * ITEMS_PER_PAGE, (activePage + 1) * ITEMS_PER_PAGE).map((row, index) =>{
-                  const labelId = `enhanced-table-checkbox-${index}`
-                  return(
-                    <LogTableRow item={row} key={`${row.id}_${index}`} labelId={labelId} userIsAdmin={userIsAdmin} isSelected={isSelected} handleClick={handleClick}
-                                 handlePublish={handlePublish} isDisabled={isDisabled}
-                    />
-                  )
-                }
-                )}
+                {logs.slice(activePage * ITEMS_PER_PAGE, (activePage + 1) * ITEMS_PER_PAGE).map((row, index) => (
+                  <LogTableRow item={row} key={`${row.id}_${index}`} userIsAdmin={userIsAdmin} />
+                ))}
               </TableBody>
             </Table>
           </TableContainer>
