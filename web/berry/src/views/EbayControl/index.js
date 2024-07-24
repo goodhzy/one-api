@@ -1,10 +1,11 @@
 import { useState, useEffect,useMemo  } from 'react';
 import PropTypes from 'prop-types';
 import { Tabs, Tab, Box, Card } from '@mui/material';
-import {  IconInnerShadowTop, } from '@tabler/icons-react';
+import {  IconInnerShadowTop,IconRosetteFilled } from '@tabler/icons-react';
 import AdminContainer from 'ui-component/AdminContainer';
 import { useLocation, useNavigate } from 'react-router-dom';
 import PublishEbay from './PublishEbay';
+import AccountEbay from './AccountEbay';
 
 
 function CustomTabPanel(props) {
@@ -36,6 +37,7 @@ const EbayControl = () => {
     const hash = location.hash.replace('#', '');
     const tabMap =  useMemo(() => ({
         publish: 0,
+        account:1
     }), []);
     const [value, setValue] = useState(tabMap[hash] || 0);
 
@@ -64,10 +66,14 @@ const EbayControl = () => {
                   <Box sx={{ bFBottom: 1, borderColor: 'divider' }}>
                       <Tabs value={value} onChange={handleChange} variant="scrollable" scrollButtons="auto">
                           <Tab label="ebay刊登" {...a11yProps(0)} icon={<IconInnerShadowTop />} iconPosition="start" />
+                          <Tab label="ebay账号管理" {...a11yProps(0)} icon={<IconRosetteFilled />} iconPosition="start" />
                       </Tabs>
                   </Box>
                   <CustomTabPanel value={value} index={0}>
                       <PublishEbay />
+                  </CustomTabPanel>
+                  <CustomTabPanel value={value} index={1}>
+                      <AccountEbay />
                   </CustomTabPanel>
               </Box>
               </AdminContainer>

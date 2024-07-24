@@ -9,11 +9,12 @@ import {
   IconGardenCart,
   IconUser,
   IconUserScan, IconCards,
-  IconShoppingBag
+  IconShoppingBag,
+  IconBrandStorybook
 } from '@tabler/icons-react';
 
 // constant
-const icons = {IconShoppingBag, IconCards,IconDashboard, IconSitemap, IconArticle, IconCoin, IconAdjustments, IconKey, IconGardenCart, IconUser, IconUserScan };
+const icons = {IconShoppingBag, IconCards,IconDashboard, IconSitemap, IconArticle, IconCoin, IconAdjustments, IconKey, IconGardenCart, IconUser, IconUserScan,IconBrandStorybook };
 
 // ==============================|| DASHBOARD MENU ITEMS ||============================== //
 
@@ -63,6 +64,14 @@ const panel = {
       url:'/panel/identify',
       icon:icons.IconCards,
       breadcrumbs:false
+    },
+    {
+      id: 'ProduceLog',
+      title: '生成日志',
+      type: 'item',
+      url: '/panel/ProduceLog',
+      icon: icons.IconBrandStorybook,
+      breadcrumbs: false
     },
     {
       id: 'log',
