@@ -12,9 +12,7 @@ import {
   DialogContent,
   DialogContentText,
   DialogTitle,
-  Button,
-  Tooltip,
-  Stack
+  Button
 } from '@mui/material';
 import { IconDotsVertical,  IconTrash } from '@tabler/icons-react';
 
@@ -47,9 +45,9 @@ export default function AccountTableRow({ item,deleteAccount }) {
   return(
     <>
       <TableRow tabIndex={item.id}>
-        <TableCell>
-          {item.id}
-        </TableCell>
+        {/*<TableCell>*/}
+        {/*  {item.id}*/}
+        {/*</TableCell>*/}
         <TableCell>
           {item.username}
         </TableCell>

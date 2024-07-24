@@ -26,7 +26,7 @@ export default function AccountEbay() {
 
   const deleteAccount = async (id)=>{
     setSearching(true);
-    const res = await API.post(`/api/ebay_account_delete`,{id:id});
+    const res = await API.get(`/api/ebay_account_delete?id=`+id);
     const { success, message } = res.data;
     if (success) {
       showSuccess('操作成功完成！');
@@ -34,6 +34,7 @@ export default function AccountEbay() {
     } else {
       showError(message);
     }
+    setSearching(false);
   }
 
   // 处理刷新

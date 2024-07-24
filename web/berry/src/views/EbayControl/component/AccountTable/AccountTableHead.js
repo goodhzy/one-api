@@ -4,7 +4,7 @@ const UsersTableHead = () => {
   return (
     <TableHead>
       <TableRow>
-        <TableCell>ID</TableCell>
+        {/*<TableCell>ID</TableCell>*/}
         <TableCell>店铺名字</TableCell>
         <TableCell>操作</TableCell>
       </TableRow>
