@@ -8,6 +8,7 @@ import (
 	"github.com/songquanpeng/one-api/common/config"
 	"github.com/songquanpeng/one-api/common/ctxkey"
 	"github.com/songquanpeng/one-api/common/helper"
+	"github.com/songquanpeng/one-api/common/random"
 	"github.com/songquanpeng/one-api/model"
 	"gorm.io/gorm"
 	"io"
@@ -80,14 +81,14 @@ func doEbayRequest(c *gin.Context, method string, path string, body []byte, quer
 	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", cAccessToken))
 	var client *http.Client
 	//
-	uri := url.URL{}
-	uriProxy, _ := uri.Parse("http://127.0.0.1:8888")
-	client = &http.Client{
-		Transport: &http.Transport{
-			Proxy: http.ProxyURL(uriProxy),
-		},
-	}
-	//client = &http.Client{}
+	//uri := url.URL{}
+	//uriProxy, _ := uri.Parse("http://127.0.0.1:8888")
+	//client = &http.Client{
+	//	Transport: &http.Transport{
+	//		Proxy: http.ProxyURL(uriProxy),
+	//	},
+	//}
+	client = &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
 		return nil, err
@@ -329,7 +330,10 @@ func LogToEbayGoods(c *gin.Context) {
 		ebayProducts = append(ebayProducts, model.EbayProduct{
 			UserId:         int64(c.GetInt(ctxkey.Id)),
 			Title:          log.Result,
+			BackOssImage:   log.BackOssImage,
+			FrontOssImage:  log.FrontOssImage,
 			CompositeImage: log.OssImage,
+			SelfSku:        random.GetUUID(),
 			Status:         NotListed,
 			Sort:           1,
 			CreatedAt:      helper.GetTimestamp(),
@@ -349,6 +353,51 @@ func LogToEbayGoods(c *gin.Context) {
 		"message": "log to ebay goods success",
 	})
 	return
+}
+
+func GetEbayGoodsList(c *gin.Context) {
+	p, _ := strconv.Atoi(c.Query("p"))
+	if p < 0 {
+		p = 0
+	}
+	ebayProducts, err := model.GetEbayProductList(p*config.ItemsPerPage, config.ItemsPerPage, int64(c.GetInt(ctxkey.Id)))
+	if err != nil {
+		c.JSON(http.StatusOK, gin.H{
+			"success": false,
+			"message": err.Error(),
+		})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"message": "get ebay goods list success",
+		"data":    ebayProducts,
+	})
+}
+
+func GetEbayGoodsDetail(c *gin.Context) {
+	id, err := strconv.Atoi(c.Query("id"))
+	if err != nil {
+		c.JSON(http.StatusOK, gin.H{
+			"success": false,
+			"message": err.Error(),
+		})
+		return
+	}
+	ebayProduct, err := model.GetEbayProductById(int64(id), int64(c.GetInt(ctxkey.Id)))
+	if err != nil {
+		c.JSON(http.StatusOK, gin.H{
+			"success": false,
+			"message": err.Error(),
+		})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"message": "get ebay goods detail success",
+		"data":    ebayProduct,
+	})
+
 }
 
 // BulkCreateOrReplaceInventoryItem 批量创建或替换库存商品

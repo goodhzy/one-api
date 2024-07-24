@@ -44,6 +44,9 @@ type EbayProduct struct {
 	UserId         int64  `json:"user_id"`
 	Title          string `json:"title"`
 	CompositeImage string `json:"composite_image"`
+	BackOssImage   string `json:"back_oss_image"`
+	FrontOssImage  string `json:"front_oss_image"`
+	SelfSku        string `json:"self_sku"`
 	Status         int    `json:"status"`
 	Sort           int    `json:"sort"`
 	CreatedAt      int64  `json:"created_at"`
@@ -395,6 +398,21 @@ func (ebayProduct *EbayProduct) InsertBatch(items []EbayProduct) error {
 	var err error
 	err = DB.Create(&items).Error
 	return err
+}
+
+func GetEbayProductList(startIdx int, num int, userId int64) ([]EbayProduct, error) {
+	var ebayProduct []EbayProduct
+	var err error
+	// 时间倒序
+	err = DB.Model(&EbayProduct{}).Where("user_id = ?", userId).Order("created_at desc").Limit(num).Offset(startIdx).Find(&ebayProduct).Error
+	return ebayProduct, err
+}
+
+func GetEbayProductById(id int64, userId int64) (*EbayProduct, error) {
+	ebayProduct := EbayProduct{Id: id, UserId: userId}
+	var err error = nil
+	err = DB.First(&ebayProduct, "id = ? and user_id = ?", id, userId).Error
+	return &ebayProduct, err
 }
 
 func GetEbayBindInfoByEbayUserId(ebayUserId string) (*Ebay, error) {

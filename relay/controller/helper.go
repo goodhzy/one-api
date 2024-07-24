@@ -201,7 +201,29 @@ func postConsumeQuota(ctx context.Context, usage *relaymodel.Usage, meta *meta.M
 		// 上传成功就清除base64Image
 		base64Image = ""
 	}
-	model.RecordConsumeLog(ctx, meta.UserId, meta.ChannelId, promptTokens, completionTokens, textRequest.Model, meta.TokenName, quota, logContent, base64Image, usage.Result, OssImage)
+	var frontOssImage = ""
+	frontBase64Image := textRequest.FrontBase64Image
+	if frontBase64Image != "" {
+		frontOssImage, err = helper.UploadFromBase64(frontBase64Image)
+		if err != nil {
+			fmt.Println("upload image failed: ", err)
+		}
+		// 上传成功就清除base64Image
+		frontBase64Image = ""
+
+	}
+	var backOssImage = ""
+	backBase64Image := textRequest.BackBase64Image
+	if backBase64Image != "" {
+		backOssImage, err = helper.UploadFromBase64(backBase64Image)
+		if err != nil {
+			fmt.Println("upload image failed: ", err)
+		}
+		// 上传成功就清除base64Image
+		backBase64Image = ""
+
+	}
+	model.RecordConsumeLog(ctx, meta.UserId, meta.ChannelId, promptTokens, completionTokens, textRequest.Model, meta.TokenName, quota, logContent, base64Image, usage.Result, OssImage, frontBase64Image, frontOssImage, backBase64Image, backOssImage)
 	model.UpdateUserUsedQuotaAndRequestCount(meta.UserId, quota)
 	model.UpdateChannelUsedQuota(meta.ChannelId, quota)
 }

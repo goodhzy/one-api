@@ -59,13 +59,69 @@ func RelayTextHelper(c *gin.Context) *model.ErrorWithStatusCode {
 		// no need to convert request for openai
 		shouldResetRequestBody := isModelMapped || meta.ChannelType == channeltype.Baichuan // frequency_penalty 0 is not acceptable for baichuan
 		if shouldResetRequestBody {
-			jsonStr, err := json.Marshal(textRequest)
+			openaiTextRequest := model.GeneralReqOpenAIRequest{
+				Messages:         textRequest.Messages,
+				Model:            textRequest.Model,
+				FrequencyPenalty: textRequest.FrequencyPenalty,
+				MaxTokens:        textRequest.MaxTokens,
+				N:                textRequest.N,
+				PresencePenalty:  textRequest.PresencePenalty,
+				ResponseFormat:   textRequest.ResponseFormat,
+				Seed:             textRequest.Seed,
+				Stream:           textRequest.Stream,
+				Temperature:      textRequest.Temperature,
+				TopP:             textRequest.TopP,
+				TopK:             textRequest.TopK,
+				Tools:            textRequest.Tools,
+				ToolChoice:       textRequest.ToolChoice,
+				FunctionCall:     textRequest.FunctionCall,
+				Functions:        textRequest.Functions,
+				User:             textRequest.User,
+				Prompt:           textRequest.Prompt,
+				Input:            textRequest.Input,
+				EncodingFormat:   textRequest.EncodingFormat,
+				Dimensions:       textRequest.Dimensions,
+				Instruction:      textRequest.Instruction,
+				Size:             textRequest.Size,
+			}
+			jsonStr, err := json.Marshal(openaiTextRequest)
 			if err != nil {
 				return openai.ErrorWrapper(err, "json_marshal_failed", http.StatusInternalServerError)
 			}
 			requestBody = bytes.NewBuffer(jsonStr)
 		} else {
-			requestBody = c.Request.Body
+			// TODO 暂时不清楚逻辑，直接复制上面的代码
+			openaiTextRequest := model.GeneralReqOpenAIRequest{
+				Messages:         textRequest.Messages,
+				Model:            textRequest.Model,
+				FrequencyPenalty: textRequest.FrequencyPenalty,
+				MaxTokens:        textRequest.MaxTokens,
+				N:                textRequest.N,
+				PresencePenalty:  textRequest.PresencePenalty,
+				ResponseFormat:   textRequest.ResponseFormat,
+				Seed:             textRequest.Seed,
+				Stream:           textRequest.Stream,
+				Temperature:      textRequest.Temperature,
+				TopP:             textRequest.TopP,
+				TopK:             textRequest.TopK,
+				Tools:            textRequest.Tools,
+				ToolChoice:       textRequest.ToolChoice,
+				FunctionCall:     textRequest.FunctionCall,
+				Functions:        textRequest.Functions,
+				User:             textRequest.User,
+				Prompt:           textRequest.Prompt,
+				Input:            textRequest.Input,
+				EncodingFormat:   textRequest.EncodingFormat,
+				Dimensions:       textRequest.Dimensions,
+				Instruction:      textRequest.Instruction,
+				Size:             textRequest.Size,
+			}
+			jsonStr, err := json.Marshal(openaiTextRequest)
+			if err != nil {
+				return openai.ErrorWrapper(err, "json_marshal_failed", http.StatusInternalServerError)
+			}
+			requestBody = bytes.NewBuffer(jsonStr)
+			//requestBody = c.Request.Body
 		}
 	} else {
 		convertedRequest, err := adaptor.ConvertRequest(c, meta.Mode, textRequest)
