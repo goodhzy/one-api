@@ -41,6 +41,19 @@ export default function PublishEbay() {
     setSearchKeyword({ ...searchKeyword, [event.target.name]: event.target.value });
   };
 
+  const LoadGoodsList = async (startIdx) => {
+    setSearching(true);
+    const res = await API.get(`/api/ebay_get_goods_list/?p=${startIdx}`)
+    const { success, message, data } = res.data;
+    if (success) {
+      setGoodsList(data);
+      setActivePage(0);
+    } else {
+      showError(message);
+    }
+    setSearching(false);
+  }
+
   const searchLogs = async (event) => {
     setTimeout(() => {
       setSearching(true)
@@ -56,7 +69,7 @@ export default function PublishEbay() {
     (async () => {
       if (activePage === Math.ceil(goodsList.length / ITEMS_PER_PAGE)) {
         // In this case we have to load more data and then append them.
-        // await loadUsers(activePage);
+        await LoadGoodsList(activePage);
       }
       setActivePage(activePage);
     })();
@@ -66,89 +79,12 @@ export default function PublishEbay() {
     setSearchKeyword(originalKeyword);
     setInitPage(false);
     //setGoodsList虚拟数据
-    setGoodsList([
-      {
-        id: 1,
-        image: 'https://via.placeholder.com/150',
-        sku: 'SKU123456',
-        area: '中国',
-        title: '标题',
-        ebay: '是'
-      },
-      {
-        id: 2,
-        image: 'https://via.placeholder.com/150',
-        sku: 'SKU123456',
-        area: '中国',
-        title: '标题',
-        ebay: '是'
-      },
-      {
-        id: 3,
-        image: 'https://via.placeholder.com/150',
-        sku: 'SKU123456',
-        area: '中国',
-        title: '标题',
-        ebay: '是'
-      },
-      {
-        id: 4,
-        image: 'https://via.placeholder.com/150',
-        sku: 'SKU123456',
-        area: '中国',
-        title: '标题',
-        ebay: '是'
-      },
-      {
-        id: 5,
-        image: 'https://via.placeholder.com/150',
-        sku: 'SKU123456',
-        area: '中国',
-        title: '标题',
-        ebay: '是'
-      },
-      {
-        id: 6,
-        image: 'https://via.placeholder.com/150',
-        sku: 'SKU123456',
-        area: '中国',
-        title: '标题',
-        ebay: '是'
-      },
-      {
-        id: 7,
-        image: 'https://via.placeholder.com/150',
-        sku: 'SKU123456',
-        area: '中国',
-        title: '标题',
-        ebay: '是'
-      },
-      {
-        id: 8,
-        image: 'https://via.placeholder.com/150',
-        sku: 'SKU123456',
-        area: '中国',
-        title: '标题',
-        ebay: '是'
-      },
-      {
-        id: 9,
-        image: 'https://via.placeholder.com/150',
-        sku: 'SKU123456',
-        area: '中国',
-        title: '标题',
-        ebay: '是'
-      },
-      {
-        id: 10,
-        image: 'https://via.placeholder.com/150',
-        sku: 'SKU123456',
-        area: '中��',
-        title: '标题',
-        ebay: '是'
-      }
-    ]);
-  }, [initPage]);
+    LoadGoodsList(0)
+      .then()
+      .catch((reason)=>{
+        showError(reason)
+      })
+  }, []);
 
 
   return(
@@ -187,7 +123,7 @@ export default function PublishEbay() {
                  <TableCell>SKU</TableCell>
                  <TableCell>属地</TableCell>
                  <TableCell>标题</TableCell>
-                 <TableCell>eBay刊登</TableCell>
+                 {/*<TableCell>eBay刊登</TableCell>*/}
                  <TableCell>操作</TableCell>
                </TableRow>
              </TableHead>

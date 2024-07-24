@@ -1,11 +1,12 @@
 import { useState, useEffect,useMemo  } from 'react';
 import PropTypes from 'prop-types';
 import { Tabs, Tab, Box, Card } from '@mui/material';
-import {  IconInnerShadowTop,IconRosetteFilled } from '@tabler/icons-react';
+import {  IconInnerShadowTop,IconRosetteFilled,IconCreditCard } from '@tabler/icons-react';
 import AdminContainer from 'ui-component/AdminContainer';
 import { useLocation, useNavigate } from 'react-router-dom';
 import PublishEbay from './PublishEbay';
 import AccountEbay from './AccountEbay';
+import EditEbayGoods from './EditEbayGoods';
 
 
 function CustomTabPanel(props) {
@@ -37,7 +38,8 @@ const EbayControl = () => {
     const hash = location.hash.replace('#', '');
     const tabMap =  useMemo(() => ({
         publish: 0,
-        account:1
+        edit:1,
+        account:2
     }), []);
     const [value, setValue] = useState(tabMap[hash] || 0);
 
@@ -66,13 +68,17 @@ const EbayControl = () => {
                   <Box sx={{ bFBottom: 1, borderColor: 'divider' }}>
                       <Tabs value={value} onChange={handleChange} variant="scrollable" scrollButtons="auto">
                           <Tab label="ebay刊登" {...a11yProps(0)} icon={<IconInnerShadowTop />} iconPosition="start" />
-                          <Tab label="ebay账号管理" {...a11yProps(0)} icon={<IconRosetteFilled />} iconPosition="start" />
+                          <Tab label="商品编辑" {...a11yProps(1)} icon={<IconCreditCard />} iconPosition="start" />
+                          <Tab label="账号管理" {...a11yProps(2)} icon={<IconRosetteFilled />} iconPosition="start" />
                       </Tabs>
                   </Box>
                   <CustomTabPanel value={value} index={0}>
                       <PublishEbay />
                   </CustomTabPanel>
                   <CustomTabPanel value={value} index={1}>
+                      <EditEbayGoods />
+                  </CustomTabPanel>
+                  <CustomTabPanel value={value} index={2}>
                       <AccountEbay />
                   </CustomTabPanel>
               </Box>

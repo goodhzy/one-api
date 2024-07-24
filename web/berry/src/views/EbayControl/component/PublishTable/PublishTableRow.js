@@ -20,7 +20,7 @@ import TableSwitch from 'ui-component/Switch';
 import { IconDotsVertical, IconEdit, IconTrash, IconUser } from '@tabler/icons-react';
 import UsersTableRow from '../../../User/component/TableRow';
 import {PhotoProvider, PhotoView} from "react-photo-view";
-import {ImageUrl} from "../../../../utils/api";
+import { ImageUrl } from 'utils/api';
 
 export default function PublishTableRow({item,handleOpenModal,setModalGoodsId}){
   const [statusSwitch, setStatusSwitch] = useState(item.status);
@@ -61,27 +61,27 @@ export default function PublishTableRow({item,handleOpenModal,setModalGoodsId}){
       <TableRow tabIndex={item.id}>
         <TableCell>
           <PhotoProvider maskOpacity={0.2}>
-            <PhotoView key={item.id} src='https://res.firstui.cn/static/images/component/waterfall/P_001.jpeg'>
-              <img alt='' style={{width:'70px',height:'100px'}} src='https://res.firstui.cn/static/images/component/waterfall/P_001.jpeg'/>
+            <PhotoView key={item.id} src={ImageUrl+item.composite_image}>
+              <img alt='' style={{width:'180px',height:'120px'}} src={ImageUrl+item.composite_image}/>
             </PhotoView>
           </PhotoProvider>
         </TableCell>
 
         <TableCell>
-          ZACK-59M-28-48
+          {item.sku || '无'}
         </TableCell>
 
         <TableCell>
-          美国
+          {item.site ||'无'}
         </TableCell>
 
         <TableCell>
-          标题标题标题标题标题标题标题标题标题标题标题标题
+          {item.title}
         </TableCell>
 
-        <TableCell>
-          <TableSwitch id={`switch-${item.id}`} checked={statusSwitch === 1} onChange={handleStatus} />
-        </TableCell>
+        {/*<TableCell>*/}
+        {/*  <TableSwitch id={`switch-${item.id}`} checked={statusSwitch === 1} onChange={handleStatus} />*/}
+        {/*</TableCell>*/}
 
         <TableCell>
           <IconButton onClick={handleOpenMenu} sx={{ color: 'rgb(99, 115, 129)' }}>
