@@ -26,6 +26,10 @@ type Log struct {
 	Result           string `json:"result"`
 	Base64Image      string `json:"base64_image"`
 	OssImage         string `json:"oss_image"`
+	FrontBase64Image string `json:"front_base_64_image"`
+	FrontOssImage    string `json:"front_oss_image"`
+	BackBase64Image  string `json:"back_base_64_image"`
+	BackOssImage     string `json:"back_oss_image"`
 }
 
 const (
@@ -68,7 +72,7 @@ func RecordTopupLog(userId int, content string, quota int) {
 	}
 }
 
-func RecordConsumeLog(ctx context.Context, userId int, channelId int, promptTokens int, completionTokens int, modelName string, tokenName string, quota int64, content string, base64Image string, result string, OssImage string) {
+func RecordConsumeLog(ctx context.Context, userId int, channelId int, promptTokens int, completionTokens int, modelName string, tokenName string, quota int64, content string, base64Image string, result string, OssImage string, frontBase64Image string, frontOssImage string, backBase64Image string, backOssImage string) {
 	logger.Info(ctx, fmt.Sprintf("record consume log: userId=%d, channelId=%d, promptTokens=%d, completionTokens=%d, modelName=%s, tokenName=%s, quota=%d, content=%s", userId, channelId, promptTokens, completionTokens, modelName, tokenName, quota, content))
 	if !config.LogConsumeEnabled {
 		return
@@ -88,6 +92,10 @@ func RecordConsumeLog(ctx context.Context, userId int, channelId int, promptToke
 		Result:           result,
 		Base64Image:      base64Image,
 		OssImage:         OssImage,
+		FrontBase64Image: frontBase64Image,
+		FrontOssImage:    frontOssImage,
+		BackBase64Image:  backBase64Image,
+		BackOssImage:     backOssImage,
 	}
 	err := LOG_DB.Create(log).Error
 	if err != nil {
@@ -143,7 +151,7 @@ func GetUserLogs(userId int, logType int, startTimestamp int64, endTimestamp int
 	if endTimestamp != 0 {
 		tx = tx.Where("created_at <= ?", endTimestamp)
 	}
-	err = tx.Order("id desc").Limit(num).Offset(startIdx).Omit("id").Find(&logs).Error
+	err = tx.Order("id desc").Limit(num).Offset(startIdx).Find(&logs).Error
 	return logs, err
 }
 
