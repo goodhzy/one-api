@@ -68,7 +68,7 @@ const EbayControl = () => {
                   <Box sx={{ bFBottom: 1, borderColor: 'divider' }}>
                       <Tabs value={value} onChange={handleChange} variant="scrollable" scrollButtons="auto">
                           <Tab label="ebay刊登" {...a11yProps(0)} icon={<IconInnerShadowTop />} iconPosition="start" />
-                          <Tab label="商品编辑" {...a11yProps(1)} icon={<IconCreditCard />} iconPosition="start" />
+                          <Tab label="编辑刊登" {...a11yProps(1)} icon={<IconCreditCard />} iconPosition="start" />
                           <Tab label="账号管理" {...a11yProps(2)} icon={<IconRosetteFilled />} iconPosition="start" />
                       </Tabs>
                   </Box>

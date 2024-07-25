@@ -143,6 +143,10 @@ export default function Profile() {
       setShowReBandEbay(false)
     }
     console.log(ebayConfig)
+    if(!ebayConfig){
+      showError('ebay配置错误，请刷新页面重试')
+      return
+    }
     let url = new URL(ebayConfig.auth_url);
     // delete ebayConfig.auth_url;
     const searchParams = new URLSearchParams(url.search);

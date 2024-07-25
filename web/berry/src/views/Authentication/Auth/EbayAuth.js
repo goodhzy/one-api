@@ -28,6 +28,13 @@ const EbayAuth = () =>{
       // showSuccess('绑定成功')
     }else {
       // showError('绑定失败')
+      if(count>=5){
+        setPrompt(`绑定失败，请检查网络...`);
+        await new Promise((resolve) => setTimeout(resolve, 2000));
+        navigate('/panel');
+        return;
+      }
+
       count++;
       setPrompt(`出现错误，第 ${count} 次重试中...`);
       await new Promise((resolve) => setTimeout(resolve, 2000));
