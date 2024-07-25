@@ -28,3 +28,18 @@ API.interceptors.response.use(
     showError(error);
   }
 );
+
+let ebayId = ''
+
+export const setEbayAccountId = (id)=>{
+  if(id){
+    ebayId = id
+  }
+}
+
+const requestConf = (config) => {
+  config.headers['ebay_id'] = ebayId
+  return config
+}
+
+API.interceptors.request.use(requestConf, (error) => {})
