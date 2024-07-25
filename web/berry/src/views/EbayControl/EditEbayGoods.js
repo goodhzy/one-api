@@ -3,7 +3,8 @@ import SubCard from "ui-component/cards/SubCard";
 import { Select, MenuItem, FormControl, InputLabel, FormHelperText,
   FormLabel,RadioGroup,FormControlLabel,Radio,Stack
 } from '@mui/material';
-import { showSuccess, showError, verifyJSON } from "utils/common";
+import { showSuccess, showError,showInfo, verifyJSON } from "utils/common";
+import { useNavigate } from 'react-router';
 import { setEbayAccountId } from "utils/api";
 import * as Yup from 'yup';
 import { Formik } from 'formik';
@@ -25,6 +26,7 @@ const originInputs = {
 
 export default function EditEbayGoods(){
   const theme = useTheme();
+  const navigate = useNavigate();
   const {fetchSitesOption,fetchTypeOption,fetchCategoryOption,fetchEbayAccountOption} =OptionsApi()
   const [inputs, setInputs] = useState(originInputs);
 
@@ -37,19 +39,26 @@ export default function EditEbayGoods(){
     let accounts =  await fetchEbayAccountOption()
     setAccountList(accounts);
     if(inputs.ebayId === '') {
-      setInputs({ ...inputs, ebayId: accounts[0].id })
-      setEbayAccountId(accounts[0].id)
+      if(accounts[0]){
+        setInputs({ ...inputs, ebayId: accounts[0].id })
+        setEbayAccountId(accounts[0].id)
+        setCategoryOptions(await fetchCategoryOption());
+      }else {
+        showInfo('请添加先ebay账号')
+        // await new Promise((resolve) => setTimeout(resolve, 2000));
+        navigate('/panel/profile');
+      }
+
     }
 
     setSitesOptions(await fetchSitesOption());
     setTypeOptions(await fetchTypeOption());
-    setCategoryOptions(await fetchCategoryOption());
+
   }
 
 
   useEffect(() => {
     fetchOptions().then()
-
   }, []);
 
   const submit = (values)=>{
