@@ -26,6 +26,7 @@ const (
 )
 
 const HeaderEbayId = "ebay_id"
+const defaultMarketplaceId = "EBAY_US"
 
 func doEbayRequest(c *gin.Context, method string, path string, body []byte, queryParams map[string]string, accessToken string) (*http.Response, error) {
 	// 获取ebay_user_id
@@ -81,19 +82,18 @@ func doEbayRequest(c *gin.Context, method string, path string, body []byte, quer
 	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", cAccessToken))
 	var client *http.Client
 	//
-	//uri := url.URL{}
-	//uriProxy, _ := uri.Parse("http://127.0.0.1:8888")
-	//client = &http.Client{
-	//	Transport: &http.Transport{
-	//		Proxy: http.ProxyURL(uriProxy),
-	//	},
-	//}
-	client = &http.Client{}
+	uri := url.URL{}
+	uriProxy, _ := uri.Parse("http://127.0.0.1:8888")
+	client = &http.Client{
+		Transport: &http.Transport{
+			Proxy: http.ProxyURL(uriProxy),
+		},
+	}
+	//client = &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
 		return nil, err
 	}
-	fmt.Printf("resp: %+v\n", resp)
 	if resp.StatusCode >= 400 {
 		if resp.StatusCode == http.StatusUnauthorized {
 			accessToken, err := RefreshToken(c)
@@ -449,7 +449,11 @@ func BulkCreateOrReplaceInventoryItem(c *gin.Context) {
 // https://developer.ebay.com/api-docs/sell/account/resources/fulfillment_policy/methods/getFulfillmentPolicies
 func GetFulfillmentPolicies(c *gin.Context) {
 	queryParams := map[string]string{}
-	queryParams["marketplace_id"] = c.Query("marketplace_id")
+	marketPlaceId := c.Query("marketplace_id")
+	if strings.TrimSpace(marketPlaceId) == "" {
+		marketPlaceId = defaultMarketplaceId
+	}
+	queryParams["marketplace_id"] = marketPlaceId
 	var path = "/sell/account/v1/fulfillment_policy"
 	resp, err := doEbayRequest(c, "GET", path, nil, queryParams, "")
 	if err != nil {
@@ -927,6 +931,77 @@ func GetItemConditionPolicies(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"success": true,
 		"message": "get item condition policies success",
+		"data":    respBody,
+	})
+	return
+}
+
+// GetEbayReturnPolicies 获取退货政策
+// https://developer.ebay.com/api-docs/sell/account/resources/return_policy/methods/getReturnPolicies
+func GetEbayReturnPolicies(c *gin.Context) {
+	urlStr := "/sell/account/v1/return_policy"
+	queryParams := map[string]string{}
+	marketPlaceId := c.Query("marketplace_id")
+	if strings.TrimSpace(marketPlaceId) == "" {
+		marketPlaceId = defaultMarketplaceId
+	}
+	fmt.Printf("marketPlaceId: %s\n", marketPlaceId)
+	queryParams["marketplace_id"] = marketPlaceId
+	resp, err := doEbayRequest(c, "GET", urlStr, nil, queryParams, "")
+	if err != nil {
+		c.JSON(http.StatusOK, gin.H{
+			"success": false,
+			"message": err.Error(),
+		})
+		return
+	}
+	var respBody any
+	err = handleRespBody(c, resp, &respBody)
+	if err != nil {
+		c.JSON(http.StatusOK, gin.H{
+			"success": false,
+			"message": err.Error(),
+		})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"message": "get return policies success",
+		"data":    respBody,
+	})
+	return
+}
+
+// GetPaymentPolicies 获取支付政策
+// https://developer.ebay.com/api-docs/sell/account/resources/payment_policy/methods/getPaymentPolicies
+func GetPaymentPolicies(c *gin.Context) {
+	urlStr := "/sell/account/v1/payment_policy"
+	queryParams := map[string]string{}
+	marketPlaceId := c.Query("marketplace_id")
+	if strings.TrimSpace(marketPlaceId) == "" {
+		marketPlaceId = defaultMarketplaceId
+	}
+	queryParams["marketplace_id"] = marketPlaceId
+	resp, err := doEbayRequest(c, "GET", urlStr, nil, queryParams, "")
+	if err != nil {
+		c.JSON(http.StatusOK, gin.H{
+			"success": false,
+			"message": err.Error(),
+		})
+		return
+	}
+	var respBody any
+	err = handleRespBody(c, resp, &respBody)
+	if err != nil {
+		c.JSON(http.StatusOK, gin.H{
+			"success": false,
+			"message": err.Error(),
+		})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"message": "get payment policies success",
 		"data":    respBody,
 	})
 	return
