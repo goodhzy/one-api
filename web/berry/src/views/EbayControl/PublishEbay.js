@@ -43,7 +43,7 @@ export default function PublishEbay() {
 
   const LoadGoodsList = async (startIdx) => {
     setSearching(true);
-    const res = await API.get(`/api/ebay_get_goods_list/?p=${startIdx}`)
+    const res = await API.get(`/api/ebay_get_goods_list?p=${startIdx}`)
     const { success, message, data } = res.data;
     if (success) {
       setGoodsList(data);
