@@ -55,6 +55,7 @@ func SetApiRouter(router *gin.Engine) {
 		apiRouter.GET("/ebay_get_item_condition_policies", middleware.UserAuth(), controller.GetItemConditionPolicies)
 		apiRouter.GET("/ebay_get_goods_list", middleware.UserAuth(), controller.GetEbayGoodsList)
 		apiRouter.GET("/ebay_get_goods_detail", middleware.UserAuth(), controller.GetEbayGoodsDetail)
+		apiRouter.GET("/ebay_delete_goods", middleware.UserAuth(), controller.GetEbayDeleteGoods)
 		apiRouter.GET("/ebay_get_return_policy", middleware.UserAuth(), controller.GetEbayReturnPolicies)
 		apiRouter.GET("/ebay_get_payment_policy", middleware.UserAuth(), controller.GetPaymentPolicies)
 

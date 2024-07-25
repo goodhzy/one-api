@@ -82,14 +82,14 @@ func doEbayRequest(c *gin.Context, method string, path string, body []byte, quer
 	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", cAccessToken))
 	var client *http.Client
 	//
-	uri := url.URL{}
-	uriProxy, _ := uri.Parse("http://127.0.0.1:8888")
-	client = &http.Client{
-		Transport: &http.Transport{
-			Proxy: http.ProxyURL(uriProxy),
-		},
-	}
-	//client = &http.Client{}
+	//uri := url.URL{}
+	//uriProxy, _ := uri.Parse("http://127.0.0.1:8888")
+	//client = &http.Client{
+	//	Transport: &http.Transport{
+	//		Proxy: http.ProxyURL(uriProxy),
+	//	},
+	//}
+	client = &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
 		return nil, err
@@ -398,6 +398,30 @@ func GetEbayGoodsDetail(c *gin.Context) {
 		"data":    ebayProduct,
 	})
 
+}
+
+func GetEbayDeleteGoods(c *gin.Context) {
+	id, err := strconv.Atoi(c.Query("id"))
+	if err != nil {
+		c.JSON(http.StatusOK, gin.H{
+			"success": false,
+			"message": err.Error(),
+		})
+		return
+	}
+	err = model.DeleteEbayProductById(int64(id), int64(c.GetInt(ctxkey.Id)))
+	if err != nil {
+		c.JSON(http.StatusOK, gin.H{
+			"success": false,
+			"message": err.Error(),
+		})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"message": "delete ebay goods success",
+	})
+	return
 }
 
 // BulkCreateOrReplaceInventoryItem 批量创建或替换库存商品

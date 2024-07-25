@@ -40,17 +40,19 @@ type Ebay struct {
 }
 
 type EbayProduct struct {
-	Id             int64  `json:"id"`
-	UserId         int64  `json:"user_id"`
-	Title          string `json:"title"`
-	CompositeImage string `json:"composite_image"`
-	BackOssImage   string `json:"back_oss_image"`
-	FrontOssImage  string `json:"front_oss_image"`
-	SelfSku        string `json:"self_sku"`
-	Status         int    `json:"status"`
-	Sort           int    `json:"sort"`
-	CreatedAt      int64  `json:"created_at"`
-	UpdatedAt      int64  `json:"updated_at"`
+	Id             int64          `json:"id"`
+	UserId         int64          `json:"user_id"`
+	Title          string         `json:"title"`
+	CompositeImage string         `json:"composite_image"`
+	BackOssImage   string         `json:"back_oss_image"`
+	FrontOssImage  string         `json:"front_oss_image"`
+	SelfSku        string         `json:"self_sku"`
+	Status         int            `json:"status"`
+	Sort           int            `json:"sort"`
+	CreatedAt      int64          `json:"created_at"`
+	UpdatedAt      int64          `json:"updated_at"`
+	DeletedAt      gorm.DeletedAt `json:"deleted_at,omitempty"` // 删除时间
+
 }
 
 type Availability struct {
@@ -413,6 +415,15 @@ func GetEbayProductById(id int64, userId int64) (*EbayProduct, error) {
 	var err error = nil
 	err = DB.First(&ebayProduct, "id = ? and user_id = ?", id, userId).Error
 	return &ebayProduct, err
+}
+
+func DeleteEbayProductById(id int64, userId int64) (err error) {
+	ebayProduct := EbayProduct{Id: id, UserId: userId}
+	err = DB.Where(ebayProduct).First(&ebayProduct).Error
+	if err != nil {
+		return err
+	}
+	return DB.Delete(&ebayProduct).Error
 }
 
 func GetEbayBindInfoByEbayUserId(ebayUserId string) (*Ebay, error) {
