@@ -14,6 +14,7 @@ import NavigationScroll from 'layout/NavigationScroll';
 
 import 'react-photo-view/dist/react-photo-view.css'
 import 'rsuite/Cascader/styles/index.css'
+import 'rsuite/Uploader/styles/index.css'
 
 // auth
 import UserProvider from 'contexts/UserContext';

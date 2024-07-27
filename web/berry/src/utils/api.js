@@ -38,7 +38,7 @@ export const setEbayAccountId = (id)=>{
 }
 
 const requestConf = (config) => {
-  config.headers['ebay_id'] = ebayId
+  config.headers['Ebay-id'] = ebayId
   return config
 }
 

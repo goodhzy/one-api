@@ -1,10 +1,13 @@
 import { useState, useEffect } from "react";
 import SubCard from "ui-component/cards/SubCard";
 import Cascader from 'rsuite/Cascader'
+import  Uploader  from 'rsuite/Uploader'
 import {
   Select, MenuItem, FormControl, InputLabel, FormHelperText,
-  FormLabel, RadioGroup, FormControlLabel, Radio, Stack, OutlinedInput
+  FormLabel, RadioGroup, FormControlLabel, Radio, Stack, OutlinedInput,
+  Box
 } from '@mui/material';
+import {  IconPlus} from '@tabler/icons-react';
 import { showSuccess, showError,showInfo, verifyJSON } from "utils/common";
 import { useNavigate } from 'react-router';
 import { setEbayAccountId } from "utils/api";
@@ -12,6 +15,7 @@ import * as Yup from 'yup';
 import { Formik } from 'formik';
 import { useTheme } from '@mui/material/styles';
 import OptionsApi from './component/EditOptions/OptionsApi';
+import {  PhotoView,PhotoProvider } from 'react-photo-view';
 
 const validationSchema = Yup.object().shape({
   siteId: Yup.string().required('站点不能为空'),
@@ -44,6 +48,7 @@ export default function EditEbayGoods(){
   const [categoryLoading, setCategoryLoading] = useState(false);
   const [categoryOptions, setCategoryOptions] = useState([]);
   const [accountList, setAccountList] = useState([]);
+  const [imageFileList,setImageFileList] = useState([])
 
   const fetchOptions = async ()=>{
     setSitesOptions(await fetchSitesOption());
@@ -64,9 +69,14 @@ export default function EditEbayGoods(){
       }
 
     }
+  }
 
-
-
+  const previewFile = (file,callback) =>{
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      callback(reader.result)
+    }
+    reader.readAsDataURL(file);
   }
 
 
@@ -143,8 +153,30 @@ export default function EditEbayGoods(){
                       </FormHelperText>
                     )}
                   </FormControl>
+
                   {/*主图*/}
                   <FormControl style={{ minWidth: 500 }} error={Boolean(touched.image && errors.image)} sx={{ ...theme.typography.otherInput }}>
+                    <FormLabel htmlFor="channel-image-label">主图</FormLabel>
+                    <Stack direction={{ xs: 'column', md:'row' }}  spacing={2}>
+                      <Uploader listType='picture' action='' autoUpload={false}
+                                fileListVisible={false}
+                                onUpload={file => {
+                                  previewFile(file.blobFile, value => {
+                                    setImageFileList(value);
+                                  });
+                                }}
+                      >
+                        <Box style={{width:'200px',height:'200px'}}>
+                          <IconPlus></IconPlus>
+                        </Box>
+                      </Uploader>
+
+                      <Uploader listType='picture' action='' autoUpload={false}>
+                        <Box style={{width:'200px',height:'200px'}}>
+                          <IconPlus></IconPlus>
+                        </Box>
+                      </Uploader>
+                    </Stack>
 
                   </FormControl>
 
