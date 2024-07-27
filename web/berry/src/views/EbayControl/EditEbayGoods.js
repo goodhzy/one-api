@@ -10,7 +10,7 @@ import {
 import {  IconPlus} from '@tabler/icons-react';
 import { showSuccess, showError,showInfo, verifyJSON } from "utils/common";
 import { useNavigate } from 'react-router';
-import { setEbayAccountId } from "utils/api";
+import { ImageUrl, setEbayAccountId } from 'utils/api';
 import * as Yup from 'yup';
 import { Formik } from 'formik';
 import { useTheme } from '@mui/material/styles';
@@ -162,13 +162,24 @@ export default function EditEbayGoods(){
                                 fileListVisible={false}
                                 onUpload={file => {
                                   previewFile(file.blobFile, value => {
-                                    setImageFileList(value);
+                                    setImageFileList([value]);
                                   });
                                 }}
                       >
-                        <Box style={{width:'200px',height:'200px'}}>
-                          <IconPlus></IconPlus>
+                        <Box>
+                            {imageFileList[0] ?(
+                            <PhotoProvider maskOpacity={0.2} >
+                              <PhotoView key="1" src={imageFileList[0]}>
+                                <img alt='第一张' style={{ width: '200px', height: '200px' }}
+                                     src={imageFileList[0]} />
+                              </PhotoView>
+                            </PhotoProvider>
+                            ):(<Box style={{width:'200px',height:'200px'}}>
+                              <IconPlus></IconPlus>
+                            </Box>)
+                          }
                         </Box>
+
                       </Uploader>
 
                       <Uploader listType='picture' action='' autoUpload={false}>
