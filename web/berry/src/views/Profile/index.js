@@ -307,7 +307,7 @@ export default function Profile() {
                         }
                       }}
                     >
-                      {inputs.ebay_bind?'更换ebay绑定':'绑定ebay'}
+                      {inputs.ebay_bind?'更换ebay绑定':'添加ebay账号'}
                     </Button>
                     {turnstileEnabled ? (
                       <Turnstile

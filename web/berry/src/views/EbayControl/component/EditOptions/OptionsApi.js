@@ -22,12 +22,31 @@ const OptionsApi = ()=>{
     }
   }
 
+  //递归处理类目添加value,label
+  const recursiveCategory = (data)=>{
+    return data.map((item)=>{
+      if(item.childCategoryTreeNodes){
+        return {
+          value:item.category.categoryId,
+          label:item.category.categoryName,
+          children:recursiveCategory(item.childCategoryTreeNodes)
+        }
+      }else {
+        return {
+          value:item.category.categoryId,
+          label:item.category.categoryName
+        }
+      }
+    })
+  }
+
   //获取刊登类目
   const fetchCategoryOption = async (siteId)=>{
     try{
       let  res = await API.get(`/api/ebay_get_default_category_tree_id`);
       const {data } = await API.get(`/api/ebay_category_tree?category_tree_id=${res.data.data.categoryTreeId}`);
-      return data.data
+      // console.log(recursiveCategory(data.data.rootCategoryNode.childCategoryTreeNodes));
+      return recursiveCategory(data.data.rootCategoryNode.childCategoryTreeNodes)
     }catch (error){
       showError(error.message)
     }
