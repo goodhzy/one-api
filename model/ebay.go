@@ -1,6 +1,9 @@
 package model
 
-import "gorm.io/gorm"
+import (
+	"encoding/json"
+	"gorm.io/gorm"
+)
 
 type EbayConsentConfig struct {
 	AuthUrl      string   `json:"auth_url"`
@@ -40,18 +43,37 @@ type Ebay struct {
 }
 
 type EbayProduct struct {
-	Id             int64          `json:"id"`
-	UserId         int64          `json:"user_id"`
-	Title          string         `json:"title"`
-	CompositeImage string         `json:"composite_image"`
-	BackOssImage   string         `json:"back_oss_image"`
-	FrontOssImage  string         `json:"front_oss_image"`
-	SelfSku        string         `json:"self_sku"`
-	Status         int            `json:"status"`
-	Sort           int            `json:"sort"`
-	CreatedAt      int64          `json:"created_at"`
-	UpdatedAt      int64          `json:"updated_at"`
-	DeletedAt      gorm.DeletedAt `json:"deleted_at,omitempty"` // 删除时间
+	Id                   int64           `json:"id"`
+	UserId               int64           `json:"user_id"`
+	Title                string          `json:"title"`
+	CompositeImage       string          `json:"composite_image"`
+	BackOssImage         string          `json:"back_oss_image"`
+	FrontOssImage        string          `json:"front_oss_image"`
+	SelfSku              string          `json:"self_sku"`
+	Status               int             `json:"status"`
+	Sort                 int             `json:"sort"`
+	Availability         json.RawMessage `json:"availability,omitempty"`
+	Condition            string          `json:"condition,omitempty"`
+	ConditionDescription string          `json:"conditionDescription,omitempty" gorm:"column:condition_description"`
+	ConditionDescriptors json.RawMessage `json:"conditionDescriptors,omitempty"`
+	Locale               string          `json:"locale" required:"true"`
+	PackageWeightAndSize json.RawMessage `json:"packageWeightAndSize,omitempty"`
+	Product              json.RawMessage `json:"product"`
+	SKU                  string          `json:"sku" required:"true"`
+	AvailableQuantity    int             `json:"availableQuantity,omitempty"`
+	CategoryId           string          `json:"categoryId,omitempty"`
+	Format               string          `json:"format" validate:"required" `
+	ListingDuration      string          `json:"listingDuration,omitempty"`
+	ListingPolicies      json.RawMessage `json:"listingPolicies,omitempty"`
+	MarketplaceId        string          `json:"marketplaceId" validate:"required"`
+	MerchantLocationKey  string          `json:"merchantLocationKey,omitempty"`
+	PricingSummary       json.RawMessage `json:"pricingSummary,omitempty"`
+	SecondaryCategoryId  string          `json:"secondaryCategoryId,omitempty"`
+	StoreCategoryNames   json.RawMessage `json:"storeCategoryNames,omitempty"`
+	OfferId              string          `json:"offerId,omitempty"`
+	CreatedAt            int64           `json:"created_at"`
+	UpdatedAt            int64           `json:"updated_at"`
+	DeletedAt            gorm.DeletedAt  `json:"deleted_at,omitempty"` // 删除时间
 
 }
 
@@ -62,16 +84,16 @@ type Availability struct {
 
 // PickupAtLocationAvailability struct to represent pickup availability details
 type PickupAtLocationAvailability struct {
-	AvailabilityType    string          `json:"availabilityType"`
-	FulfillmentTime     FulfillmentTime `json:"fulfillmentTime"`
-	MerchantLocationKey string          `json:"merchantLocationKey"`
-	Quantity            int             `json:"quantity"`
+	AvailabilityType    string           `json:"availabilityType,omitempty"`
+	FulfillmentTime     *FulfillmentTime `json:"fulfillmentTime,omitempty" gorm:"type:json"`
+	MerchantLocationKey string           `json:"merchantLocationKey,omitempty"`
+	Quantity            int              `json:"quantity,omitempty"`
 }
 
 // FulfillmentTime struct to represent fulfillment time details
 type FulfillmentTime struct {
-	Unit  string `json:"unit"`
-	Value int    `json:"value"`
+	Unit  string `json:"unit,omitempty"`
+	Value int    `json:"value,omitempty"`
 }
 
 // ShipToLocationAvailability struct to represent ship-to-location availability details
@@ -118,18 +140,18 @@ type Weight struct {
 
 // Product struct to represent product details
 type Product struct {
-	Aspects     string   `json:"aspects,omitempty"`
-	Brand       string   `json:"brand,omitempty"`
-	Description string   `json:"description,omitempty"`
-	EAN         []string `json:"ean,omitempty"`
-	EPID        string   `json:"epid,omitempty"`
-	ImageUrls   []string `json:"imageUrls,omitempty"`
-	ISBN        []string `json:"isbn,omitempty"`
-	MPN         string   `json:"mpn,omitempty"`
-	Subtitle    string   `json:"subtitle,omitempty"`
-	Title       string   `json:"title,omitempty"`
-	UPC         []string `json:"upc,omitempty"`
-	VideoIds    []string `json:"videoIds,omitempty"`
+	Aspects     map[string][]string `json:"aspects,omitempty"`
+	Brand       string              `json:"brand,omitempty"`
+	Description string              `json:"description,omitempty"`
+	EAN         []string            `json:"ean,omitempty"`
+	EPID        string              `json:"epid,omitempty"`
+	ImageUrls   []string            `json:"imageUrls,omitempty"`
+	ISBN        []string            `json:"isbn,omitempty"`
+	MPN         string              `json:"mpn,omitempty"`
+	Subtitle    string              `json:"subtitle,omitempty"`
+	Title       string              `json:"title,omitempty"`
+	UPC         []string            `json:"upc,omitempty"`
+	VideoIds    []string            `json:"videoIds,omitempty"`
 }
 
 // InventoryItem struct to represent an inventory item
@@ -186,12 +208,17 @@ type EbayResponse struct {
 	Errors []ErrorDetail `json:"errors,omitempty"`
 }
 
+type EbayCreateOfferResponse struct {
+	Errors  []ErrorDetail `json:"errors,omitempty"`
+	OfferId string        `json:"offerId,omitempty"`
+}
+
 // BulkCreateOrReplaceInventoryItemResponse struct to represent the full response
 type BulkCreateOrReplaceInventoryItemResponse struct {
 	Responses []EbayResponse `json:"responses"`
 }
 
-// offer model start
+// CurrencyValue offer model start
 type CurrencyValue struct {
 	Currency string `json:"currency,omitempty"`
 	Value    string `json:"value,omitempty"`
@@ -398,7 +425,19 @@ func DeleteEbayAccountById(id int64, userId int64) (err error) {
 
 func (ebayProduct *EbayProduct) InsertBatch(items []EbayProduct) error {
 	var err error
-	err = DB.Create(&items).Error
+	err = DB.Model(&ebayProduct).Create(&items).Error
+	return err
+}
+
+func (ebayProduct *EbayProduct) Insert() error {
+	var err error
+	err = DB.Model(&EbayProduct{}).Create(&ebayProduct).Error
+	return err
+}
+
+func (ebayProduct *EbayProduct) Update(userId int64) error {
+	var err error
+	err = DB.Model(ebayProduct).Where("user_id = ?", userId).Updates(ebayProduct).Error
 	return err
 }
 

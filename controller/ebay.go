@@ -15,17 +15,20 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"reflect"
 	"strconv"
 	"strings"
 )
 
-// status枚举 1未刊登 2:已刊登
+// status枚举 1未刊登 2. 创建库存 3. 创建报价 4. 发布报价
 const (
-	NotListed = 1
-	Listed    = 2
+	NotListed              = 1
+	CreateInventorySuccess = 2
+	CreateOfferSuccess     = 3
+	PublishOfferSuccess    = 4
 )
 
-const HeaderEbayId = "ebay_id"
+const HeaderEbayId = "Ebay-id"
 const defaultMarketplaceId = "EBAY_US"
 
 func doEbayRequest(c *gin.Context, method string, path string, body []byte, queryParams map[string]string, accessToken string) (*http.Response, error) {
@@ -62,7 +65,10 @@ func doEbayRequest(c *gin.Context, method string, path string, body []byte, quer
 		req, err = http.NewRequest("GET", reqUrl, nil)
 	case "POST":
 		req, err = http.NewRequest("POST", reqUrl, bytes.NewBuffer(body))
-		req.Header.Set("Content-Type", "application/json") // 设置请求体的Content-Type，可以根据需要调整
+		req.Header.Set("Content-Type", "application/json")
+	case "PUT":
+		req, err = http.NewRequest("PUT", reqUrl, bytes.NewBuffer(body))
+		req.Header.Set("Content-Type", "application/json")
 	default:
 		return nil, fmt.Errorf("unsupported method: %s", method)
 	}
@@ -74,22 +80,23 @@ func doEbayRequest(c *gin.Context, method string, path string, body []byte, quer
 	if accessToken == "" {
 		ebay, err := model.GetEbayBindInfoByUserIdAndEbayUserId(int64(c.GetInt(ctxkey.Id)), int64(ebayId))
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("ebay账号未绑定")
 		}
 		cAccessToken = ebay.AccessToken
 	}
 	req.Header.Set("Content-Language", "en-US")
 	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", cAccessToken))
 	var client *http.Client
-	//
-	//uri := url.URL{}
-	//uriProxy, _ := uri.Parse("http://127.0.0.1:8888")
-	//client = &http.Client{
-	//	Transport: &http.Transport{
-	//		Proxy: http.ProxyURL(uriProxy),
-	//	},
-	//}
-	client = &http.Client{}
+	// start
+	uri := url.URL{}
+	uriProxy, _ := uri.Parse("http://127.0.0.1:8888")
+	client = &http.Client{
+		Transport: &http.Transport{
+			Proxy: http.ProxyURL(uriProxy),
+		},
+	}
+	// end
+	//client = &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
 		return nil, err
@@ -118,7 +125,7 @@ func doEbayRequest(c *gin.Context, method string, path string, body []byte, quer
 				return nil, err
 			}
 			if respBody.Errors != nil && len(respBody.Errors) > 0 {
-				return nil, fmt.Errorf("ebay request error: %s", respBody.Errors[0].Message)
+				return nil, fmt.Errorf("ebay request error: message %s; longMessage : %s", respBody.Errors[0].Message, respBody.Errors[0].LongMessage)
 			}
 			return nil, fmt.Errorf("ebay request error: %s", resp.Status)
 		}
@@ -136,8 +143,23 @@ func handleRespBody[T any](c *gin.Context, resp *http.Response, respBody *T) err
 	if err != nil {
 		return err
 	}
+	if resp.StatusCode == http.StatusNoContent && (body == nil || len(body) == 0) {
+		return nil
+	}
 	if err := json.Unmarshal(body, &respBody); err != nil {
 		return err
+	}
+	// 使用反射检查 respBody 是否包含 errors 字段
+	respBodyValue := reflect.ValueOf(respBody).Elem()
+	errorsField := respBodyValue.FieldByName("Errors")
+	if errorsField.IsValid() && errorsField.Kind() == reflect.Slice && errorsField.Len() > 0 {
+		firstError := errorsField.Index(0).Interface()
+		firstErrorValue := reflect.ValueOf(firstError)
+		messageField := firstErrorValue.FieldByName("Message")
+		longMessageField := firstErrorValue.FieldByName("LongMessage")
+		if messageField.IsValid() && longMessageField.IsValid() {
+			return fmt.Errorf("ebay request error: message %s; longMessage: %s", messageField.String(), longMessageField.String())
+		}
 	}
 	return nil
 }
@@ -400,7 +422,7 @@ func GetEbayGoodsDetail(c *gin.Context) {
 
 }
 
-func GetEbayDeleteGoods(c *gin.Context) {
+func DeleteEbayGoods(c *gin.Context) {
 	id, err := strconv.Atoi(c.Query("id"))
 	if err != nil {
 		c.JSON(http.StatusOK, gin.H{
@@ -420,6 +442,146 @@ func GetEbayDeleteGoods(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"success": true,
 		"message": "delete ebay goods success",
+	})
+	return
+}
+
+func saveEbayGoods(c *gin.Context) (model.EbayProduct, error) {
+	var ebayProduct model.EbayProduct
+	if err := c.ShouldBindJSON(&ebayProduct); err != nil {
+		return ebayProduct, err
+	}
+	userId := int64(c.GetInt(ctxkey.Id))
+	if ebayProduct.Id > 0 {
+		ebayProduct.UpdatedAt = helper.GetTimestamp()
+		err := ebayProduct.Update(userId)
+		if err != nil {
+			return ebayProduct, err
+		}
+	} else {
+		ebayProduct.CreatedAt = helper.GetTimestamp()
+		ebayProduct.UserId = userId
+		err := ebayProduct.Insert()
+		if err != nil {
+			return ebayProduct, err
+		}
+	}
+	return ebayProduct, nil
+
+}
+
+func SaveEbayGoods(c *gin.Context) {
+	_, err := saveEbayGoods(c)
+	if err != nil {
+		c.JSON(http.StatusOK, gin.H{
+			"success": false,
+			"message": err.Error(),
+		})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"message": "save ebay goods success",
+	})
+	return
+}
+
+// PublishEbayGoods 刊登商品
+// https://developer.ebay.com/api-docs/sell/inventory/resources/inventory_item/methods/publishOffer
+
+func PublishEbayGoods(c *gin.Context) {
+	ebayProduct, err := saveEbayGoods(c)
+	if err != nil {
+		c.JSON(http.StatusOK, gin.H{
+			"success": false,
+			"message": err.Error(),
+		})
+		return
+	}
+	var path = "/sell/inventory/v1/inventory_item/" + ebayProduct.SKU
+	payloadBytes, err := json.Marshal(map[string]interface{}{
+		//"availability":         ebayProduct.Availability,
+		"condition":            ebayProduct.Condition,
+		"conditionDescription": ebayProduct.ConditionDescription,
+		"conditionDescriptors": ebayProduct.ConditionDescriptors,
+		//"packageWeightAndSize": ebayProduct.PackageWeightAndSize,
+		"product": ebayProduct.Product,
+		"locale":  ebayProduct.Locale,
+	})
+	resp, err := doEbayRequest(c, "PUT", path, payloadBytes, nil, "")
+	if err != nil {
+		c.JSON(http.StatusOK, gin.H{
+			"success": false,
+			"message": err.Error(),
+		})
+		return
+	}
+
+	var respBody model.EbayResponse
+	err = handleRespBody(c, resp, &respBody)
+	if err != nil {
+		c.JSON(http.StatusOK, gin.H{
+			"success": false,
+			"message": err.Error(),
+		})
+		return
+	}
+	// 更改状态
+	ebayProduct.Status = CreateInventorySuccess
+	err = ebayProduct.Update(int64(c.GetInt(ctxkey.Id)))
+	if err != nil {
+		c.JSON(http.StatusOK, gin.H{
+			"success": false,
+			"message": err.Error(),
+		})
+	}
+
+	var createOfferPath = "/sell/inventory/v1/offer"
+	var createOfferPayload []byte
+	createOfferPayload, err = json.Marshal(map[string]interface{}{
+		"sku":                 ebayProduct.SKU,
+		"availableQuantity":   ebayProduct.AvailableQuantity,
+		"format":              "FIXED_PRICE",
+		"categoryId":          ebayProduct.CategoryId,
+		"secondaryCategoryId": ebayProduct.SecondaryCategoryId,
+		"listingDuration":     ebayProduct.ListingDuration,
+		"listingPolicies":     ebayProduct.ListingPolicies,
+		"pricingSummary":      ebayProduct.PricingSummary,
+		"storeCategoryNames":  ebayProduct.StoreCategoryNames,
+		"marketplaceId":       ebayProduct.MarketplaceId,
+	})
+	if err != nil {
+		c.JSON(http.StatusOK, gin.H{
+			"success": false,
+			"message": err.Error(),
+		})
+	}
+
+	resp, err = doEbayRequest(c, "POST", createOfferPath, createOfferPayload, nil, "")
+	if err != nil {
+		c.JSON(http.StatusOK, gin.H{
+			"success": false,
+			"message": err.Error(),
+		})
+		return
+	}
+	var createOfferRespBody model.EbayCreateOfferResponse
+	err = handleRespBody(c, resp, &createOfferRespBody)
+	if err != nil {
+		c.JSON(http.StatusOK, gin.H{
+			"success": false,
+			"message": err.Error(),
+		})
+		return
+	}
+	var offerId = createOfferRespBody.OfferId
+	// 更改状态
+	ebayProduct.Status = CreateOfferSuccess
+	ebayProduct.OfferId = offerId
+	err = ebayProduct.Update(int64(c.GetInt(ctxkey.Id)))
+	c.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"message": "publish ebay goods success",
 	})
 	return
 }
@@ -1029,4 +1191,24 @@ func GetPaymentPolicies(c *gin.Context) {
 		"data":    respBody,
 	})
 	return
+}
+
+func GetListingDuration(c *gin.Context) {
+	// 创建带label, value的数组
+	durations := []map[string]string{
+		{"label": "1天", "value": "Days_1"},
+		{"label": "3天", "value": "Days_3"},
+		{"label": "5天", "value": "Days_5"},
+		{"label": "7天", "value": "Days_7"},
+		{"label": "10天", "value": "Days_10"},
+		{"label": "21天", "value": "Days_21"},
+		{"label": "30天", "value": "Days_30"},
+		{"label": "GTC", "value": "GTC"},
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"message": "get listing duration success",
+		"data":    durations,
+	})
 }
