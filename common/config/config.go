@@ -151,10 +151,15 @@ var UserContentRequestTimeout = env.Int("USER_CONTENT_REQUEST_TIMEOUT", 30)
 
 var BucketName = "ball-star-card"
 
-var EbayOauthUrl = "https://auth.sandbox.ebay.com"
+// var EbayOauthUrl = "https://auth.sandbox.ebay.com"
+var EbayOauthUrl = "https://auth.ebay.com"
 
-var EbayApiUrl = "https://api.sandbox.ebay.com"
+// var EbayApiUrl = "https://api.sandbox.ebay.com"
+var EbayApiUrl = "https://api.ebay.com"
 
-//var EbayApiUrl = "https://api.ebay.com"
+// var EbayRedirectUri = "--sjkjspor-SBX-7-geklbwywy" // test
+var EbayRedirectUri = "--sjkjspor-PRD-3-xdaeka" // prd
 
-var EbayRedirectUri = "--sjkjspor-SBX-7-geklbwywy"
+//var GetEbayUserUri = "https://apiz.sandbox.ebay.com"
+
+var GetEbayUserUri = "https://apiz.ebay.com"
