@@ -274,3 +274,18 @@ func PostConsumeTokenQuota(tokenId int, quota int64) (err error) {
 	}
 	return nil
 }
+
+func GetDefaultTokens(userId int) (*Token, error) {
+	var tokens []*Token
+	var err error
+	query := DB.Where("user_id = ? and status = ?", userId, TokenStatusEnabled)
+	err = query.Find(&tokens).Error
+	if err != nil {
+		return nil, err
+	}
+	if len(tokens) == 0 {
+		return nil, errors.New("未找到可用令牌")
+	}
+	// 获取第一个
+	return tokens[0], nil
+}

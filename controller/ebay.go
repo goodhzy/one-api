@@ -1232,3 +1232,39 @@ func GetListingDuration(c *gin.Context) {
 		"data":    durations,
 	})
 }
+
+// GetInventoryLocations 获取库存位置
+// https://developer.ebay.com/api-docs/sell/inventory/resources/location/methods/getInventoryLocations
+func GetInventoryLocations(c *gin.Context) {
+	p, _ := strconv.Atoi(c.Query("p"))
+	if p < 0 {
+		p = 0
+	}
+	queryParams := map[string]string{}
+	queryParams["limit"] = strconv.Itoa(config.ItemsPerPage)
+	queryParams["offset"] = strconv.Itoa(p * config.ItemsPerPage)
+	urlStr := "/sell/inventory/v1/location"
+	resp, err := doEbayRequest(c, "GET", urlStr, nil, queryParams, "")
+	if err != nil {
+		c.JSON(http.StatusOK, gin.H{
+			"success": false,
+			"message": err.Error(),
+		})
+		return
+	}
+	var respBody any
+	err = handleRespBody(c, resp, &respBody)
+	if err != nil {
+		c.JSON(http.StatusOK, gin.H{
+			"success": false,
+			"message": err.Error(),
+		})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"message": "get inventory locations success",
+		"data":    respBody,
+	})
+	return
+}

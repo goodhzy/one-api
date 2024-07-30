@@ -255,3 +255,22 @@ func UpdateToken(c *gin.Context) {
 	})
 	return
 }
+
+func GetDefaultToken(c *gin.Context) {
+	userId := c.GetInt(ctxkey.Id)
+	token, err := model.GetDefaultTokens(userId)
+	if err != nil {
+		c.JSON(http.StatusOK, gin.H{
+			"success": false,
+			"message": err.Error(),
+		})
+		return
+
+	}
+	c.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"message": "",
+		"data":    token,
+	})
+	return
+}

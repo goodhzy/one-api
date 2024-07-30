@@ -61,6 +61,7 @@ func SetApiRouter(router *gin.Engine) {
 		apiRouter.GET("/ebay_get_return_policy", middleware.UserAuth(), controller.GetEbayReturnPolicies)
 		apiRouter.GET("/ebay_get_payment_policy", middleware.UserAuth(), controller.GetPaymentPolicies)
 		apiRouter.GET("/ebay_get_listing_duration", middleware.UserAuth(), controller.GetListingDuration)
+		apiRouter.GET("/ebay_get_inventory_location", middleware.UserAuth(), controller.GetInventoryLocations)
 
 		userRoute := apiRouter.Group("/user")
 		{
@@ -125,6 +126,7 @@ func SetApiRouter(router *gin.Engine) {
 			tokenRoute.POST("/", controller.AddToken)
 			tokenRoute.PUT("/", controller.UpdateToken)
 			tokenRoute.DELETE("/:id", controller.DeleteToken)
+			tokenRoute.GET("/default", controller.GetDefaultToken)
 		}
 
 		bannerRoute := apiRouter.Group("/banner")
