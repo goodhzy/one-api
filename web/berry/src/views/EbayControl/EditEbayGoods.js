@@ -10,6 +10,7 @@ import {
   FormLabel, RadioGroup, FormControlLabel, Radio, Stack, OutlinedInput,
   Box,Button
 } from '@mui/material';
+import {LoadingButton } from '@mui/lab'
 import {  IconPlus,IconLoader} from '@tabler/icons-react';
 import { showSuccess, showError,showInfo, verifyJSON } from "utils/common";
 import { useNavigate } from 'react-router';
@@ -63,7 +64,8 @@ export default function EditEbayGoods(){
     setAccountList(accounts);
     if(inputs.ebayId === '') {
       if(accounts[0]){
-        setInputs({ ...inputs, ebayId: accounts[0].id })
+        // setInputs({ ...inputs, ebayId: accounts[0].id })
+        setInputs(prevInputs => ({ ...prevInputs, ebayId: accounts[0].id }))
         setEbayAccountId(accounts[0].id)
         setCategoryLoading(true);
         setCategoryOptions(await fetchCategoryOption());
@@ -88,11 +90,21 @@ export default function EditEbayGoods(){
     reader.readAsDataURL(file);
   }
 
-  const identify = async ()=>{
+  const identify = async (setFieldValue)=>{
     setSynthesisButtonLoading(true)
     try {
       if(imageFileList && imageFileList.length===0){
-        showError('请先上传主图')
+        showError('请先上传两张主图')
+        return
+      }
+
+      if(!imageFileList[0]){
+        showError('请上传第一张图')
+        return
+      }
+
+      if(!imageFileList[1]){
+        showError('请上传第二张图')
         return
       }
       // compositeDiagrams
@@ -104,7 +116,9 @@ export default function EditEbayGoods(){
         ...MODEL.STARCARD.modelConfig,
         messages: MODEL.STARCARD.context
       })
-      console.log(data);
+      console.log(inputs)
+      setFieldValue('title', data.choices[0].message.content);
+      console.log(inputs)
     }catch (err){
       console.log(err);
     }finally {
@@ -124,7 +138,7 @@ export default function EditEbayGoods(){
   return(
     <>
       <Formik initialValues={inputs} enableReinitialize validationSchema={validationSchema} onSubmit={submit}>
-        {({errors, handleBlur, handleChange, handleSubmit, touched, values, isSubmitting })=>(
+        {({errors, handleBlur, handleChange, handleSubmit, touched, values, isSubmitting,setFieldValue })=>(
           <form noValidate onSubmit={handleSubmit}>
             <Stack spacing={3}>
               <SubCard title='基础信息'>
@@ -173,7 +187,7 @@ export default function EditEbayGoods(){
                         <InputLabel htmlFor="channel-title-label">商品标题</InputLabel>
                         <OutlinedInput
                           id="channel-title-label"
-                          style={{width:'500px'}}
+                          style={{width:'650px'}}
                           label="商品标题"
                           type="text"
                           value={values.title}
@@ -184,14 +198,14 @@ export default function EditEbayGoods(){
                           aria-describedby="helper-text-channel-title-label"
                         />
                       </Stack>
-                      <Button variant="outlined"
-                              startIcon={<IconLoader/>}
-                              onClick={identify}
-                              loading={synthesisButtonLoading}
-                              loadingPosition="识别中..."
+                      <LoadingButton
+                          loading={synthesisButtonLoading}
+                          variant="outlined"
+                          startIcon={<IconLoader/>}
+                          onClick={()=>identify(setFieldValue)}
                       >
                         识别
-                      </Button>
+                      </LoadingButton>
                     </Stack>
                     {touched.title && errors.title && (
                       <FormHelperText error id="helper-tex-channel-title-label">
@@ -307,8 +321,6 @@ export default function EditEbayGoods(){
                       })}
                     </RadioGroup>
                   </FormControl>
-
-
 
                   <FormControl style={{ minWidth: 300 }} error={Boolean(touched.categoryId && errors.categoryId)} sx={{ ...theme.typography.otherInput }}>
                     <FormLabel htmlFor="channel-category-label" style={{marginBottom:'10px'}}>刊登类目</FormLabel>
