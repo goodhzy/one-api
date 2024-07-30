@@ -80,6 +80,11 @@ export async function getOAuthState() {
   }
 }
 
+export async function getOpenaiMsg (data){
+  const [res] = await Promise.all([API.post('/chat/v1/chat/completions', data)])
+  return res
+}
+
 export async function onGitHubOAuthClicked(github_client_id, openInNewTab = false) {
   const state = await getOAuthState();
   if (!state) return;

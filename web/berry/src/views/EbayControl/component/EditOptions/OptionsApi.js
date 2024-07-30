@@ -62,8 +62,17 @@ const OptionsApi = ()=>{
     }
   }
 
+  const fetchPromp = async ()=>{
+    try {
+      let res = await API.get('/api/prompt')
+      return res.data.data
+    }catch (error){
+      showError(error.message)
+    }
+  }
 
-  return { fetchSitesOption, fetchTypeOption,fetchCategoryOption,fetchEbayAccountOption };
+
+  return { fetchSitesOption, fetchTypeOption,fetchCategoryOption,fetchEbayAccountOption,fetchPromp };
 }
 
 export default OptionsApi

@@ -39,6 +39,7 @@ export const setEbayAccountId = (id)=>{
 
 const requestConf = (config) => {
   config.headers['Ebay-id'] = ebayId
+  config.headers['Authorization'] = 'Bearer sk-2yYQTVtkgvYmHYnx6028D902E785494487B86403B2D843D0'
   return config
 }
 

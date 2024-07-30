@@ -2,12 +2,15 @@ import { useState, useEffect } from "react";
 import SubCard from "ui-component/cards/SubCard";
 import Cascader from 'rsuite/Cascader'
 import  Uploader  from 'rsuite/Uploader'
+import handleIdentify from 'utils/image-processing'
+import {getOpenaiMsg} from 'utils/common'
+import {MODEL} from 'utils/preset'
 import {
   Select, MenuItem, FormControl, InputLabel, FormHelperText,
   FormLabel, RadioGroup, FormControlLabel, Radio, Stack, OutlinedInput,
-  Box
+  Box,Button
 } from '@mui/material';
-import {  IconPlus} from '@tabler/icons-react';
+import {  IconPlus,IconLoader} from '@tabler/icons-react';
 import { showSuccess, showError,showInfo, verifyJSON } from "utils/common";
 import { useNavigate } from 'react-router';
 import { ImageUrl, setEbayAccountId } from 'utils/api';
@@ -15,7 +18,6 @@ import * as Yup from 'yup';
 import { Formik } from 'formik';
 import { useTheme } from '@mui/material/styles';
 import OptionsApi from './component/EditOptions/OptionsApi';
-import {  PhotoView,PhotoProvider } from 'react-photo-view';
 
 const validationSchema = Yup.object().shape({
   siteId: Yup.string().required('站点不能为空'),
@@ -40,7 +42,7 @@ const originInputs = {
 export default function EditEbayGoods(){
   const theme = useTheme();
   const navigate = useNavigate();
-  const {fetchSitesOption,fetchTypeOption,fetchCategoryOption,fetchEbayAccountOption} =OptionsApi()
+  const {fetchSitesOption,fetchTypeOption,fetchCategoryOption,fetchEbayAccountOption,fetchPromp} =OptionsApi()
   const [inputs, setInputs] = useState(originInputs);
 
   const [sitesOptions, setSitesOptions] = useState([]);
@@ -49,10 +51,14 @@ export default function EditEbayGoods(){
   const [categoryOptions, setCategoryOptions] = useState([]);
   const [accountList, setAccountList] = useState([]);
   const [imageFileList,setImageFileList] = useState([])
+  const [prompt,setPrompt] = useState('');
+
+  const [synthesisButtonLoading,setSynthesisButtonLoading] = useState(false)
 
   const fetchOptions = async ()=>{
     setSitesOptions(await fetchSitesOption());
     setTypeOptions(await fetchTypeOption());
+    setPrompt(await fetchPromp())
     let accounts =  await fetchEbayAccountOption()
     setAccountList(accounts);
     if(inputs.ebayId === '') {
@@ -71,12 +77,39 @@ export default function EditEbayGoods(){
     }
   }
 
-  const previewFile = (file,callback) =>{
+  const previewFile = (file,index) =>{
+    let newImgList = [...imageFileList];
     const reader = new FileReader();
     reader.onloadend = () => {
-      callback(reader.result)
+      newImgList[index] = reader.result
+      console.log(newImgList);
+      setImageFileList(newImgList)
     }
     reader.readAsDataURL(file);
+  }
+
+  const identify = async ()=>{
+    setSynthesisButtonLoading(true)
+    try {
+      if(imageFileList && imageFileList.length===0){
+        showError('请先上传主图')
+        return
+      }
+      // compositeDiagrams
+      const {url} =  await handleIdentify(imageFileList)
+      console.log(url);
+      MODEL.STARCARD.context[0].content[1].image_url.url = url
+      MODEL.STARCARD.context[0].content[0].text = prompt
+      const {data} = await getOpenaiMsg({
+        ...MODEL.STARCARD.modelConfig,
+        messages: MODEL.STARCARD.context
+      })
+      console.log(data);
+    }catch (err){
+      console.log(err);
+    }finally {
+      setSynthesisButtonLoading(false)
+    }
   }
 
 
@@ -134,57 +167,73 @@ export default function EditEbayGoods(){
                     )}
                   </FormControl>
                   {/*标题*/}
-                  <FormControl style={{ minWidth: 500 }} error={Boolean(touched.title && errors.title)} sx={{ ...theme.typography.otherInput }}>
-                    <InputLabel htmlFor="channel-title-label">商品标题</InputLabel>
-                    <OutlinedInput
-                      id="channel-title-label"
-                      label="商品标题"
-                      type="text"
-                      value={values.title}
-                      name="title"
-                      onBlur={handleBlur}
-                      onChange={handleChange}
-                      inputProps={{ autoComplete: 'title' }}
-                      aria-describedby="helper-text-channel-title-label"
-                    />
+                  <FormControl  error={Boolean(touched.title && errors.title)} sx={{ ...theme.typography.otherInput }}>
+                    <Stack direction='row' spacing={5} alignItems="center">
+                      <Stack>
+                        <InputLabel htmlFor="channel-title-label">商品标题</InputLabel>
+                        <OutlinedInput
+                          id="channel-title-label"
+                          style={{width:'500px'}}
+                          label="商品标题"
+                          type="text"
+                          value={values.title}
+                          name="title"
+                          onBlur={handleBlur}
+                          onChange={handleChange}
+                          inputProps={{ autoComplete: 'title' }}
+                          aria-describedby="helper-text-channel-title-label"
+                        />
+                      </Stack>
+                      <Button variant="outlined"
+                              startIcon={<IconLoader/>}
+                              onClick={identify}
+                              loading={synthesisButtonLoading}
+                              loadingPosition="识别中..."
+                      >
+                        识别
+                      </Button>
+                    </Stack>
                     {touched.title && errors.title && (
                       <FormHelperText error id="helper-tex-channel-title-label">
                         {errors.title}
                       </FormHelperText>
                     )}
                   </FormControl>
-
                   {/*主图*/}
                   <FormControl style={{ minWidth: 500 }} error={Boolean(touched.image && errors.image)} sx={{ ...theme.typography.otherInput }}>
                     <FormLabel htmlFor="channel-image-label">主图</FormLabel>
+
                     <Stack direction={{ xs: 'column', md:'row' }}  spacing={2}>
-                      <Uploader listType='picture' action='' autoUpload={false}
+                      <Uploader listType='picture' action=''
                                 fileListVisible={false}
                                 onUpload={file => {
-                                  previewFile(file.blobFile, value => {
-                                    setImageFileList([value]);
-                                  });
+                                  previewFile(file.blobFile, 0)
                                 }}
                       >
-                        <Box>
+                        <Box style={{width:'200px',height:'300px'}}>
                             {imageFileList[0] ?(
-                            <PhotoProvider maskOpacity={0.2} >
-                              <PhotoView key="1" src={imageFileList[0]}>
-                                <img alt='第一张' style={{ width: '200px', height: '200px' }}
+                                <img alt='第一张' style={{ width: '200px', height: '300px' }}
                                      src={imageFileList[0]} />
-                              </PhotoView>
-                            </PhotoProvider>
-                            ):(<Box style={{width:'200px',height:'200px'}}>
+                            ):(
                               <IconPlus></IconPlus>
-                            </Box>)
-                          }
+                            )}
                         </Box>
 
                       </Uploader>
 
-                      <Uploader listType='picture' action='' autoUpload={false}>
-                        <Box style={{width:'200px',height:'200px'}}>
-                          <IconPlus></IconPlus>
+                      <Uploader listType='picture' action=''
+                                fileListVisible={false}
+                                onUpload={file => {
+                                  previewFile(file.blobFile, 1)
+                                }}
+                      >
+                        <Box style={{width:'200px',height:'300px'}}>
+                          {imageFileList[1] ?(
+                            <img alt='第二张' style={{ width: '200px', height: '300px' }}
+                                 src={imageFileList[1]} />
+                          ):(
+                            <IconPlus></IconPlus>
+                          )}
                         </Box>
                       </Uploader>
                     </Stack>
