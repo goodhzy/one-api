@@ -12,6 +12,16 @@ import { Autoplay,  Navigation } from 'swiper/modules';
 import 'swiper/css';
 
 const Dashboard = () => {
+  const originalKeyword = {
+    p: 0,
+    username: '',
+    token_name: '',
+    model_name: '',
+    start_timestamp: 0,
+    end_timestamp: new Date().getTime() / 1000 + 3600,
+    type: 2,
+    channel: ''
+  };
   const [isLoading, setLoading] = useState(true);
   const [statisticalData, setStatisticalData] = useState([]);
   const [requestChart, setRequestChart] = useState(null);
@@ -29,13 +39,22 @@ const Dashboard = () => {
         setRequestChart(getLineCardOption(lineData, 'RequestCount'));
         setQuotaChart(getLineCardOption(lineData, 'Quota'));
         setTokenChart(getLineCardOption(lineData, 'PromptTokens'));
-        setStatisticalData(getBarDataGroup(data));
       }
     } else {
       showError(message);
     }
     setLoading(false);
   };
+
+  const getIdentifyLog = async ()=>{
+    const res = await API.get('/api/log/self/',{params:originalKeyword});
+    const {success, message, data} = res.data
+    if (success){
+      setStatisticalData(data)
+    }else {
+      showError(message)
+    }
+  }
 
   const getBanner = async ()=>{
     const res = await API.get('/api/banner/list')
@@ -61,6 +80,7 @@ const Dashboard = () => {
     userDashboard();
     loadUser();
     getBanner().then()
+    getIdentifyLog().then()
   }, []);
 
   return (
@@ -81,7 +101,7 @@ const Dashboard = () => {
           <Grid item lg={4} xs={12}>
             <StatisticalLineChartCard
               isLoading={isLoading}
-              title="今日请求量"
+              title="今日生成数量"
               chartData={requestChart?.chartData}
               todayValue={requestChart?.todayValue}
             />
@@ -125,7 +145,7 @@ const Dashboard = () => {
                   <Typography variant="h3"> {users?.used_quota ? '$' + calculateQuota(users.used_quota) : '未知'}</Typography>
                 </Grid>
                 <Grid item xs={4}>
-                  <Typography variant="h4">调用次数：</Typography>
+                  <Typography variant="h4">累计使用：</Typography>
                 </Grid>
                 <Grid item xs={8}>
                   <Typography variant="h3"> {users?.request_count || '未知'}</Typography>

@@ -1,7 +1,7 @@
 import PropTypes from 'prop-types';
 
 // material-ui
-import { Grid, Typography } from '@mui/material';
+import { Grid, Typography,TableContainer,Table,TableBody,TableCell, TableHead, TableRow } from '@mui/material';
 
 // third-party
 import Chart from 'react-apexcharts';
@@ -11,8 +11,12 @@ import SkeletonTotalGrowthBarChart from 'ui-component/cards/Skeleton/TotalGrowth
 import MainCard from 'ui-component/cards/MainCard';
 import { gridSpacing } from 'store/constant';
 import { Box } from '@mui/material';
-
+import { timestamp2string } from 'utils/common';
+import {  PhotoView,PhotoProvider } from 'react-photo-view';
+import { ImageUrl } from 'utils/api';
 // ==============================|| DASHBOARD DEFAULT - TOTAL GROWTH BAR CHART ||============================== //
+
+
 
 const StatisticalBarChart = ({ isLoading, chartDatas }) => {
   chartData.options.xaxis.categories = chartDatas.xaxis;
@@ -28,27 +32,38 @@ const StatisticalBarChart = ({ isLoading, chartDatas }) => {
             <Grid item xs={12}>
               <Grid container alignItems="center" justifyContent="space-between">
                 <Grid item>
-                  <Typography variant="h3">统计</Typography>
+                  <Typography variant="h3">最近10条识别</Typography>
                 </Grid>
               </Grid>
             </Grid>
             <Grid item xs={12}>
-              {chartData.series ? (
-                <Chart {...chartData} />
-              ) : (
-                <Box
-                  sx={{
-                    minHeight: '490px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center'
-                  }}
-                >
-                  <Typography variant="h3" color={'#697586'}>
-                    暂无数据
-                  </Typography>
-                </Box>
-              )}
+              <TableContainer >
+                <Table >
+                  <TableHead>
+                    <TableRow>
+                      <TableCell>时间</TableCell>
+                      <TableCell>卡片</TableCell>
+                      <TableCell>标题</TableCell>
+                    </TableRow>
+                  </TableHead>
+
+                  <TableBody>
+                    {chartDatas.map((row, index) => (
+                      <TableRow key={index}>
+                        <TableCell>{timestamp2string(row.created_at)}</TableCell>
+                        <TableCell>
+                          {row.oss_image && <PhotoProvider maskOpacity={0.2} >
+                            <PhotoView key='1' src={ImageUrl+row.oss_image}>
+                              <img alt={row.result} style={{width:'180px',height:'120px'}} src={ImageUrl+row.oss_image}/>
+                            </PhotoView>
+                          </PhotoProvider>}
+                        </TableCell>
+                        <TableCell>{row.result}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </TableContainer>
             </Grid>
           </Grid>
         </MainCard>
