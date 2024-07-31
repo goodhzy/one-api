@@ -147,18 +147,18 @@ export default function Profile() {
       showError('ebay配置错误，请刷新页面重试')
       return
     }
-    let url = new URL(ebayConfig.auth_url);
+    let url = ebayConfig.auth_url
     // delete ebayConfig.auth_url;
-    const searchParams = new URLSearchParams(url.search);
-    for (const [key, value] of Object.entries(ebayConfig)) {
-      if (key === 'scope') {
-        searchParams.append(key, value.join(' '));
-      } else {
-        searchParams.append(key, value);
-      }
-    }
-    url.search = searchParams.toString();
-    window.open(url.href, '_blank');
+
+    // "auth_url": "https://auth.ebay.com/oauth2/authorize",
+    //   "client_id": "-sjkjspor-PRD-34d625879-0324db1c",
+    //   "redirect_uri": "--sjkjspor-PRD-3-xdaeka",
+    //   "response_type": "code",
+    //
+
+    url += `?client_id=${ebayConfig.client_id}&redirect_uri=${ebayConfig.redirect_uri}&response_type=${ebayConfig.response_type}&scope=${ebayConfig.scope.join(encodeURIComponent(' '))}`;
+    console.log(url);
+    window.open(url, '_blank');
 
     // let queryString = '';
     // let firstParam = true;

@@ -1,6 +1,50 @@
-import {MODEL} from 'utils/preset';
-import {getOpenaiMsg} from 'utils/common';
+export const compressImage = (url, maxSize) => {
+  return new Promise((resolve, reject) => {
+    fetch(url)
+      .then(response => response.blob())
+      .then(blob => {
+        const reader = new FileReader();
+        reader.onload = (readerEvent) => {
+          const image = new Image();
+          image.onload = () => {
+            let canvas = document.createElement("canvas");
+            let ctx = canvas.getContext("2d");
+            let width = image.width;
+            let height = image.height;
+            let quality = 0.5;
+            let dataUrl;
 
+            do {
+              canvas.width = width;
+              canvas.height = height;
+              ctx?.clearRect(0, 0, canvas.width, canvas.height);
+              ctx?.drawImage(image, 0, 0, width, height);
+              dataUrl = canvas.toDataURL("image/webp", quality);
+              console.log(dataUrl.length);
+              console.log('-----------------------------------------');
+              if (dataUrl.length < maxSize) break;
+
+              if (quality > 0.5) {
+                // Prioritize quality reduction
+                quality -= 0.1;
+              } else {
+                // Then reduce the size
+                width *= 0.9;
+                height *= 0.9;
+              }
+            } while (dataUrl.length > maxSize);
+
+            resolve(dataUrl);
+          };
+          image.onerror = reject;
+          image.src = readerEvent.target.result;
+        };
+        reader.onerror = reject;
+        reader.readAsDataURL(blob);
+      })
+      .catch(reject);
+  });
+};
 
 const getImageInfo = (image)=>{
   return new Promise((resolve, reject) => {
@@ -20,7 +64,7 @@ const getMax = (...arr) => {
   return Math.max(...arr);
 };
 
-const handleIdentify = async (imgList)=>{
+export const handleIdentify = async (imgList)=>{
   const canvas = document.createElement('canvas');
   const ctx = canvas.getContext('2d');
   let scale = 1;
@@ -43,5 +87,3 @@ const handleIdentify = async (imgList)=>{
     }
   }
 
-
-export default handleIdentify

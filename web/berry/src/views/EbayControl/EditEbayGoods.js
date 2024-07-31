@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import SubCard from "ui-component/cards/SubCard";
 import Cascader from 'rsuite/Cascader'
 import  Uploader  from 'rsuite/Uploader'
-import handleIdentify from 'utils/image-processing'
+import { handleIdentify,compressImage } from 'utils/image-processing'
 import {getOpenaiMsg} from 'utils/common'
 import {MODEL} from 'utils/preset'
 import {
@@ -16,7 +16,7 @@ import { showSuccess, showError,showInfo, verifyJSON } from "utils/common";
 import { useNavigate } from 'react-router';
 import { ImageUrl, setEbayAccountId } from 'utils/api';
 import * as Yup from 'yup';
-import { Formik } from 'formik';
+import { Formik,useFormik } from 'formik';
 import { useTheme } from '@mui/material/styles';
 import OptionsApi from './component/EditOptions/OptionsApi';
 
@@ -35,6 +35,7 @@ const originInputs = {
   title:'',  //标题
   childTitle:'' ,//子标题
   image:[],//主图
+  condition:'',//物品状况
 
   display_name: '',
   categories: '',
@@ -43,18 +44,35 @@ const originInputs = {
 export default function EditEbayGoods(){
   const theme = useTheme();
   const navigate = useNavigate();
-  const {fetchSitesOption,fetchTypeOption,fetchCategoryOption,fetchEbayAccountOption,fetchPromp} =OptionsApi()
+  const {fetchSitesOption,fetchTypeOption,fetchCategoryOption,
+    fetchEbayAccountOption,fetchPromp,fetchStoreCategories,
+    fetchConditionOption
+  } =OptionsApi()
   const [inputs, setInputs] = useState(originInputs);
 
   const [sitesOptions, setSitesOptions] = useState([]);
   const [typeOptions, setTypeOptions] = useState([]);
+  const [conditionOpitons,setConditionOptions] = useState([])
+
   const [categoryLoading, setCategoryLoading] = useState(false);
   const [categoryOptions, setCategoryOptions] = useState([]);
+
   const [accountList, setAccountList] = useState([]);
   const [imageFileList,setImageFileList] = useState([])
+
+  const [storeCategories,setStoreCategories] = useState([])
+
   const [prompt,setPrompt] = useState('');
 
   const [synthesisButtonLoading,setSynthesisButtonLoading] = useState(false)
+
+  const formik = useFormik({
+    initialValues: inputs,
+    validationSchema:validationSchema,
+    onSubmit: values => {
+      alert(JSON.stringify(values, null, 2));
+    },
+  });
 
   const fetchOptions = async ()=>{
     setSitesOptions(await fetchSitesOption());
@@ -70,6 +88,8 @@ export default function EditEbayGoods(){
         setCategoryLoading(true);
         setCategoryOptions(await fetchCategoryOption());
         setCategoryLoading(false);
+        setStoreCategories(await fetchStoreCategories())
+
       }else {
         showInfo('请添加先ebay账号')
         // await new Promise((resolve) => setTimeout(resolve, 2000));
@@ -97,12 +117,10 @@ export default function EditEbayGoods(){
         showError('请先上传两张主图')
         return
       }
-
       if(!imageFileList[0]){
         showError('请上传第一张图')
         return
       }
-
       if(!imageFileList[1]){
         showError('请上传第二张图')
         return
@@ -110,11 +128,15 @@ export default function EditEbayGoods(){
       // compositeDiagrams
       const {url} =  await handleIdentify(imageFileList)
       console.log(url);
+      const front_base_64_image = await compressImage(imageFileList[0], 300 * 1028 / 3 * 4)
+      const back_base_64_image = await compressImage(imageFileList[1], 300 * 1028 / 3 * 4)
       MODEL.STARCARD.context[0].content[1].image_url.url = url
       MODEL.STARCARD.context[0].content[0].text = prompt
       const {data} = await getOpenaiMsg({
         ...MODEL.STARCARD.modelConfig,
-        messages: MODEL.STARCARD.context
+        messages: MODEL.STARCARD.context,
+        front_base_64_image:  front_base_64_image,
+        back_base_64_image: back_base_64_image
       })
       console.log(inputs)
       setFieldValue('title', data.choices[0].message.content);
@@ -137,8 +159,8 @@ export default function EditEbayGoods(){
 
   return(
     <>
-      <Formik initialValues={inputs} enableReinitialize validationSchema={validationSchema} onSubmit={submit}>
-        {({errors, handleBlur, handleChange, handleSubmit, touched, values, isSubmitting,setFieldValue })=>(
+      <Formik initialValues={inputs} enableReinitialize validationSchema={validationSchema} onSubmit={submit} >
+        {({errors, handleBlur, handleChange, handleSubmit, touched, values, isSubmitting,setFieldValue  })=>(
           <form noValidate onSubmit={handleSubmit}>
             <Stack spacing={3}>
               <SubCard title='基础信息'>
@@ -154,10 +176,10 @@ export default function EditEbayGoods(){
                     <Select
                       id="channel-sites-label"
                       label="站点"
-                      value={values.siteId}
+                      value={formik.values.siteId}
                       name="siteId"
-                      onBlur={handleBlur}
-                      onChange={handleChange}
+                      onBlur={formik.handleBlur}
+                      onChange={formik.handleChange}
                       MenuProps={{
                         PaperProps: {
                           style: {
@@ -174,9 +196,9 @@ export default function EditEbayGoods(){
                         )
                       })}
                     </Select>
-                    {touched.siteId && errors.siteId && (
+                    {formik.touched.siteId && formik.errors.siteId && (
                       <FormHelperText error id="helper-tex-channel-sites-label">
-                        {errors.siteId}
+                        {formik.errors.siteId}
                       </FormHelperText>
                     )}
                   </FormControl>
@@ -225,6 +247,8 @@ export default function EditEbayGoods(){
                                 }}
                       >
                         <Box style={{width:'200px',height:'300px'}}>
+
+
                             {imageFileList[0] ?(
                                 <img alt='第一张' style={{ width: '200px', height: '300px' }}
                                      src={imageFileList[0]} />
@@ -330,6 +354,38 @@ export default function EditEbayGoods(){
                     { errors.categoryId && (
                       <FormHelperText error id="helper-tex-channel-category-label">
                         {errors.categoryId}
+                      </FormHelperText>
+                    )}
+                  </FormControl>
+
+                  <FormControl style={{ minWidth: 300 }} error={Boolean(touched.condition && errors.condition)} sx={{ ...theme.typography.otherInput }}>
+                    <InputLabel htmlFor="channel-condition-label">物品状况</InputLabel>
+                    <Select
+                      id="channel-condition-label"
+                      label="物品状况"
+                      value={values.condition}
+                      name="condition"
+                      onBlur={handleBlur}
+                      onChange={handleChange}
+                      MenuProps={{
+                        PaperProps: {
+                          style: {
+                            maxHeight: 200
+                          }
+                        }
+                      }}
+                    >
+                      {conditionOpitons.map((option) => {
+                        return(
+                          <MenuItem key={option.id} value={option.siteId}>
+                            {option.name}
+                          </MenuItem>
+                        )
+                      })}
+                    </Select>
+                    {touched.condition && errors.condition && (
+                      <FormHelperText error id="helper-tex-channel-condition-label">
+                        {errors.condition}
                       </FormHelperText>
                     )}
                   </FormControl>

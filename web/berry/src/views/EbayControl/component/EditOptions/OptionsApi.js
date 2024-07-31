@@ -52,6 +52,16 @@ const OptionsApi = ()=>{
     }
   }
 
+  //获取店铺分类
+  const fetchStoreCategories = async ()=>{
+    try{
+      let res = await API.get('/api/ebay_get_store_categories')
+      return res.data.data
+    }catch (error){
+      showError(error.message)
+    }
+  }
+
   //获取ebay账号
   const fetchEbayAccountOption = async ()=>{
     try{
@@ -71,8 +81,20 @@ const OptionsApi = ()=>{
     }
   }
 
+  const fetchConditionOption = async (data)=>{
+    try{
+      let  res = await API.get('/api/ebay_get_item_condition_policies',data);
+      return res.data.data
+    }catch (error){
+      showError(error.message)
+    }
 
-  return { fetchSitesOption, fetchTypeOption,fetchCategoryOption,fetchEbayAccountOption,fetchPromp };
+  }
+
+
+  return { fetchSitesOption, fetchTypeOption,fetchCategoryOption,
+    fetchEbayAccountOption,fetchPromp,fetchStoreCategories,fetchConditionOption
+  };
 }
 
 export default OptionsApi
