@@ -152,17 +152,24 @@ func handleRespBody[T any](c *gin.Context, resp *http.Response, respBody *T) err
 		return err
 	}
 	// 使用反射检查 respBody 是否包含 errors 字段
-	respBodyValue := reflect.ValueOf(respBody).Elem()
-	errorsField := respBodyValue.FieldByName("Errors")
-	if errorsField.IsValid() && errorsField.Kind() == reflect.Slice && errorsField.Len() > 0 {
-		firstError := errorsField.Index(0).Interface()
-		firstErrorValue := reflect.ValueOf(firstError)
-		messageField := firstErrorValue.FieldByName("Message")
-		longMessageField := firstErrorValue.FieldByName("LongMessage")
-		if messageField.IsValid() && longMessageField.IsValid() {
-			return fmt.Errorf("ebay request error: message %s; longMessage: %s", messageField.String(), longMessageField.String())
+	respBodyValue := reflect.ValueOf(respBody)
+	if respBodyValue.Kind() == reflect.Ptr {
+		respBodyValue = respBodyValue.Elem()
+		if respBodyValue.Kind() == reflect.Struct {
+			errorsField := respBodyValue.FieldByName("Errors")
+			if errorsField.IsValid() && errorsField.Kind() == reflect.Slice && errorsField.Len() > 0 {
+				firstError := errorsField.Index(0).Interface()
+				firstErrorValue := reflect.ValueOf(firstError)
+				messageField := firstErrorValue.FieldByName("Message")
+				longMessageField := firstErrorValue.FieldByName("LongMessage")
+				if messageField.IsValid() && messageField.Kind() == reflect.String &&
+					longMessageField.IsValid() && longMessageField.Kind() == reflect.String {
+					return fmt.Errorf("ebay request error: message %s; longMessage: %s", messageField.String(), longMessageField.String())
+				}
+			}
 		}
 	}
+
 	return nil
 }
 
