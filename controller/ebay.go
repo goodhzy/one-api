@@ -182,22 +182,17 @@ func GetConfig(c *gin.Context) {
 	// https://developer.ebay.com/my/keys
 	ebayConfig.Scope =
 		[]string{
-			"https://api.ebay.com/oauth/api_scope",                                   // View public data from eBay
-			"https://api.ebay.com/oauth/api_scope/sell.marketing.readonly",           // View your eBay marketing activities, such as ad campaigns and listing promotions
-			"https://api.ebay.com/oauth/api_scope/sell.marketing",                    // View and manage your eBay marketing activities, such as ad campaigns and listing promotions
-			"https://api.ebay.com/oauth/api_scope/sell.inventory",                    // View and manage your inventory and offers
-			"https://api.ebay.com/oauth/api_scope/sell.account",                      // View and manage your eBay seller account
-			"https://api.ebay.com/oauth/api_scope/sell.account.readonly",             // View and manage your eBay seller account
-			"https://api.ebay.com/oauth/api_scope/sell.fulfillment.readonly",         // View your order fulfillments
-			"https://api.ebay.com/oauth/api_scope/sell.fulfillment",                  // View and manage your order fulfillments
-			"https://api.ebay.com/oauth/api_scope/sell.analytics.readonly",           // View your selling analytics data, such as performance reports
-			"https://api.ebay.com/oauth/api_scope/commerce.identity.status.readonly", // View your eBay account status
-			"https://api.ebay.com/oauth/api_scope/sell.stores",                       // View and manage eBay stores
+			"https://api.ebay.com/oauth/api_scope",                           // View public data from eBay
+			"https://api.ebay.com/oauth/api_scope/sell.marketing.readonly",   // View your eBay marketing activities, such as ad campaigns and listing promotions
+			"https://api.ebay.com/oauth/api_scope/sell.marketing",            // View and manage your eBay marketing activities, such as ad campaigns and listing promotions
+			"https://api.ebay.com/oauth/api_scope/sell.inventory",            // View and manage your inventory and offers
+			"https://api.ebay.com/oauth/api_scope/sell.account",              // View and manage your eBay seller account
+			"https://api.ebay.com/oauth/api_scope/sell.account.readonly",     // View and manage your eBay seller account
+			"https://api.ebay.com/oauth/api_scope/sell.fulfillment.readonly", // View your order fulfillments
+			"https://api.ebay.com/oauth/api_scope/sell.fulfillment",          // View and manage your order fulfillments
+			"https://api.ebay.com/oauth/api_scope/sell.analytics.readonly",   // View your selling analytics data, such as performance reports
+			"https://api.ebay.com/oauth/api_scope/sell.stores",               // View and manage eBay stores
 			"https://api.ebay.com/oauth/api_scope/commerce.identity.readonly",
-			"https://api.ebay.com/oauth/api_scope/commerce.identity.name.readonly",
-			"https://api.ebay.com/oauth/api_scope/commerce.identity.address.readonly",
-			"https://api.ebay.com/oauth/api_scope/commerce.identity.email.readonly",
-			"https://api.ebay.com/oauth/api_scope/commerce.identity.phone.readonly",
 		}
 	c.JSON(http.StatusOK, gin.H{
 		"success": true,

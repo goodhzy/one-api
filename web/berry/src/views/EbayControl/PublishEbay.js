@@ -123,7 +123,6 @@ export default function PublishEbay() {
                  <TableCell>SKU</TableCell>
                  <TableCell>属地</TableCell>
                  <TableCell>标题</TableCell>
-                 {/*<TableCell>eBay刊登</TableCell>*/}
                  <TableCell>操作</TableCell>
                </TableRow>
              </TableHead>
@@ -133,6 +132,8 @@ export default function PublishEbay() {
                  <PublishTableRow
                    item={row}
                    key={row.id}
+                   setSearching={setSearching}
+                   LoadGoodsList={LoadGoodsList}
                  />
                ))}
              </TableBody>

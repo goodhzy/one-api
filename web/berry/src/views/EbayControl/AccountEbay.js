@@ -11,6 +11,17 @@ import { API } from '../../utils/api';
 export default function AccountEbay() {
   const [accounts, setAccounts] = useState([]);
   const [searching, setSearching] = useState(false);
+  const [ebayConfig, setEbayConfig] = useState({});
+
+  const loadEbayConfig = async () => {
+    let res = await API.get(`/api/ebay_config`);
+    const { success, message, data } = res.data;
+    if (success) {
+      setEbayConfig(data);
+    } else {
+      showError(message);
+    }
+  };
 
   const loadAccounts = async () => {
     setSearching(true);
@@ -42,6 +53,15 @@ export default function AccountEbay() {
     await loadAccounts();
   };
 
+  const handleBind = async () => {
+    if(!ebayConfig){
+      showError('ebay配置错误，请刷新页面重试')
+      return
+    }
+    let url = ebayConfig.auth_url
+    url += `?client_id=${ebayConfig.client_id}&redirect_uri=${ebayConfig.redirect_uri}&response_type=${ebayConfig.response_type}&scope=${ebayConfig.scope.join(encodeURIComponent(' '))}`;
+    window.open(url, '_blank');
+  };
 
   useEffect(() => {
     loadAccounts(0)
@@ -49,7 +69,10 @@ export default function AccountEbay() {
       .catch((reason) => {
         showError(reason);
       });
+    loadEbayConfig().then();
+
   }, []);
+
 
   return(
     <>
@@ -64,6 +87,9 @@ export default function AccountEbay() {
       >
         <Container>
           <ButtonGroup variant="outlined" aria-label="outlined small primary button group" sx={{marginBottom: 2}}>
+            <Button onClick={handleBind} startIcon={<IconRefresh width={'18px'} />}>
+              绑定账号
+            </Button>
             <Button onClick={handleRefresh} startIcon={<IconRefresh width={'18px'} />}>
               刷新
             </Button>

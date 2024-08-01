@@ -46,7 +46,6 @@ export default function Profile() {
   const [openWechat, setOpenWechat] = useState(false);
   const [openEmail, setOpenEmail] = useState(false);
   const status = useSelector((state) => state.siteInfo);
-  const [ebayConfig, setEbayConfig] = useState({});
 
   const handleWechatOpen = () => {
     setOpenWechat(true);
@@ -66,16 +65,6 @@ export default function Profile() {
     const { success, message, data } = res.data;
     if (success) {
       setInputs(data);
-    } else {
-      showError(message);
-    }
-  };
-
-  const loadEbayConfig = async () => {
-    let res = await API.get(`/api/ebay_config`);
-    const { success, message, data } = res.data;
-    if (success) {
-      setEbayConfig(data);
     } else {
       showError(message);
     }
@@ -133,55 +122,6 @@ export default function Profile() {
     }
     loadUser().then();
   }, [status]);
-
-  useEffect(() => {
-    loadEbayConfig().then();
-  }, []);
-
-  const handleBindEbay = async () => {
-    if(showReBandEbay){
-      setShowReBandEbay(false)
-    }
-    console.log(ebayConfig)
-    if(!ebayConfig){
-      showError('ebay配置错误，请刷新页面重试')
-      return
-    }
-    let url = ebayConfig.auth_url
-    // delete ebayConfig.auth_url;
-
-    // "auth_url": "https://auth.ebay.com/oauth2/authorize",
-    //   "client_id": "-sjkjspor-PRD-34d625879-0324db1c",
-    //   "redirect_uri": "--sjkjspor-PRD-3-xdaeka",
-    //   "response_type": "code",
-    //
-
-    url += `?client_id=${ebayConfig.client_id}&redirect_uri=${ebayConfig.redirect_uri}&response_type=${ebayConfig.response_type}&scope=${ebayConfig.scope.join(encodeURIComponent(' '))}`;
-    console.log(url);
-    window.open(url, '_blank');
-
-    // let queryString = '';
-    // let firstParam = true;
-    //
-    // for (const [key, value] of Object.entries(ebayConfig)) {
-    //   if (!firstParam) {
-    //     queryString += '&';
-    //   }
-    //   if(key === 'scope') {
-    //     queryString += `${key}=${value.join(' ')}`;
-    //   }else
-    //   {
-    //     queryString += `${key}=${value}`;
-    //   }
-    //   firstParam = false;
-    // }
-    //
-    // if (queryString) {
-    //   url += '?' + queryString;
-    // }
-    // console.log(url);
-    // window.open(url, '_blank');
-  };
 
   return (
     <>
@@ -295,32 +235,6 @@ export default function Profile() {
                     <></>
                   )}
                 </Grid>
-                {ebayConfig ? (
-                  <Grid xs={12} md={4}>
-                    <Button
-                      variant="contained"
-                      onClick={() => {
-                        if(inputs.ebay_bind){
-                          setShowReBandEbay(true)
-                        }else {
-                          handleBindEbay();
-                        }
-                      }}
-                    >
-                      {inputs.ebay_bind?'更换ebay绑定':'添加ebay账号'}
-                    </Button>
-                    {turnstileEnabled ? (
-                      <Turnstile
-                        sitekey={turnstileSiteKey}
-                        onVerify={(token) => {
-                          setTurnstileToken(token);
-                        }}
-                      />
-                    ) : (
-                      <></>
-                    )}
-                  </Grid>
-                ) : null}
               </Grid>
             </SubCard>
           </Stack>
@@ -342,19 +256,6 @@ export default function Profile() {
             }}
           >
             确定
-          </Button>
-        </DialogActions>
-      </Dialog>
-
-      <Dialog open={showReBandEbay} onClose={()=> setShowReBandEbay(false)}>
-        <DialogTitle>绑定ebay</DialogTitle>
-        <DialogContent>
-          <DialogContentText>是否重新绑定？</DialogContentText>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={()=>setShowReBandEbay(false)}>关闭</Button>
-          <Button onClick={handleBindEbay} sx={{ color: 'error.main' }} autoFocus>
-            是的
           </Button>
         </DialogActions>
       </Dialog>

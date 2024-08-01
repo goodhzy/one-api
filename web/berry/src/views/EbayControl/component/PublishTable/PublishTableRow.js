@@ -19,13 +19,16 @@ import {
 import TableSwitch from 'ui-component/Switch';
 import { IconDotsVertical, IconEdit, IconTrash, IconUser } from '@tabler/icons-react';
 import UsersTableRow from '../../../User/component/TableRow';
+import EditEbayGoods from '../EditEbayGoods';
 import {PhotoProvider, PhotoView} from "react-photo-view";
-import { ImageUrl } from 'utils/api';
+import { API, ImageUrl } from 'utils/api';
+import { showError, showSuccess } from '../../../../utils/common';
 
-export default function PublishTableRow({item,handleOpenModal,setModalGoodsId}){
+export default function PublishTableRow({item,setModalGoodsId, setSearching, LoadGoodsList}){
   const [statusSwitch, setStatusSwitch] = useState(item.status);
   const [open, setOpen] = useState(null);
   const [openDelete, setOpenDelete] = useState(false);
+  const [editEbayGoodsOpen,setEditEbayGoodsOpen] = useState(false);
 
   const handleStatus = async () => {
     const switchVlue = statusSwitch === 1 ? 2 : 1;
@@ -53,7 +56,19 @@ export default function PublishTableRow({item,handleOpenModal,setModalGoodsId}){
   };
 
   const handleDelete = async () => {
-    handleCloseMenu();
+    try {
+      const res = await API.get(`/api/ebay_delete_goods?id=`+item.id);
+      const { success, message } = res.data;
+      if (success) {
+        showSuccess('操作成功完成！');
+        LoadGoodsList(0);
+        handleDeleteClose();
+      } else {
+        showError(message);
+      }
+    }finally {
+      setSearching(false);
+    }
   };
 
   return(
@@ -104,8 +119,7 @@ export default function PublishTableRow({item,handleOpenModal,setModalGoodsId}){
         <MenuItem
           onClick={() => {
             handleCloseMenu();
-            handleOpenModal();
-            setModalGoodsId(item.id);
+            setEditEbayGoodsOpen(true);
           }}
         >
           <IconEdit style={{ marginRight: '16px' }} />
@@ -118,9 +132,9 @@ export default function PublishTableRow({item,handleOpenModal,setModalGoodsId}){
       </Popover>
 
       <Dialog open={openDelete} onClose={handleDeleteClose}>
-        <DialogTitle>删除用户</DialogTitle>
+        <DialogTitle>删除商品</DialogTitle>
         <DialogContent>
-          <DialogContentText>是否删除用户 {item.name}？</DialogContentText>
+          <DialogContentText>是否删除商品 {item.name}？</DialogContentText>
         </DialogContent>
         <DialogActions>
           <Button onClick={handleDeleteClose}>关闭</Button>
@@ -130,6 +144,7 @@ export default function PublishTableRow({item,handleOpenModal,setModalGoodsId}){
         </DialogActions>
       </Dialog>
 
+      <EditEbayGoods open={editEbayGoodsOpen} setOpen={setEditEbayGoodsOpen} goodsId={item.id} />
     </>
   )
 }
