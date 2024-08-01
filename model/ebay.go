@@ -367,12 +367,14 @@ type OfferResponse struct {
 
 // EbaySite site model start
 type EbaySite struct {
-	Id        int64  `json:"id"`
-	GlobalId  string `json:"globalId"`
-	Language  string `json:"language"`
-	Territory string `json:"territory"`
-	Name      string `json:"name"`
-	SiteId    int    `json:"siteId"`
+	Id            int64  `json:"id"`
+	GlobalId      string `json:"globalId"`
+	Language      string `json:"language"`
+	Territory     string `json:"territory"`
+	Name          string `json:"name"`
+	SiteId        int    `json:"siteId"`
+	MarketplaceId string `json:"marketplaceId"`
+	IsDefault     int    `json:"isDefault"`
 }
 
 // site model end

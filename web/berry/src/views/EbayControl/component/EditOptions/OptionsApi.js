@@ -83,7 +83,9 @@ const OptionsApi = ()=>{
 
   const fetchConditionOption = async (data)=>{
     try{
-      let  res = await API.get('/api/ebay_get_item_condition_policies',data);
+      let  res = await API.get('/api/ebay_get_item_condition_policies',{
+        params:data
+      });
       return res.data.data
     }catch (error){
       showError(error.message)

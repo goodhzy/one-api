@@ -1109,7 +1109,9 @@ func GetItemConditionPolicies(c *gin.Context) {
 	marketplaceId := c.Query("marketplace_id")
 	urlStr += marketplaceId + "/get_item_condition_policies"
 	queryParams := map[string]string{}
-	categoryIds := c.QueryArray("category_ids")
+	categoryIds := c.QueryArray("category_ids[]")
+	fmt.Printf("categoryIds: %v\n", categoryIds)
+	fmt.Printf("marketplaceId: %s\n", marketplaceId)
 	if len(categoryIds) > 0 {
 		queryParams["filter"] = generateFilter(categoryIds)
 	} else {
@@ -1117,6 +1119,7 @@ func GetItemConditionPolicies(c *gin.Context) {
 			"success": false,
 			"message": "category_ids is required",
 		})
+		return
 	}
 
 	resp, err := doEbayRequest(c, "GET", urlStr, nil, queryParams, "")
