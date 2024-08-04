@@ -30,6 +30,7 @@ specifiers:
   history: ^5.3.0
   http-proxy-middleware: ^3.0.0
   immutable: ^4.3.0
+  lodash: ^4.17.21
   marked: ^4.1.1
   material-ui-popup-state: ^4.0.1
   notistack: ^3.0.1
@@ -70,6 +71,7 @@ dependencies:
   framer-motion: 6.5.1_nnrd3gsncyragczmpvfhocinkq
   history: 5.3.0
   http-proxy-middleware: 3.0.0
+  lodash: 4.17.21
   marked: 4.3.0
   material-ui-popup-state: 4.1.0_l4nqkajrntrot4jhggjwfy4ghq
   notistack: 3.0.1_nnrd3gsncyragczmpvfhocinkq

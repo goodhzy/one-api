@@ -23,6 +23,11 @@ export const ConditionEnum = {
   5000: 'USED_GOOD',
   6000: 'USED_ACCEPTABLE',
   7000: 'FOR_PARTS_OR_NOT_WORKING',
+}
 
-
+export const AspectDataTypeEnum = {
+  STRING: 'STRING',
+  NUMBER: 'NUMBER',
+  DATE: 'DATE',
+  STRING_ARRAY: 'STRING_ARRAY',
 }

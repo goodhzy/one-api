@@ -1,6 +1,8 @@
 import {
+  Autocomplete,
   Box,
   Button,
+  Checkbox,
   Dialog,
   DialogActions,
   DialogContent,
@@ -12,6 +14,7 @@ import {
   FormLabel,
   Grid,
   InputLabel,
+  ListItemText,
   MenuItem,
   OutlinedInput,
   Radio,
@@ -20,7 +23,7 @@ import {
   Stack,
   TextField
 } from '@mui/material';
-import { useFormik } from 'formik';
+import { Field, useFormik } from 'formik';
 import SubCard from '../../../../ui-component/cards/SubCard';
 import { LoadingButton } from '@mui/lab';
 import { IconLoader, IconPlus } from '@tabler/icons-react';
@@ -36,8 +39,10 @@ import { MODEL } from '../../../../utils/preset';
 import { useEffect, useState } from 'react';
 import * as Yup from 'yup';
 import { ImageUrl } from '../../../../utils/api';
-import { width } from '@mui/system';
-import { ConditionEnum, ModeEnum } from '../../../../constants/Ebay';
+import { CardinalityEnum, ConditionEnum, ModeEnum } from '../../../../constants/Ebay';
+import _ from 'lodash';
+import { CheckTreePicker, MultiCascader } from 'rsuite';
+import { validate } from '@babel/core/lib/config/validation/options';
 
 const validationSchema = Yup.object().shape({
   siteId: Yup.string().required('站点不能为空'),
@@ -47,13 +52,22 @@ const validationSchema = Yup.object().shape({
   })
 });
 
+const validateAspect = (value) => {
+  // value是数组, 且长度大于0
+  if (value && value.length > 0) {
+    return true;
+  }
+  return false;
+}
+
 const originInputs = {
   is_edit: false,
   siteId: '', //站点
   ebayId: '', //ebay账号
-  categoryId: '183050', //刊登类目
+  categoryId: '', //刊登类目
   childTitle: '', //子标题
   condition: '', //物品状况
+  conditionDescription: '', // 物品状况描述
   conditionDescriptors: [],
   display_name: '',
   categories: '',
@@ -66,8 +80,10 @@ const originInputs = {
     imageUrls: [],
     sku: '',
     locale: '',
-    availableQuantity: 0
-  }
+    availableQuantity: 0,
+    aspects: {}
+  },
+  self_sku: ''
 };
 
 const EditEbayGoods = ({ setOpen, open, goodsId }) => {
@@ -84,7 +100,9 @@ const EditEbayGoods = ({ setOpen, open, goodsId }) => {
     fetchEbayAccountOption,
     fetchPromp,
     fetchStoreCategories,
-    fetchConditionOption
+    fetchConditionOption,
+    fetchAspectsForCategory,
+    fetchDefaultCategoryTreeId
   } = OptionsApi();
 
   const [sitesOptions, setSitesOptions] = useState([]);
@@ -102,6 +120,12 @@ const EditEbayGoods = ({ setOpen, open, goodsId }) => {
 
   const [synthesisButtonLoading, setSynthesisButtonLoading] = useState(false);
 
+  const [storeCategoryLoading, setStoreCategoryLoading] = useState(false);
+
+  const [defaultCategoryTreeId, setDefaultCategoryTreeId] = useState('');
+
+  const [itemAspectsForCategoryOptions, setItemAspectsForCategoryOptions] = useState([]);
+
   const formik = useFormik({
     initialValues: originInputs,
     validationSchema: validationSchema,
@@ -109,14 +133,13 @@ const EditEbayGoods = ({ setOpen, open, goodsId }) => {
       console.log(values);
     }
   });
-
   const fetchGoodsDetail = async () => {
     try {
       let res = await API.get('/api/ebay_get_goods_detail?id=' + goodsId);
       const { success, message, data } = res.data;
       if (success) {
         if (data) {
-          data.product = data.product || {};
+          data.product = data.product || originInputs.product;
           if (!data.product.imageUrls || data.product.imageUrls.length === 0) {
             data.product.imageUrls = [];
             data.product.imageUrls[0] = data.front_oss_image;
@@ -159,23 +182,55 @@ const EditEbayGoods = ({ setOpen, open, goodsId }) => {
     if (accounts[0]) {
       await formik.setFieldValue('ebayId', accounts[0].id);
       setEbayAccountId(accounts[0].id);
+
+      const defaultCategoryTreeIdRes = await fetchDefaultCategoryTreeId();
+      setDefaultCategoryTreeId(defaultCategoryTreeIdRes);
+
       // setCategoryLoading(true);
       // setCategoryOptions(await fetchCategoryOption());
       // setCategoryLoading(false);
-      // setStoreCategories(await fetchStoreCategories());
+
+      setStoreCategoryLoading(true);
+      // const { storeCategories } = await fetchStoreCategories();
+      const storeCategories = [
+        {
+          categoryId: '1',
+          categoryName: '1****r',
+          order: '0',
+          level: 1,
+          childrenCategories: [
+            {
+              categoryId: '2*****',
+              categoryName: 'D******2',
+              order: '0',
+              level: 2,
+              childrenCategories: [
+                {
+                  categoryId: '3*****',
+                  categoryName: 'D******3',
+                  order: '0',
+                  level: 3
+                }
+              ]
+            }
+          ]
+        },
+        {
+          categoryId: '2',
+          categoryName: 'D******s',
+          order: '1',
+          level: 1
+        }
+      ];
+      //
+      setStoreCategories(storeCategories);
+      setStoreCategoryLoading(false);
+
+      getAspectsForCategory({ defaultCategoryTreeIdRes }).then();
     } else {
       showInfo('请添加先ebay账号');
       // await new Promise((resolve) => setTimeout(resolve, 2000));
       navigate('/panel/profile');
-    }
-
-    // 获取物品状况
-    const { itemConditionPolicies } = await fetchConditionOption({
-      marketplace_id: formik.values.marketplaceId || 'EBAY_US',
-      category_ids: [formik.values.categoryId || '183050']
-    });
-    if (itemConditionPolicies?.length > 0) {
-      setCondition(itemConditionPolicies[0]);
     }
   };
 
@@ -261,6 +316,49 @@ const EditEbayGoods = ({ setOpen, open, goodsId }) => {
       fetchOptions().then();
     }
   }, [open]);
+
+  const getConditionOption = async () => {
+    const { itemConditionPolicies } = await fetchConditionOption({
+      marketplace_id: formik.values.marketplaceId,
+      category_ids: [formik.values.categoryId]
+    });
+    if (itemConditionPolicies?.length > 0) {
+      setCondition(itemConditionPolicies[0]);
+    }
+  };
+  useEffect(() => {
+    // 获取物品状况
+    if (formik.values.categoryId) {
+      formik.setFieldValue('condition', '');
+      formik.setFieldValue('conditionDescriptors', []);
+      getConditionOption().then();
+    }
+  }, [formik.values.categoryId]);
+
+  const getAspectsForCategory = async ({ defaultCategoryTreeId }) => {
+    try {
+      const { aspects } = await fetchAspectsForCategory({
+        category_tree_id: defaultCategoryTreeId || 0,
+        category_id: formik.values.categoryId || '183050'
+      });
+      console.log(aspects);
+      console.log('----------');
+      setItemAspectsForCategoryOptions(aspects);
+    } catch (error) {}
+  };
+
+  const isAspectValueDisabled = (valueConstraints) => {
+    const aspects = formik.values.product.aspects;
+    for (let key in valueConstraints) {
+      const { applicableForLocalizedAspectName: aspectName, applicableForLocalizedAspectValues: aspectValues } = valueConstraints[key];
+      const value = aspects[aspectName];
+      // 交集
+      if (_.intersection(value, aspectValues).length === 0) {
+        return true;
+      }
+    }
+    return false;
+  };
 
   return (
     <>
@@ -348,7 +446,46 @@ const EditEbayGoods = ({ setOpen, open, goodsId }) => {
                       </FormHelperText>
                     )}
                   </FormControl>
-
+                  {/* 店铺分类 */}
+                  <FormControl
+                    style={{ minWidth: 300 }}
+                    error={Boolean(formik.touched.categoryId && formik.errors.categoryId)}
+                    sx={{ ...theme.typography.otherInput }}
+                  >
+                    <FormLabel htmlFor="channel-category-label" style={{ marginBottom: '10px' }}>
+                      店铺分类
+                    </FormLabel>
+                    <CheckTreePicker
+                      defaultExpandAll
+                      data={storeCategories}
+                      popupStyle={{ zIndex: 9999 }}
+                      searchable={false}
+                      style={{ width: 280 }}
+                      placeholder="Select without search"
+                      labelKey="categoryName"
+                      valueKey="categoryName"
+                      childrenKey="childrenCategories"
+                    />
+                    <CheckTreePicker
+                      name="storeCategoryIds"
+                      popupStyle={{ zIndex: 9999 }}
+                      preventOverflow={true}
+                      data={storeCategories}
+                      searchable={true}
+                      placeholder="店铺分类选择"
+                      size="lg"
+                      loading={storeCategoryLoading}
+                      labelKey="categoryName"
+                      valueKey="categoryName"
+                      childrenKey="childrenCategories"
+                      onChange={(value) => formik.setFieldValue('storeCategoryNames', value || '')}
+                    ></CheckTreePicker>
+                    {formik.errors.categoryId && (
+                      <FormHelperText error id="helper-tex-channel-category-label">
+                        {formik.errors.categoryId}
+                      </FormHelperText>
+                    )}
+                  </FormControl>
                   {/*标题*/}
                   <FormControl
                     error={Boolean(formik.touched.product?.title && formik.errors?.product?.title)}
@@ -504,7 +641,7 @@ const EditEbayGoods = ({ setOpen, open, goodsId }) => {
                   <Grid container spacing={2} alignItems="center">
                     <Grid item xs={3} sm={4}>
                       <FormControl
-                        style={{ minWidth: 300 }}
+                        style={{ width: '100%' }}
                         error={Boolean(formik.touched.condition && formik.errors.condition && condition?.itemConditionRequired)}
                         sx={{ ...theme.typography.otherInput }}
                       >
@@ -546,40 +683,288 @@ const EditEbayGoods = ({ setOpen, open, goodsId }) => {
                         ?.find((item) => formik.values.condition && ConditionEnum[item.conditionId] === formik.values.condition)
                         ?.conditionDescriptors?.map((conditionDescriptor, conditionDescriptorIndex) => {
                           return (
-                            <>
-                              <Grid item xs={3} sm={4}>
-                                {conditionDescriptor.conditionDescriptorConstraint.mode === ModeEnum.FREE_TEXT ? (
-                                  <FormControl
-                                    style={{ minWidth: 300 }}
-                                    // error={Boolean(formik.touched.product?.subtitle && formik.errors.product?.subtitle)}
-                                    sx={{ ...theme.typography.otherInput }}
+                            <Grid key={conditionDescriptorIndex} item xs={3} sm={4}>
+                              {conditionDescriptor.conditionDescriptorConstraint.mode === ModeEnum.FREE_TEXT ? (
+                                <FormControl
+                                  // error={Boolean(formik.touched.product?.subtitle && formik.errors.product?.subtitle)}
+                                  fullWidth={true}
+                                  sx={{ ...theme.typography.otherInput }}
+                                >
+                                  <InputLabel htmlFor="channel-title-label">{conditionDescriptor.conditionDescriptorHelpText}</InputLabel>
+                                  <OutlinedInput
+                                    id="channel-childTitle-label"
+                                    label={conditionDescriptor.conditionDescriptorName}
+                                    type="text"
+                                    value={formik.values.conditionDescriptors[conditionDescriptorIndex]?.additionalInfo}
+                                    name={`conditionDescriptors.${conditionDescriptorIndex}.additionalInfo`}
+                                    onChange={(e) => {
+                                      formik.setFieldValue(
+                                        `conditionDescriptors.${conditionDescriptorIndex}.additionalInfo`,
+                                        e.target.value
+                                      );
+                                      formik.setFieldValue(
+                                        `conditionDescriptors.${conditionDescriptorIndex}.name`,
+                                        conditionDescriptor.conditionDescriptorId
+                                      );
+                                    }}
+                                    aria-describedby={`helper-text-label-${conditionDescriptorIndex}`}
+                                  />
+                                </FormControl>
+                              ) : (
+                                <FormControl fullWidth={true}>
+                                  <InputLabel id="demo-multiple-checkbox-label">{conditionDescriptor.conditionDescriptorName}</InputLabel>
+                                  <Select
+                                    labelId="demo-multiple-checkbox-label"
+                                    id="demo-multiple-checkbox"
+                                    multiple={true}
+                                    value={formik.values.conditionDescriptors[conditionDescriptorIndex]?.values || []}
+                                    onChange={(e) => {
+                                      const value = e.target.value;
+                                      if (
+                                        conditionDescriptor.conditionDescriptorConstraint?.applicableToConditionDescriptorIds &&
+                                        conditionDescriptor.conditionDescriptorConstraint.applicableToConditionDescriptorIds.length > 0
+                                      ) {
+                                        const conditionDescriptorValueConstraints =
+                                          conditionDescriptor.conditionDescriptorValues.find((item) =>
+                                            value.includes(item.conditionDescriptorValueId)
+                                          )?.conditionDescriptorValueConstraints || [];
+                                        for (let i = 0; i < conditionDescriptorValueConstraints.length; i++) {
+                                          const { applicableToConditionDescriptorId, applicableToConditionDescriptorValueIds } =
+                                            conditionDescriptorValueConstraints[i];
+                                          if (
+                                            _.intersection(
+                                              applicableToConditionDescriptorValueIds,
+                                              formik.values.conditionDescriptors?.find(
+                                                (item) => item.name === applicableToConditionDescriptorId
+                                              )?.values || []
+                                            ).length === 0
+                                          ) {
+                                            showError(`不符合选中条件`);
+                                            return;
+                                          }
+                                          formik.setFieldValue(`conditionDescriptors.${conditionDescriptorIndex}.values`, []);
+                                        }
+                                      }
+                                      if (conditionDescriptor.conditionDescriptorConstraint.cardinality === CardinalityEnum.SINGLE) {
+                                        formik.setFieldValue(
+                                          `conditionDescriptors.${conditionDescriptorIndex}.values`,
+                                          [e.target.value.pop()].filter((item) => item)
+                                        );
+                                      } else {
+                                        formik.setFieldValue(`conditionDescriptors.${conditionDescriptorIndex}.values`, e.target.value);
+                                      }
+                                      formik.setFieldValue(
+                                        `conditionDescriptors.${conditionDescriptorIndex}.name`,
+                                        conditionDescriptor.conditionDescriptorId
+                                      );
+                                    }}
+                                    input={<OutlinedInput label={conditionDescriptor.conditionDescriptorName} />}
                                   >
-                                    <InputLabel htmlFor="channel-title-label">{conditionDescriptor.conditionDescriptorHelpText}</InputLabel>
-                                    <OutlinedInput
-                                      id="channel-childTitle-label"
-                                      label={conditionDescriptor.conditionDescriptorName}
-                                      type="text"
-                                      value={formik.values.conditionDescriptors[conditionDescriptorIndex]?.additionalInfo}
-                                      name={`conditionDescriptors.${conditionDescriptorIndex}.additionalInfo`}
-                                      onBlur={formik.handleBlur}
-                                      onChange={formik.handleChange}
-                                      aria-describedby={`helper-text-label-${conditionDescriptorIndex}`}
-                                    />
-                                    {/*{formik.touched.conditionDescriptors[conditionDescriptorIndex]?.additionalInfo &&*/}
-                                    {/*  formik.errors.conditionDescriptors[conditionDescriptorIndex]?.additionalInfo && (*/}
-                                    {/*    <FormHelperText error id={`helper-text-label-${conditionDescriptorIndex}`}>*/}
-                                    {/*      {formik.errors.conditionDescriptors[conditionDescriptorIndex]?.additionalInfo}*/}
-                                    {/*    </FormHelperText>*/}
-                                    {/*  )}*/}
-                                  </FormControl>
-                                ) : (
-                                  <div style={{ width: '300px', height: '400px', background: 'red' }}>{conditionDescriptorIndex}{JSON.stringify(formik.values.conditionDescriptors[conditionDescriptorIndex]?.additionalInfo)}</div>
-                                )}
-                              </Grid>
-                            </>
+                                    {conditionDescriptor.conditionDescriptorValues?.map(
+                                      ({ conditionDescriptorValueName: name, conditionDescriptorValueId: id }) => (
+                                        <MenuItem key={id} value={id}>
+                                          <ListItemText primary={name} />
+                                        </MenuItem>
+                                      )
+                                    )}
+                                  </Select>
+                                </FormControl>
+                              )}
+                            </Grid>
                           );
                         })}
                   </Grid>
+                  {/*物品状况描述*/}
+                  <FormControl sx={{ ...theme.typography.otherInput }}>
+                    <InputLabel htmlFor="channel-title-label">物品状况描述</InputLabel>
+                    <OutlinedInput
+                      id="channel-title-label"
+                      style={{ width: '650px' }}
+                      label="物品状况描述"
+                      type="text"
+                      value={formik.values.conditionDescription}
+                      name="conditionDescription"
+                      onBlur={formik.handleBlur}
+                      onChange={formik.handleChange}
+                      aria-describedby="helper-text-conditionDescription-label"
+                    />
+                    {formik.touched.title && formik.errors.title && (
+                      <FormHelperText error id="helper-tex-channel-title-label">
+                        {formik.errors.title}
+                      </FormHelperText>
+                    )}
+                  </FormControl>
+                  <FormControl sx={{ ...theme.typography.otherInput }}>
+                    <InputLabel htmlFor="channel-title-label">平台sku</InputLabel>
+                    <OutlinedInput
+                      id="channel-title-label"
+                      style={{ width: '650px' }}
+                      label="平台sku"
+                      type="text"
+                      value={formik.values.self_sku}
+                      name="self_sku"
+                      onBlur={formik.handleBlur}
+                      onChange={formik.handleChange}
+                      aria-describedby="helper-text-conditionDescription-label"
+                      readOnly={true}
+                    />
+                  </FormControl>
+                </Stack>
+              </SubCard>
+              <SubCard title="类目属性">
+                <Stack direction="column" justifyContent="flex-start" alignItems="flex-start" spacing={{ xs: 1, sm: 2, md: 4 }}>
+                  {itemAspectsForCategoryOptions.map((item) => {
+                    return (
+                      <FormControl style={{ minWidth: 300 }} sx={{ ...theme.typography.otherInput }} key={item.localizedAspectName} error={Boolean(item.aspectConstraint.aspectRequired)}>
+                        <Field name={`product.aspects.${item.localizedAspectName}`} validate={validateAspect} >
+                        {item.aspectConstraint.aspectMode === ModeEnum.SELECTION_ONLY ? (
+                          <>
+                            {/*error={Boolean(formik.touched.product?.aspects[item.localizedAspectName] && formik.errors.product?.aspects[item.localizedAspectName])}*/}
+                            <InputLabel id="demo-multiple-checkbox-label">{item.localizedAspectName}</InputLabel>
+                            <Select
+                              labelId="demo-multiple-checkbox-label"
+                              id="demo-multiple-checkbox"
+                              multiple
+                              value={formik.values.product['aspects'][item.localizedAspectName] || []}
+                              onChange={(e) => {
+                                const value = e.target.value;
+                                if (item.aspectConstraint.itemToAspectCardinality === CardinalityEnum.SINGLE) {
+                                  formik.setFieldValue(
+                                    `product.aspects.${item.localizedAspectName}`,
+                                    [e.target.value.pop()].filter((item) => item)
+                                  );
+                                } else {
+                                  formik.setFieldValue(`product.aspects.${item.localizedAspectName}`, e.target.value);
+                                }
+                              }}
+                              input={<OutlinedInput label={item.localizedAspectName} />}
+                            >
+                              {item.aspectValues
+                                ?.filter((item) => {
+                                  return !isAspectValueDisabled(item.valueConstraints);
+                                })
+                                ?.map(({ localizedValue: name }) => (
+                                  <MenuItem key={name} value={name}>
+                                    <ListItemText primary={name} />
+                                  </MenuItem>
+                                ))}
+                            </Select>
+                          </>
+                        ) : item.aspectValues == null || item.aspectValues.length === 0 ? (
+                          <>
+                            <InputLabel htmlFor="channel-title-label">{item.localizedAspectName}</InputLabel>
+                            <OutlinedInput
+                              id="channel-title-label"
+                              style={{ width: '650px' }}
+                              label={item.localizedAspectName}
+                              type="text"
+                              value={
+                                formik.values.product.aspects[item.localizedAspectName]
+                                  ? formik.values.product.aspects[item.localizedAspectName][0]
+                                  : ''
+                              }
+                              onChange={(e) => {
+                                const value = e.target.value;
+                                if (value) {
+                                  formik.setFieldValue(`product.aspects.${item.localizedAspectName}`, [value]);
+                                }
+                              }}
+                              aria-describedby="helper-text-conditionDescription-label"
+                            />
+                          </>
+                        ) : (
+                          <>
+                            <Autocomplete
+                              // error={Boolean(formik.touched.product?.aspects[item.localizedAspectName] && formik.errors.product?.aspects[item.localizedAspectName])}
+                              multiple
+                              value={formik.values.product.aspects[item.localizedAspectName] || []}
+                              onChange={(event, params, reason, details) => {
+                                const inputValue = params.map((item) => {
+                                  if (typeof item === 'string') {
+                                    return item;
+                                  }
+                                  // Add "xxx" option created dynamically
+                                  if (item.inputValue) {
+                                    return item.inputValue;
+                                  }
+                                  // Regular option
+                                  return item.localizedValue;
+                                });
+                                if (item.aspectConstraint.itemToAspectCardinality === CardinalityEnum.SINGLE) {
+                                  formik.setFieldValue(
+                                    `product.aspects.${item.localizedAspectName}`,
+                                    [inputValue.pop()].filter((item) => item)
+                                  );
+                                } else {
+                                  formik.setFieldValue(`product.aspects.${item.localizedAspectName}`, inputValue);
+                                }
+                              }}
+                              getOptionDisabled={(option) => {
+                                const findItem = item.aspectValues.find(
+                                  (aspectValue) => aspectValue.localizedValue === option.localizedValue
+                                );
+                                if (findItem) {
+                                  return isAspectValueDisabled(findItem.valueConstraints);
+                                }
+                                return false;
+                              }}
+                              filterOptions={(options, params) => {
+                                const { inputValue } = params;
+
+                                const filtered = _.filter(options, (item) => {
+                                  return item.localizedValue.includes(inputValue);
+                                });
+                                // Suggest the creation of a new value
+                                const isExisting = options.some((option) => inputValue === option.localizedValue);
+                                if (inputValue !== '' && !isExisting) {
+                                  filtered.push({
+                                    inputValue,
+                                    localizedValue: `Add "${inputValue}"`
+                                  });
+                                }
+                                return filtered;
+                              }}
+                              selectOnFocus
+                              clearOnBlur
+                              handleHomeEndKeys
+                              id="free-solo-with-text-demo"
+                              options={item.aspectValues || []}
+                              getOptionLabel={(option) => {
+                                // Value selected with enter, right from the input
+                                if (typeof option === 'string') {
+                                  return option;
+                                }
+                                // Add "xxx" option created dynamically
+                                if (option.inputValue) {
+                                  return option.inputValue;
+                                }
+                                // Regular option
+                                return option.localizedValue;
+                              }}
+                              renderOption={(props, option) => {
+                                const { key, ...optionProps } = props;
+                                return (
+                                  <li key={key} {...optionProps}>
+                                    {option.localizedValue}
+                                  </li>
+                                );
+                              }}
+                              sx={{ width: 300 }}
+                              freeSolo
+                              renderInput={(params) => <TextField {...params} label={item.localizedAspectName} />}
+                            />
+                          </>
+                        )}
+                        {formik.touched.product?.aspects[item.localizedAspectName] &&
+                          formik.errors.product?.aspects[item.localizedAspectName] && (
+                            <FormHelperText error id="helper-tex-channel-sites-label">
+                              {formik.errors.product?.aspects[item.localizedAspectName]}
+                            </FormHelperText>
+                          )}
+                        </Field>
+                      </FormControl>
+                    )
+                  })}
                 </Stack>
               </SubCard>
             </Stack>
