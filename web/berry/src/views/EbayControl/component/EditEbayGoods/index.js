@@ -23,7 +23,7 @@ import {
   Stack,
   TextField
 } from '@mui/material';
-import { Field, useFormik } from 'formik';
+import { useFormik } from 'formik';
 import SubCard from '../../../../ui-component/cards/SubCard';
 import { LoadingButton } from '@mui/lab';
 import { IconLoader, IconPlus } from '@tabler/icons-react';
@@ -43,12 +43,15 @@ import { CardinalityEnum, ConditionEnum, ModeEnum } from '../../../../constants/
 import _ from 'lodash';
 import { CheckTreePicker, MultiCascader } from 'rsuite';
 import { validate } from '@babel/core/lib/config/validation/options';
-
+import '@wangeditor/editor/dist/css/style.css' // 引入 css
+import { Editor, Toolbar } from '@wangeditor/editor-for-react'
+import { IDomEditor, IEditorConfig, IToolbarConfig } from '@wangeditor/editor'
 const validationSchema = Yup.object().shape({
   siteId: Yup.string().required('站点不能为空'),
   categoryId: Yup.string().required('刊登类目为必填'),
   product: Yup.object().shape({
-    title: Yup.string().required('商品标题不能为空')
+    title: Yup.string().required('商品标题不能为空'),
+    description: Yup.string().required('商品描述不能为空'),
   })
 });
 
@@ -81,7 +84,8 @@ const originInputs = {
     sku: '',
     locale: '',
     availableQuantity: 0,
-    aspects: {}
+    aspects: {},
+    description: '',
   },
   self_sku: ''
 };
@@ -104,6 +108,25 @@ const EditEbayGoods = ({ setOpen, open, goodsId }) => {
     fetchAspectsForCategory,
     fetchDefaultCategoryTreeId
   } = OptionsApi();
+
+  const [editor, setEditor] = useState(null)
+  const [html, setHtml] = useState('<p>hello</p>')
+  // 工具栏配置
+  const toolbarConfig = { }                        // JS 语法
+
+  // 编辑器配置
+    const editorConfig = {                         // JS 语法
+    placeholder: '请输入内容...',
+  }
+
+  // 及时销毁 editor ，重要！
+  useEffect(() => {
+    return () => {
+      if (editor == null) return
+      editor.destroy()
+      setEditor(null)
+    }
+  }, [editor])
 
   const [sitesOptions, setSitesOptions] = useState([]);
   const [typeOptions, setTypeOptions] = useState([]);
@@ -816,10 +839,8 @@ const EditEbayGoods = ({ setOpen, open, goodsId }) => {
                   {itemAspectsForCategoryOptions.map((item) => {
                     return (
                       <FormControl style={{ minWidth: 300 }} sx={{ ...theme.typography.otherInput }} key={item.localizedAspectName} error={Boolean(item.aspectConstraint.aspectRequired)}>
-                        <Field name={`product.aspects.${item.localizedAspectName}`} validate={validateAspect} >
                         {item.aspectConstraint.aspectMode === ModeEnum.SELECTION_ONLY ? (
                           <>
-                            {/*error={Boolean(formik.touched.product?.aspects[item.localizedAspectName] && formik.errors.product?.aspects[item.localizedAspectName])}*/}
                             <InputLabel id="demo-multiple-checkbox-label">{item.localizedAspectName}</InputLabel>
                             <Select
                               labelId="demo-multiple-checkbox-label"
@@ -875,7 +896,6 @@ const EditEbayGoods = ({ setOpen, open, goodsId }) => {
                         ) : (
                           <>
                             <Autocomplete
-                              // error={Boolean(formik.touched.product?.aspects[item.localizedAspectName] && formik.errors.product?.aspects[item.localizedAspectName])}
                               multiple
                               value={formik.values.product.aspects[item.localizedAspectName] || []}
                               onChange={(event, params, reason, details) => {
@@ -955,16 +975,48 @@ const EditEbayGoods = ({ setOpen, open, goodsId }) => {
                             />
                           </>
                         )}
-                        {formik.touched.product?.aspects[item.localizedAspectName] &&
-                          formik.errors.product?.aspects[item.localizedAspectName] && (
-                            <FormHelperText error id="helper-tex-channel-sites-label">
-                              {formik.errors.product?.aspects[item.localizedAspectName]}
-                            </FormHelperText>
-                          )}
-                        </Field>
+                        {/*{formik.touched.product?.aspects[item.localizedAspectName] &&*/}
+                        {/*  formik.errors.product?.aspects[item.localizedAspectName] && (*/}
+                        {/*    <FormHelperText error id="helper-tex-channel-sites-label">*/}
+                        {/*      {formik.errors.product?.aspects[item.localizedAspectName]}*/}
+                        {/*    </FormHelperText>*/}
+                        {/*  )}*/}
                       </FormControl>
                     )
                   })}
+                  <div>商品描述</div>
+                  <FormControl sx={{ ...theme.typography.otherInput }} error={Boolean(!formik.product?.description)}>
+                    <div style={{ border: '1px solid #ccc', zIndex: 100}}>
+                      <Toolbar
+                        editor={editor}
+                        defaultConfig={toolbarConfig}
+                        mode="default"
+                        style={{ borderBottom: '1px solid #ccc' }}
+                      />
+                      <Editor
+                        defaultConfig={editorConfig}
+                        value={formik.values.product.description}
+                        onCreated={setEditor}
+                        onChange={editor => {
+                          formik.validateField('product.description')
+                          let html = editor.getHtml()
+                          if(html === '<p><br></p>') {
+                            html = ''
+                          }
+                          setHtml(html)
+                          formik.setFieldValue('product.description', html)
+                          formik.setFieldTouched('product.description', html.lengt)
+                          formik.setFieldError('product.description', html.length > 0 ? undefined : '商品描述不能为空')
+                        }}
+                        name="product.description"
+                        mode="default"
+                        style={{ height: '300px', overflowY: 'hidden' }}
+                      />
+                    </div>
+                    <FormHelperText id="helper-text-channel-title-label">
+                      {formik.touched.product?.description && formik.errors.product?.description}
+                    </FormHelperText>
+                  </FormControl>
                 </Stack>
               </SubCard>
             </Stack>
