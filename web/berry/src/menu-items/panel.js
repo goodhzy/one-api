@@ -10,11 +10,12 @@ import {
   IconUser,
   IconUserScan, IconCards,
   IconShoppingBag,
-  IconBrandStorybook
+  IconBrandStorybook,
+  IconPhotoScan
 } from '@tabler/icons-react';
 
 // constant
-const icons = {IconShoppingBag, IconCards,IconDashboard, IconSitemap, IconArticle, IconCoin, IconAdjustments, IconKey, IconGardenCart, IconUser, IconUserScan,IconBrandStorybook };
+const icons = {IconShoppingBag,IconPhotoScan, IconCards,IconDashboard, IconSitemap, IconArticle, IconCoin, IconAdjustments, IconKey, IconGardenCart, IconUser, IconUserScan,IconBrandStorybook };
 
 // ==============================|| DASHBOARD MENU ITEMS ||============================== //
 
@@ -63,6 +64,14 @@ const panel = {
       type:'item',
       url:'/panel/identify',
       icon:icons.IconCards,
+      breadcrumbs:false
+    },
+    {
+      id:'picture',
+      title: '图片合成',
+      type:'item',
+      url:'/panel/picture',
+      icon:icons.IconPhotoScan,
       breadcrumbs:false
     },
     {
