@@ -80,8 +80,8 @@ export async function getOAuthState() {
   }
 }
 
-export async function getOpenaiMsg (data){
-  const [res] = await Promise.all([API.post('/v1/chat/completions', data)])
+export async function getOpenaiMsg (data, header){
+  const [res] = await Promise.all([API.post('/v1/chat/completions', data,{headers:header})])
   return res
 }
 
@@ -234,4 +234,14 @@ export function copy(text, name = '') {
     return;
   }
   showSuccess(`复制${name}成功！`);
+}
+
+// 但请求参数有空值时，不传递该参数
+export function removeEmpty(obj) {
+  for (let key in obj) {
+    if (obj[key] === '' || obj[key] === undefined) {
+      delete obj[key];
+    }
+  }
+  return obj;
 }

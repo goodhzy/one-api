@@ -45,6 +45,8 @@ type Ebay struct {
 type EbayProduct struct {
 	Id                   int64           `json:"id"`
 	UserId               int64           `json:"user_id"`
+	SiteId               int             `json:"siteId"`
+	EbayId               int64           `json:"ebayId"`
 	Title                string          `json:"title"`
 	CompositeImage       string          `json:"composite_image"`
 	BackOssImage         string          `json:"back_oss_image"`

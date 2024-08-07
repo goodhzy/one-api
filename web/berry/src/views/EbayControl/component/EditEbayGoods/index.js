@@ -34,10 +34,10 @@ import Cascader from 'rsuite/Cascader';
 import { useTheme } from '@mui/material/styles';
 import { useNavigate } from 'react-router';
 import OptionsApi from '../EditOptions/OptionsApi';
-import { getOpenaiMsg, showError, showInfo } from '../../../../utils/common';
+import { getOpenaiMsg, removeEmpty, showError, showInfo } from '../../../../utils/common';
 import { compressImage, handleIdentify } from '../../../../utils/image-processing';
 import { MODEL } from '../../../../utils/preset';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import * as Yup from 'yup';
 import { ImageUrl } from '../../../../utils/api';
 import { CardinalityEnum, ConditionEnum, ListingTypeEnum, ModeEnum } from '../../../../constants/Ebay';
@@ -51,7 +51,7 @@ import { IDomEditor, IEditorConfig, IToolbarConfig } from '@wangeditor/editor';
 const btnType = {
   save: 'save',
   publish: 'publish'
-}
+};
 
 const validationSchema = Yup.object().shape({
   siteId: Yup.string().required('站点不能为空'),
@@ -83,7 +83,7 @@ const validationSchema = Yup.object().shape({
       })
     })
   }),
-  sku: Yup.string().required('SKU为必填'),
+  sku: Yup.string().required('SKU为必填')
 });
 
 const originInputs = {
@@ -105,7 +105,6 @@ const originInputs = {
     subtitle: '',
     imageUrls: [],
     sku: '',
-    locale: '',
     aspects: {},
     description: ''
   },
@@ -121,18 +120,21 @@ const originInputs = {
   pricingSummary: {
     price: {
       currency: 'USD',
-      value: ''
+      value: 0.01
     },
     auctionStartPrice: {
       currency: 'USD',
-      value: ''
+      value: 0.01
     }
   },
-  availableQuantity: '',
-  listingDuration: ''
+  availableQuantity: 1 ,
+  listingDuration: '',
+
 };
 
 const EditEbayGoods = ({ setOpen, open, goodsId }) => {
+  const ebayProduct = useRef(originInputs);
+
   const handleClose = () => {
     setOpen(false);
   };
@@ -212,10 +214,33 @@ const EditEbayGoods = ({ setOpen, open, goodsId }) => {
   const formik = useFormik({
     initialValues: originInputs,
     validationSchema: validationSchema,
-    onSubmit: (values, formikHelpers) => {
-      const {btnType, ...restValues} = values
-      console.log(btnType);
-      console.log(restValues);
+    onSubmit: async (values, formikHelpers) => {
+      const { btnType, ...restValues } = values;
+      let url = '';
+      if (btnType === 'save') {
+        url = '/api/ebay_save_goods';
+      } else {
+        url = '/api/ebay_publish_goods';
+      }
+
+      try {
+        const reqData = removeEmpty(restValues);
+        if(reqData.format === ListingTypeEnum.FIXED_PRICE){
+          delete reqData.pricingSummary.auctionStartPrice;
+        }
+        if(reqData.product){
+          reqData.product = removeEmpty(reqData.product);
+        }
+        const res = await API.post(url, removeEmpty(restValues));
+        const { success, message } = res.data;
+        if (success) {
+          showInfo('保存成功');
+        } else {
+          showError(message);
+        }
+      } catch (e) {
+        showError(e.message);
+      }
     }
   });
   const fetchGoodsDetail = async () => {
@@ -227,14 +252,15 @@ const EditEbayGoods = ({ setOpen, open, goodsId }) => {
           data.product = data.product || originInputs.product;
           if (!data.product.imageUrls || data.product.imageUrls.length === 0) {
             data.product.imageUrls = [];
-            data.product.imageUrls[0] = data.front_oss_image;
-            data.product.imageUrls[1] = data.back_oss_image;
+            data.product.imageUrls[0] = ImageUrl + data.front_oss_image;
+            data.product.imageUrls[1] = ImageUrl + data.back_oss_image;
           }
           if (!data.product.title) {
             data.product.title = data.title;
           }
-
-          await formik.setValues({ ...originInputs, ...data });
+          ebayProduct.current = { ...originInputs, ...data };
+          await formik.setValues(ebayProduct.current);
+          fetchOptions().then();
         }
       } else {
         showError(message);
@@ -245,21 +271,16 @@ const EditEbayGoods = ({ setOpen, open, goodsId }) => {
   };
 
   const fetchOptions = async () => {
-    fetchGoodsDetail().then();
-
     fetchPromp().then();
 
-    fetchTypeOption().then(
-      (res) => {
-        setTypeOptions(res);
-      }
-    )
+    fetchTypeOption().then((res) => {
+      setTypeOptions(res);
+    });
     await getSiteOptions();
 
     await getEbayAccountOptions();
 
     getEbayAllOptions().then();
-
   };
 
   const previewFile = (file, index) => {
@@ -273,7 +294,7 @@ const EditEbayGoods = ({ setOpen, open, goodsId }) => {
     reader.readAsDataURL(file);
   };
 
-  const identify = async (setFieldValue) => {
+  const identify = async () => {
     setSynthesisButtonLoading(true);
     try {
       if (formik.values.product.imageUrls && formik.values.product.imageUrls.length === 0) {
@@ -295,13 +316,18 @@ const EditEbayGoods = ({ setOpen, open, goodsId }) => {
       const back_base_64_image = await compressImage(formik.values.product.imageUrls[1], ((300 * 1028) / 3) * 4);
       MODEL.STARCARD.context[0].content[1].image_url.url = url;
       MODEL.STARCARD.context[0].content[0].text = prompt;
-      const { data } = await getOpenaiMsg({
-        ...MODEL.STARCARD.modelConfig,
-        messages: MODEL.STARCARD.context,
-        front_base_64_image: front_base_64_image,
-        back_base_64_image: back_base_64_image
-      });
-      setFieldValue('title', data.choices[0].message.content);
+      const { data } = await getOpenaiMsg(
+        {
+          ...MODEL.STARCARD.modelConfig,
+          messages: MODEL.STARCARD.context,
+          front_base_64_image: front_base_64_image,
+          back_base_64_image: back_base_64_image
+        },
+        {
+          Authorization: 'Bearer ' + localStorage.getItem('openai_token')
+        }
+      );
+      await formik.setFieldValue('title', data.choices[0].message.content);
     } catch (err) {
       console.log(err);
     } finally {
@@ -309,38 +335,9 @@ const EditEbayGoods = ({ setOpen, open, goodsId }) => {
     }
   };
 
-  const handleSave = async () => {
-    try {
-      console.log(formik.values);
-      const res = await API.post('/api/ebay_goods_save', formik.values);
-      const { success, message } = res.data;
-      if (success) {
-        showInfo('保存成功');
-      } else {
-        showError(message);
-      }
-    } catch (error) {
-      showError(error.message);
-    }
-  };
-
-  const handlePublish = async () => {
-    try {
-      const res = await API.post('/api/ebay_goods_publish', formik.values);
-      const { success, message } = res.data;
-      if (success) {
-        showInfo('刊登成功');
-      } else {
-        showError(message);
-      }
-    } catch (error) {
-      showError(error.message);
-    }
-  };
-
   useEffect(() => {
     if (open) {
-      fetchOptions().then();
+      fetchGoodsDetail().then();
     }
   }, [open]);
 
@@ -349,115 +346,112 @@ const EditEbayGoods = ({ setOpen, open, goodsId }) => {
       const sites = await fetchSitesOption();
       setSitesOptions(sites);
       if (sites && sites.length > 0) {
-        let defaultSite = sites.find((site) => site.isDefault === 1);
-        if (!defaultSite) {
-          defaultSite = sites[0];
+        if (!formik.values.siteId) {
+          let defaultSite = sites.find((site) => site.isDefault === 1);
+          if (!defaultSite) {
+            defaultSite = sites[0];
+          }
+          ebayProduct.current.siteId = defaultSite.siteId;
+          ebayProduct.current.locale = defaultSite.marketplaceId;
+          ebayProduct.current.marketplaceId = defaultSite.marketplaceId;
+          await formik.setFieldValue('siteId', defaultSite.siteId);
+          await formik.setFieldValue('locale', defaultSite.marketplaceId);
+          await formik.setFieldValue('marketplaceId', defaultSite.marketplaceId);
+          localStorage.setItem('globalId', defaultSite.globalId);
         }
-        await formik.setFieldValue('siteId', defaultSite.siteId);
-        await formik.setFieldValue('locale', defaultSite.marketplaceId);
-        await formik.setFieldValue('marketplaceId', defaultSite.marketplaceId);
-        localStorage.setItem('globalId', defaultSite.globalId);
       }
-    }catch (e) {
-
-    }
-   
-  }
+    } catch (e) {}
+  };
 
   const getEbayAccountOptions = async () => {
-    try{
+    try {
       let accounts = await fetchEbayAccountOption();
       setAccountList(accounts);
-      if (accounts[0]) {
-        await formik.setFieldValue('ebayId', accounts[0].id);
-        localStorage.setItem('ebayId', accounts[0].id);
-
-      } else {
-        showInfo('请添加先ebay账号');
-        // await new Promise((resolve) => setTimeout(resolve, 2000));
-        navigate('/panel/profile');
+      if (!formik.values.ebayId) {
+        if (accounts[0]) {
+          ebayProduct.current.ebayId = accounts[0].id;
+          await formik.setFieldValue('ebayId', accounts[0].id);
+          localStorage.setItem('ebayId', accounts[0].id);
+        } else {
+          showInfo('请添加先ebay账号');
+          // await new Promise((resolve) => setTimeout(resolve, 2000));
+          navigate('/panel/profile');
+        }
       }
-
-    }catch (e) {
-
-    }
-
-  }
+    } catch (e) {}
+  };
 
   const getEbayAllOptions = async () => {
-    const defaultCategoryTreeIdRes = await getDefaultCategoryTreeId();
+    try {
+      const defaultCategoryTreeIdRes = await getDefaultCategoryTreeId();
+      if (defaultCategoryTreeIdRes) {
+        getCategoryOptions({ categoryTreeId: defaultCategoryTreeIdRes }).then(()=>{
 
-    console.log(defaultCategoryTreeIdRes);
-    getCategoryOptions({categoryTreeId:defaultCategoryTreeIdRes}).then();
 
-    getStoreCategories().then();
+        });
+        getConditionOption({ marketplaceId: ebayProduct.current.marketplaceId, categoryId: ebayProduct.current.categoryId }).then();
+        getAspectsForCategory({ defaultCategoryTreeIdRes, categoryId: ebayProduct.current.categoryId }).then();
 
-    getAspectsForCategory({ defaultCategoryTreeIdRes }).then();
+        getStoreCategories().then();
 
-    getPaymentPolicy().then();
 
-    getReturnPolicy().then();
+        getPaymentPolicy().then();
 
-    getFulfillmentPolicy().then();
+        getReturnPolicy().then();
 
-    getInventoryLocation().then();
+        getFulfillmentPolicy().then();
 
-    getListingDuration().then();
-  }
+        getInventoryLocation().then();
 
+        getListingDuration().then();
+      }
+    } catch (e) {}
+  };
 
   const getDefaultCategoryTreeId = async () => {
     try {
       const defaultCategoryTreeIdRes = await fetchDefaultCategoryTreeId();
       setDefaultCategoryTreeId(defaultCategoryTreeIdRes);
       return defaultCategoryTreeIdRes;
-    }catch (e) {
+    } catch (e) {}
+  };
 
-    }
-  }
-
-  const getCategoryOptions = async ({categoryTreeId = 0}) => {
+  const getCategoryOptions = async ({ categoryTreeId = 0 }) => {
     try {
       setCategoryLoading(true);
       const categories = await fetchCategoryOption({
         marketplace_id: formik.values.marketplaceId,
         categoryTreeId
       });
-      console.log(categories);
-      console.log('categories');
-
       setCategoryOptions(categories);
-    }finally {
+    } finally {
       setCategoryLoading(false);
     }
-  }
-  
-  const getConditionOption = async () => {
+  };
+
+  const getConditionOption = async ({ marketplaceId, categoryId }) => {
+    console.log(categoryId);
+    console.log('ccc');
+    if(!categoryId){
+      return;
+    }
     const { itemConditionPolicies } = await fetchConditionOption({
-      marketplace_id: formik.values.marketplaceId,
-      category_ids: [formik.values.categoryId]
+      marketplace_id: marketplaceId,
+      category_ids: [categoryId]
     });
     if (itemConditionPolicies?.length > 0) {
       setCondition(itemConditionPolicies[0]);
     }
   };
-  useEffect(() => {
-    // 获取物品状况
-    if (formik.values.categoryId) {
-      formik.setFieldValue('condition', '');
-      formik.setFieldValue('conditionDescriptors', []);
-      getConditionOption().then();
-    }
-  }, [formik.values.categoryId]);
 
-  const getAspectsForCategory = async ({ defaultCategoryTreeId }) => {
+  const getAspectsForCategory = async ({ defaultCategoryTreeId, categoryId }) => {
     try {
-      if(!formik.values.categoryId) {
+      if (!categoryId) {
         return;
       }
       const { aspects } = await fetchAspectsForCategory({
         category_tree_id: defaultCategoryTreeId || 0,
-        category_id: formik.values.categoryId
+        category_id: categoryId
       });
       setItemAspectsForCategoryOptions(aspects);
     } catch (error) {}
@@ -564,10 +558,10 @@ const EditEbayGoods = ({ setOpen, open, goodsId }) => {
   // 刊登类型为拍卖, 库存为1
   useEffect(() => {
     if (formik.values.format === ListingTypeEnum.AUCTION) {
-      formik.setFieldValue('availableQuantity', '1');
+      formik.setFieldValue('availableQuantity', 1);
     }
   }, [formik.values.format]);
-  
+
   return (
     <>
       <Dialog maxWidth="lg" open={open} onClose={handleClose}>
@@ -590,7 +584,6 @@ const EditEbayGoods = ({ setOpen, open, goodsId }) => {
                       value={formik.values.siteId}
                       name="siteId"
                       onBlur={formik.handleBlur}
-                      onChange={formik.handleChange}
                       onChange={async (e) => {
                         localStorage.setItem('globalId', e.target.value);
                         const site = sitesOptions.find((site) => site.siteId === e.target.value);
@@ -662,7 +655,7 @@ const EditEbayGoods = ({ setOpen, open, goodsId }) => {
                   {/* 店铺分类 */}
                   <FormControl
                     style={{ minWidth: 300 }}
-                    error={Boolean(formik.touched.categoryId && formik.errors.categoryId)}
+                    error={Boolean(formik.touched.storeCategoryNames && formik.errors.storeCategoryNames)}
                     sx={{ ...theme.typography.otherInput }}
                   >
                     <FormLabel htmlFor="channel-category-label" style={{ marginBottom: '10px' }}>
@@ -682,7 +675,7 @@ const EditEbayGoods = ({ setOpen, open, goodsId }) => {
                       placeholder={formik.values.storeCategoryNames ? formik.values.storeCategoryNames[0] : '请选择'}
                       onChange={(value, e) => {
                         if (value) {
-                          formik.setFieldValue('storeCategoryNames', '/' + getPath(value, storeCategories).join('/'));
+                          formik.setFieldValue('storeCategoryNames.0', '/' + getPath(value, storeCategories).join('/'));
                         } else {
                           formik.setFieldValue('storeCategoryNames', '');
                         }
@@ -717,12 +710,7 @@ const EditEbayGoods = ({ setOpen, open, goodsId }) => {
                           {formik.touched.product?.title && formik.errors.product?.title}
                         </FormHelperText>
                       </Stack>
-                      <LoadingButton
-                        loading={synthesisButtonLoading}
-                        variant="outlined"
-                        startIcon={<IconLoader />}
-                        onClick={() => identify(formik.setFieldValue)}
-                      >
+                      <LoadingButton loading={synthesisButtonLoading} variant="outlined" startIcon={<IconLoader />} onClick={identify}>
                         识别
                       </LoadingButton>
                     </Stack>
@@ -754,7 +742,7 @@ const EditEbayGoods = ({ setOpen, open, goodsId }) => {
                             <img
                               alt="第一张"
                               style={{ width: '200px', height: '300px' }}
-                              src={ImageUrl + formik.values.product.imageUrls[0]}
+                              src={formik.values.product.imageUrls[0]}
                             />
                           ) : (
                             <IconPlus></IconPlus>
@@ -775,7 +763,7 @@ const EditEbayGoods = ({ setOpen, open, goodsId }) => {
                             <img
                               alt="第二张"
                               style={{ width: '200px', height: '300px' }}
-                              src={ImageUrl + formik.values.product.imageUrls[1]}
+                              src={formik.values.product.imageUrls[1]}
                             />
                           ) : (
                             <IconPlus></IconPlus>
@@ -953,7 +941,14 @@ const EditEbayGoods = ({ setOpen, open, goodsId }) => {
                       placeholder="刊登类目选择"
                       size="lg"
                       loading={categoryLoading}
-                      onChange={(value) => formik.setFieldValue('categoryId', value || '')}
+                      value={formik.values.categoryId}
+                      onChange={async (value) => {
+                        await formik.setFieldValue('categoryId', value || '');
+                        getConditionOption({ categoryId: value, marketplaceId: formik.values.marketplaceId }).then();
+                        getAspectsForCategory({ defaultCategoryTreeId, categoryId: value }).then();
+                        await formik.setFieldValue('condition', '');
+                        await formik.setFieldValue('conditionDescriptors', []);
+                      }}
                     ></Cascader>
                     {formik.errors.categoryId && (
                       <FormHelperText error id="helper-tex-channel-category-label">
@@ -1222,7 +1217,7 @@ const EditEbayGoods = ({ setOpen, open, goodsId }) => {
                             <Autocomplete
                               multiple
                               value={formik.values.product.aspects[item.localizedAspectName] || []}
-                              onChange={(event, params, reason, details) => {
+                              onChange={(event, params) => {
                                 const inputValue = params.map((item) => {
                                   if (typeof item === 'string') {
                                     return item;
@@ -1515,16 +1510,22 @@ const EditEbayGoods = ({ setOpen, open, goodsId }) => {
         </DialogContent>
         <DialogActions>
           <Button onClick={handleClose}>取消</Button>
-          <Button type="submit" onClick={(e)=>{
-            formik.setFieldValue('btnType', btnType.save);
-            formik.handleSubmit(e);
-          }}>
+          <Button
+            type="submit"
+            onClick={(e) => {
+              formik.setFieldValue('btnType', btnType.save);
+              formik.handleSubmit(e);
+            }}
+          >
             保存
           </Button>
-          <Button type="submit" onClick={()=>{
-            formik.setFieldValue('btnType', btnType.publish);
-            formik.handleSubmit();
-          }}>
+          <Button
+            type="submit"
+            onClick={() => {
+              formik.setFieldValue('btnType', btnType.publish);
+              formik.handleSubmit();
+            }}
+          >
             刊登
           </Button>
         </DialogActions>

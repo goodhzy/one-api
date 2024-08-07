@@ -512,7 +512,7 @@ func PublishEbayGoods(c *gin.Context) {
 		return
 	}
 	var path = "/sell/inventory/v1/inventory_item/" + ebayProduct.SKU
-	payloadBytes, err := json.Marshal(map[string]interface{}{
+	var payLoadJson = map[string]interface{}{
 		//"availability":         ebayProduct.Availability,
 		"condition":            ebayProduct.Condition,
 		"conditionDescription": ebayProduct.ConditionDescription,
@@ -520,7 +520,14 @@ func PublishEbayGoods(c *gin.Context) {
 		//"packageWeightAndSize": ebayProduct.PackageWeightAndSize,
 		"product": ebayProduct.Product,
 		"locale":  ebayProduct.Locale,
-	})
+	}
+	//payLoadJson["availability"] = map[string]interface{}{
+	//	"shipToLocationAvailability": map[string]interface{}{
+	//		"quantity":         3,
+	//		"availabilityType": "IN_STOCK",
+	//	},
+	//}
+	payloadBytes, err := json.Marshal(payLoadJson)
 	resp, err := doEbayRequest(c, "PUT", path, payloadBytes, nil, "")
 	if err != nil {
 		c.JSON(http.StatusOK, gin.H{
@@ -567,19 +574,25 @@ func PublishEbayGoods(c *gin.Context) {
 		createOfferMethod = "PUT"
 	}
 	var createOfferPayload []byte
-	createOfferPayload, err = json.Marshal(map[string]interface{}{
+
+	var createOfferPayloadJson = map[string]interface{}{
 		"sku":                 ebayProduct.SKU,
 		"availableQuantity":   ebayProduct.AvailableQuantity,
 		"format":              ebayProduct.Format,
 		"categoryId":          ebayProduct.CategoryId,
 		"secondaryCategoryId": ebayProduct.SecondaryCategoryId,
-		"listingDuration":     ebayProduct.ListingDuration,
 		"listingPolicies":     ebayProduct.ListingPolicies,
 		"pricingSummary":      ebayProduct.PricingSummary,
 		"storeCategoryNames":  ebayProduct.StoreCategoryNames,
 		"marketplaceId":       ebayProduct.MarketplaceId,
 		"merchantLocationKey": ebayProduct.MerchantLocationKey,
-	})
+	}
+	if ebayProduct.ListingDuration != "" {
+		createOfferPayloadJson["listingDuration"] = ebayProduct.ListingDuration
+	}
+
+	createOfferPayload, err = json.Marshal(createOfferPayloadJson)
+
 	if err != nil {
 		c.JSON(http.StatusOK, gin.H{
 			"success": false,
