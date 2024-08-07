@@ -13,6 +13,7 @@ const Setting = Loadable(lazy(() => import('views/Setting')));
 const Token = Loadable(lazy(() => import('views/Token')));
 const Identify = Loadable(lazy(() => import('views/Identify')));
 const EbayControl = loadable(lazy(()=>import ('views/EbayControl')))
+const Picture = loadable(lazy(()=>import ('views/Picture')))
 const Topup = Loadable(lazy(() => import('views/Topup')));
 const User = Loadable(lazy(() => import('views/User')));
 const Profile = Loadable(lazy(() => import('views/Profile')));
@@ -66,6 +67,10 @@ const MainRoutes = {
     {
       path: 'ebayControl',
       element: <EbayControl/>
+    },
+    {
+      path: 'picture',
+      element: <Picture />
     },
     {
       path: 'topup',
