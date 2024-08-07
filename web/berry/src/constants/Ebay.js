@@ -31,3 +31,9 @@ export const AspectDataTypeEnum = {
   DATE: 'DATE',
   STRING_ARRAY: 'STRING_ARRAY',
 }
+
+// 刊登类型
+export const ListingTypeEnum = {
+  FIXED_PRICE: 'FIXED_PRICE',
+  AUCTION: 'AUCTION',
+}

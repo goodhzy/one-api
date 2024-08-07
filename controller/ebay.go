@@ -1226,9 +1226,9 @@ func GetListingDuration(c *gin.Context) {
 		{"label": "5天", "value": "Days_5"},
 		{"label": "7天", "value": "Days_7"},
 		{"label": "10天", "value": "Days_10"},
-		{"label": "21天", "value": "Days_21"},
-		{"label": "30天", "value": "Days_30"},
-		{"label": "GTC", "value": "GTC"},
+		//{"label": "21天", "value": "Days_21"},
+		//{"label": "30天", "value": "Days_30"},
+		//{"label": "GTC", "value": "GTC"},
 	}
 
 	c.JSON(http.StatusOK, gin.H{

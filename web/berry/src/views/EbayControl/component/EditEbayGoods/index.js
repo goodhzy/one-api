@@ -3,6 +3,7 @@ import {
   Box,
   Button,
   Checkbox,
+  Chip,
   Dialog,
   DialogActions,
   DialogContent,
@@ -39,29 +40,51 @@ import { MODEL } from '../../../../utils/preset';
 import { useEffect, useState } from 'react';
 import * as Yup from 'yup';
 import { ImageUrl } from '../../../../utils/api';
-import { CardinalityEnum, ConditionEnum, ModeEnum } from '../../../../constants/Ebay';
+import { CardinalityEnum, ConditionEnum, ListingTypeEnum, ModeEnum } from '../../../../constants/Ebay';
 import _ from 'lodash';
 import { CheckTreePicker, MultiCascader } from 'rsuite';
 import { validate } from '@babel/core/lib/config/validation/options';
-import '@wangeditor/editor/dist/css/style.css' // 引入 css
-import { Editor, Toolbar } from '@wangeditor/editor-for-react'
-import { IDomEditor, IEditorConfig, IToolbarConfig } from '@wangeditor/editor'
+import '@wangeditor/editor/dist/css/style.css'; // 引入 css
+import { Editor, Toolbar } from '@wangeditor/editor-for-react';
+import { IDomEditor, IEditorConfig, IToolbarConfig } from '@wangeditor/editor';
+
+const btnType = {
+  save: 'save',
+  publish: 'publish'
+}
+
 const validationSchema = Yup.object().shape({
   siteId: Yup.string().required('站点不能为空'),
   categoryId: Yup.string().required('刊登类目为必填'),
   product: Yup.object().shape({
     title: Yup.string().required('商品标题不能为空'),
-    description: Yup.string().required('商品描述不能为空'),
-  })
+    description: Yup.string().required('商品描述不能为空')
+  }),
+  listingPolicies: Yup.object().shape({
+    paymentPolicyId: Yup.string().required('支付政策为必填'),
+    returnPolicyId: Yup.string().required('退货政策为必填'),
+    fulfillmentPolicyId: Yup.string().required('发货政策为必填')
+  }),
+  merchantLocationKey: Yup.string().required('物品所在地政策为必填'),
+  listingDuration: Yup.string().when('format', {
+    is: (format) => format === ListingTypeEnum.AUCTION,
+    then: Yup.string().required('拍卖时长为必填')
+  }),
+  pricingSummary: Yup.object().when('format', {
+    is: (format) => format === ListingTypeEnum.AUCTION,
+    then: Yup.object().shape({
+      auctionStartPrice: Yup.object().shape({
+        value: Yup.string().required('价格为必填')
+      })
+    }),
+    otherwise: Yup.object().shape({
+      price: Yup.object().shape({
+        value: Yup.string().required('价格为必填')
+      })
+    })
+  }),
+  sku: Yup.string().required('SKU为必填'),
 });
-
-const validateAspect = (value) => {
-  // value是数组, 且长度大于0
-  if (value && value.length > 0) {
-    return true;
-  }
-  return false;
-}
 
 const originInputs = {
   is_edit: false,
@@ -74,20 +97,39 @@ const originInputs = {
   conditionDescriptors: [],
   display_name: '',
   categories: '',
-  format: '',
+  format: ListingTypeEnum.FIXED_PRICE, //刊登类型
   locale: '',
-  marketplaceId: 'EBAY_US',
+  marketplaceId: '',
   product: {
     title: '',
     subtitle: '',
     imageUrls: [],
     sku: '',
     locale: '',
-    availableQuantity: 0,
     aspects: {},
-    description: '',
+    description: ''
   },
-  self_sku: ''
+  storeCategoryNames: [],
+  self_sku: '',
+  sku: '',
+  listingPolicies: {
+    paymentPolicyId: '',
+    returnPolicyId: '',
+    fulfillmentPolicyId: ''
+  },
+  merchantLocationKey: '',
+  pricingSummary: {
+    price: {
+      currency: 'USD',
+      value: ''
+    },
+    auctionStartPrice: {
+      currency: 'USD',
+      value: ''
+    }
+  },
+  availableQuantity: '',
+  listingDuration: ''
 };
 
 const EditEbayGoods = ({ setOpen, open, goodsId }) => {
@@ -106,27 +148,33 @@ const EditEbayGoods = ({ setOpen, open, goodsId }) => {
     fetchStoreCategories,
     fetchConditionOption,
     fetchAspectsForCategory,
-    fetchDefaultCategoryTreeId
+    fetchDefaultCategoryTreeId,
+    fetchPaymentPolicy,
+    fetchReturnPolicy,
+    fetchFulfillmentPolicy,
+    fetchInventoryLocation,
+    fetchListingDuration
   } = OptionsApi();
 
-  const [editor, setEditor] = useState(null)
-  const [html, setHtml] = useState('<p>hello</p>')
+  const [editor, setEditor] = useState(null);
+  const [html, setHtml] = useState('<p>hello</p>');
   // 工具栏配置
-  const toolbarConfig = { }                        // JS 语法
+  const toolbarConfig = {}; // JS 语法
 
   // 编辑器配置
-    const editorConfig = {                         // JS 语法
-    placeholder: '请输入内容...',
-  }
+  const editorConfig = {
+    // JS 语法
+    placeholder: '请输入内容...'
+  };
 
   // 及时销毁 editor ，重要！
   useEffect(() => {
     return () => {
-      if (editor == null) return
-      editor.destroy()
-      setEditor(null)
-    }
-  }, [editor])
+      if (editor == null) return;
+      editor.destroy();
+      setEditor(null);
+    };
+  }, [editor]);
 
   const [sitesOptions, setSitesOptions] = useState([]);
   const [typeOptions, setTypeOptions] = useState([]);
@@ -149,11 +197,25 @@ const EditEbayGoods = ({ setOpen, open, goodsId }) => {
 
   const [itemAspectsForCategoryOptions, setItemAspectsForCategoryOptions] = useState([]);
 
+  const [paymentPolicyOptions, setPaymentPolicyOptions] = useState([]);
+  const [paymentPolicyLoading, setPaymentPolicyLoading] = useState(false);
+  const [returnPolicyOptions, setReturnPolicyOptions] = useState([]);
+  const [returnPolicyLoading, setReturnPolicyLoading] = useState(false);
+  const [fulfillmentPolicyOptions, setFulfillmentPolicyOptions] = useState([]);
+  const [fulfillmentPolicyLoading, setFulfillmentPolicyLoading] = useState(false);
+  const [inventoryLocationOptions, setInventoryLocationOptions] = useState([]);
+  const [inventoryLocationLoading, setInventoryLocationLoading] = useState(false);
+
+  const [listingDurationOptions, setListingDurationOptions] = useState([]);
+  const [listingDurationLoading, setListingDurationLoading] = useState(false);
+
   const formik = useFormik({
     initialValues: originInputs,
     validationSchema: validationSchema,
-    onSubmit: (values) => {
-      console.log(values);
+    onSubmit: (values, formikHelpers) => {
+      const {btnType, ...restValues} = values
+      console.log(btnType);
+      console.log(restValues);
     }
   });
   const fetchGoodsDetail = async () => {
@@ -185,76 +247,19 @@ const EditEbayGoods = ({ setOpen, open, goodsId }) => {
   const fetchOptions = async () => {
     fetchGoodsDetail().then();
 
-    const sites = await fetchSitesOption();
-    setSitesOptions(sites);
-    if (sites && sites.length > 0) {
-      let defaultSite = sites.find((site) => site.isDefault === 1);
-      if (!defaultSite) {
-        defaultSite = sites[0];
+    fetchPromp().then();
+
+    fetchTypeOption().then(
+      (res) => {
+        setTypeOptions(res);
       }
-      await formik.setFieldValue('siteId', defaultSite.siteId);
-      await formik.setFieldValue('locale', defaultSite.marketplaceId);
-      await formik.setFieldValue('marketplaceId', defaultSite.marketplaceId);
-    }
+    )
+    await getSiteOptions();
 
-    setTypeOptions(await fetchTypeOption());
-    setPrompt(await fetchPromp());
+    await getEbayAccountOptions();
 
-    let accounts = await fetchEbayAccountOption();
-    setAccountList(accounts);
-    if (accounts[0]) {
-      await formik.setFieldValue('ebayId', accounts[0].id);
-      setEbayAccountId(accounts[0].id);
+    getEbayAllOptions().then();
 
-      const defaultCategoryTreeIdRes = await fetchDefaultCategoryTreeId();
-      setDefaultCategoryTreeId(defaultCategoryTreeIdRes);
-
-      // setCategoryLoading(true);
-      // setCategoryOptions(await fetchCategoryOption());
-      // setCategoryLoading(false);
-
-      setStoreCategoryLoading(true);
-      // const { storeCategories } = await fetchStoreCategories();
-      const storeCategories = [
-        {
-          categoryId: '1',
-          categoryName: '1****r',
-          order: '0',
-          level: 1,
-          childrenCategories: [
-            {
-              categoryId: '2*****',
-              categoryName: 'D******2',
-              order: '0',
-              level: 2,
-              childrenCategories: [
-                {
-                  categoryId: '3*****',
-                  categoryName: 'D******3',
-                  order: '0',
-                  level: 3
-                }
-              ]
-            }
-          ]
-        },
-        {
-          categoryId: '2',
-          categoryName: 'D******s',
-          order: '1',
-          level: 1
-        }
-      ];
-      //
-      setStoreCategories(storeCategories);
-      setStoreCategoryLoading(false);
-
-      getAspectsForCategory({ defaultCategoryTreeIdRes }).then();
-    } else {
-      showInfo('请添加先ebay账号');
-      // await new Promise((resolve) => setTimeout(resolve, 2000));
-      navigate('/panel/profile');
-    }
   };
 
   const previewFile = (file, index) => {
@@ -307,7 +312,6 @@ const EditEbayGoods = ({ setOpen, open, goodsId }) => {
   const handleSave = async () => {
     try {
       console.log(formik.values);
-      return;
       const res = await API.post('/api/ebay_goods_save', formik.values);
       const { success, message } = res.data;
       if (success) {
@@ -340,6 +344,94 @@ const EditEbayGoods = ({ setOpen, open, goodsId }) => {
     }
   }, [open]);
 
+  const getSiteOptions = async () => {
+    try {
+      const sites = await fetchSitesOption();
+      setSitesOptions(sites);
+      if (sites && sites.length > 0) {
+        let defaultSite = sites.find((site) => site.isDefault === 1);
+        if (!defaultSite) {
+          defaultSite = sites[0];
+        }
+        await formik.setFieldValue('siteId', defaultSite.siteId);
+        await formik.setFieldValue('locale', defaultSite.marketplaceId);
+        await formik.setFieldValue('marketplaceId', defaultSite.marketplaceId);
+        localStorage.setItem('globalId', defaultSite.globalId);
+      }
+    }catch (e) {
+
+    }
+   
+  }
+
+  const getEbayAccountOptions = async () => {
+    try{
+      let accounts = await fetchEbayAccountOption();
+      setAccountList(accounts);
+      if (accounts[0]) {
+        await formik.setFieldValue('ebayId', accounts[0].id);
+        localStorage.setItem('ebayId', accounts[0].id);
+
+      } else {
+        showInfo('请添加先ebay账号');
+        // await new Promise((resolve) => setTimeout(resolve, 2000));
+        navigate('/panel/profile');
+      }
+
+    }catch (e) {
+
+    }
+
+  }
+
+  const getEbayAllOptions = async () => {
+    const defaultCategoryTreeIdRes = await getDefaultCategoryTreeId();
+
+    console.log(defaultCategoryTreeIdRes);
+    getCategoryOptions({categoryTreeId:defaultCategoryTreeIdRes}).then();
+
+    getStoreCategories().then();
+
+    getAspectsForCategory({ defaultCategoryTreeIdRes }).then();
+
+    getPaymentPolicy().then();
+
+    getReturnPolicy().then();
+
+    getFulfillmentPolicy().then();
+
+    getInventoryLocation().then();
+
+    getListingDuration().then();
+  }
+
+
+  const getDefaultCategoryTreeId = async () => {
+    try {
+      const defaultCategoryTreeIdRes = await fetchDefaultCategoryTreeId();
+      setDefaultCategoryTreeId(defaultCategoryTreeIdRes);
+      return defaultCategoryTreeIdRes;
+    }catch (e) {
+
+    }
+  }
+
+  const getCategoryOptions = async ({categoryTreeId = 0}) => {
+    try {
+      setCategoryLoading(true);
+      const categories = await fetchCategoryOption({
+        marketplace_id: formik.values.marketplaceId,
+        categoryTreeId
+      });
+      console.log(categories);
+      console.log('categories');
+
+      setCategoryOptions(categories);
+    }finally {
+      setCategoryLoading(false);
+    }
+  }
+  
   const getConditionOption = async () => {
     const { itemConditionPolicies } = await fetchConditionOption({
       marketplace_id: formik.values.marketplaceId,
@@ -360,12 +452,13 @@ const EditEbayGoods = ({ setOpen, open, goodsId }) => {
 
   const getAspectsForCategory = async ({ defaultCategoryTreeId }) => {
     try {
+      if(!formik.values.categoryId) {
+        return;
+      }
       const { aspects } = await fetchAspectsForCategory({
         category_tree_id: defaultCategoryTreeId || 0,
-        category_id: formik.values.categoryId || '183050'
+        category_id: formik.values.categoryId
       });
-      console.log(aspects);
-      console.log('----------');
       setItemAspectsForCategoryOptions(aspects);
     } catch (error) {}
   };
@@ -383,6 +476,98 @@ const EditEbayGoods = ({ setOpen, open, goodsId }) => {
     return false;
   };
 
+  const getStoreCategories = async () => {
+    try {
+      setStoreCategoryLoading(true);
+      const { storeCategories } = await fetchStoreCategories();
+      setStoreCategories(storeCategories);
+    } finally {
+      setStoreCategoryLoading(false);
+    }
+  };
+
+  // 级联获取路径, item为最后一级的值
+  const getPath = (item, list) => {
+    let path = [];
+    const find = (list) => {
+      for (let i = 0; i < list.length; i++) {
+        if (list[i].categoryName === item) {
+          path.push(list[i].categoryName);
+          return true;
+        }
+        if (list[i].childrenCategories) {
+          path.push(list[i].categoryName);
+          if (find(list[i].childrenCategories)) {
+            return true;
+          } else {
+            path.pop();
+          }
+        }
+      }
+    };
+    find(list);
+    return path;
+  };
+
+  const getPaymentPolicy = async () => {
+    try {
+      setPaymentPolicyLoading(true);
+      const { paymentPolicies } = await fetchPaymentPolicy();
+      setPaymentPolicyOptions(paymentPolicies);
+    } finally {
+      setPaymentPolicyLoading(false);
+    }
+  };
+
+  const getReturnPolicy = async () => {
+    try {
+      setReturnPolicyLoading(true);
+      const { returnPolicies } = await fetchReturnPolicy();
+      setReturnPolicyOptions(returnPolicies);
+    } finally {
+      setReturnPolicyLoading(false);
+    }
+  };
+
+  const getFulfillmentPolicy = async () => {
+    setFulfillmentPolicyLoading(true);
+
+    try {
+      const { fulfillmentPolicies } = await fetchFulfillmentPolicy();
+      setFulfillmentPolicyOptions(fulfillmentPolicies);
+    } finally {
+      setFulfillmentPolicyLoading(false);
+    }
+  };
+
+  const getInventoryLocation = async () => {
+    setInventoryLocationLoading(true);
+
+    try {
+      const { locations } = await fetchInventoryLocation();
+      setInventoryLocationOptions(locations);
+    } finally {
+      setInventoryLocationLoading(false);
+    }
+  };
+
+  const getListingDuration = async () => {
+    setListingDurationLoading(true);
+
+    try {
+      const data = await fetchListingDuration();
+      setListingDurationOptions(data);
+    } finally {
+      setListingDurationLoading(false);
+    }
+  };
+  // 刊登类型为拍卖, 库存为1
+  useEffect(() => {
+    if (formik.values.format === ListingTypeEnum.AUCTION) {
+      formik.setFieldValue('availableQuantity', '1');
+    }
+  }, [formik.values.format]);
+  
   return (
     <>
       <Dialog maxWidth="lg" open={open} onClose={handleClose}>
@@ -390,8 +575,6 @@ const EditEbayGoods = ({ setOpen, open, goodsId }) => {
         <DialogContent>
           <form noValidate onSubmit={formik.handleSubmit}>
             <Stack spacing={3}>
-              {JSON.stringify(formik.touched)}
-              {JSON.stringify(formik.errors)}
               <SubCard title="基础信息">
                 <Stack direction="column" justifyContent="flex-start" alignItems="flex-start" spacing={{ xs: 1, sm: 2, md: 4 }}>
                   {/*站点*/}
@@ -408,6 +591,13 @@ const EditEbayGoods = ({ setOpen, open, goodsId }) => {
                       name="siteId"
                       onBlur={formik.handleBlur}
                       onChange={formik.handleChange}
+                      onChange={async (e) => {
+                        localStorage.setItem('globalId', e.target.value);
+                        const site = sitesOptions.find((site) => site.siteId === e.target.value);
+                        await formik.setFieldValue('locale', site.marketplaceId);
+                        await formik.setFieldValue('marketplaceId', site.marketplaceId);
+                        formik.handleChange(e);
+                      }}
                       MenuProps={{
                         PaperProps: {
                           style: {
@@ -444,7 +634,7 @@ const EditEbayGoods = ({ setOpen, open, goodsId }) => {
                       name="ebayId"
                       onBlur={formik.handleBlur}
                       onChange={(e) => {
-                        setEbayAccountId(e.target.value);
+                        localStorage.setItem('ebayId', e.target.value);
                         formik.handleChange(e);
                       }}
                       MenuProps={{
@@ -478,34 +668,29 @@ const EditEbayGoods = ({ setOpen, open, goodsId }) => {
                     <FormLabel htmlFor="channel-category-label" style={{ marginBottom: '10px' }}>
                       店铺分类
                     </FormLabel>
-                    <CheckTreePicker
-                      defaultExpandAll
-                      data={storeCategories}
-                      popupStyle={{ zIndex: 9999 }}
-                      searchable={false}
-                      style={{ width: 280 }}
-                      placeholder="Select without search"
-                      labelKey="categoryName"
-                      valueKey="categoryName"
-                      childrenKey="childrenCategories"
-                    />
-                    <CheckTreePicker
-                      name="storeCategoryIds"
-                      popupStyle={{ zIndex: 9999 }}
-                      preventOverflow={true}
-                      data={storeCategories}
-                      searchable={true}
-                      placeholder="店铺分类选择"
+                    <Cascader
+                      appearance="default"
                       size="lg"
                       loading={storeCategoryLoading}
-                      labelKey="categoryName"
-                      valueKey="categoryName"
-                      childrenKey="childrenCategories"
-                      onChange={(value) => formik.setFieldValue('storeCategoryNames', value || '')}
-                    ></CheckTreePicker>
-                    {formik.errors.categoryId && (
+                      popupStyle={{ zIndex: 9999 }}
+                      preventOverflow={true}
+                      labelKey={'categoryName'}
+                      valueKey={'categoryName'}
+                      childrenKey={'childrenCategories'}
+                      data={storeCategories}
+                      style={{ width: 300 }}
+                      placeholder={formik.values.storeCategoryNames ? formik.values.storeCategoryNames[0] : '请选择'}
+                      onChange={(value, e) => {
+                        if (value) {
+                          formik.setFieldValue('storeCategoryNames', '/' + getPath(value, storeCategories).join('/'));
+                        } else {
+                          formik.setFieldValue('storeCategoryNames', '');
+                        }
+                      }}
+                    />
+                    {formik.errors.storeCategoryNames && (
                       <FormHelperText error id="helper-tex-channel-category-label">
-                        {formik.errors.categoryId}
+                        {formik.errors.storeCategoryNames}
                       </FormHelperText>
                     )}
                   </FormControl>
@@ -610,10 +795,10 @@ const EditEbayGoods = ({ setOpen, open, goodsId }) => {
                       label="子标题"
                       type="text"
                       value={formik.values.product.subtitle}
-                      name="subtitle"
+                      name="product.subtitle"
                       onBlur={formik.handleBlur}
                       onChange={formik.handleChange}
-                      inputProps={{ autoComplete: 'title' }}
+                      inputProps={{ autoComplete: 'subtitle' }}
                       aria-describedby="helper-text-channel-childTitle-label"
                     />
                     {formik.touched.product?.subtitle && formik.errors.product?.subtitle && (
@@ -633,6 +818,121 @@ const EditEbayGoods = ({ setOpen, open, goodsId }) => {
                         return <FormControlLabel key={option.value} value={option.value} control={<Radio />} label={option.label} />;
                       })}
                     </RadioGroup>
+                  </FormControl>
+                  {formik.values.format === ListingTypeEnum.AUCTION ? (
+                    <Stack direction="row" spacing={2}>
+                      <FormControl
+                        style={{ minWidth: 300 }}
+                        error={Boolean(
+                          formik.touched.pricingSummary?.auctionStartPrice?.value && formik.errors.pricingSummary?.auctionStartPrice?.value
+                        )}
+                        sx={{ ...theme.typography.otherInput }}
+                      >
+                        <InputLabel htmlFor="channel-auctionStartPrice-label">起拍价</InputLabel>
+                        <OutlinedInput
+                          id="channel-auctionStartPrice-label"
+                          label="起拍价"
+                          type="text"
+                          value={formik.values.pricingSummary.auctionStartPrice.value}
+                          name="pricingSummary.auctionStartPrice.value"
+                          onBlur={formik.handleBlur}
+                          onChange={formik.handleChange}
+                          inputProps={{ autoComplete: 'auctionStartPrice' }}
+                          aria-describedby="helper-text-channel-auctionStartPrice-label"
+                        />
+                        {formik.touched.pricingSummary?.auctionStartPrice?.value &&
+                          formik.errors.pricingSummary?.auctionStartPrice?.value && (
+                            <FormHelperText error id="helper-tex-channel-auctionStartPrice-label">
+                              {formik.errors.pricingSummary?.auctionStartPrice?.value}
+                            </FormHelperText>
+                          )}
+                      </FormControl>
+                      <FormControl
+                        style={{ minWidth: 300 }}
+                        error={Boolean(formik.touched.listingDuration && formik.errors.listingDuration)}
+                        sx={{ ...theme.typography.otherInput }}
+                      >
+                        <InputLabel htmlFor="channel-listingDuration-label">拍卖时间</InputLabel>
+                        <Select
+                          id="channel-listingDuration-label"
+                          label="拍卖时间"
+                          value={formik.values.listingDuration}
+                          name="listingDuration"
+                          onBlur={formik.handleBlur}
+                          onChange={formik.handleChange}
+                          MenuProps={{
+                            PaperProps: {
+                              style: {
+                                maxHeight: 200
+                              }
+                            }
+                          }}
+                        >
+                          {listingDurationOptions.map((option) => {
+                            return (
+                              <MenuItem key={option.value} value={option.value}>
+                                {option.label}
+                              </MenuItem>
+                            );
+                          })}
+                        </Select>
+                        {formik.touched.listingDuration && formik.errors.listingDuration && (
+                          <FormHelperText error id="helper-tex-channel-listingDuration-label">
+                            {formik.errors.listingDuration}
+                          </FormHelperText>
+                        )}
+                      </FormControl>
+                    </Stack>
+                  ) : null}
+
+                  {/*价格*/}
+                  <FormControl
+                    style={{ minWidth: 300 }}
+                    error={Boolean(formik.touched.pricingSummary?.price?.value && formik.errors.pricingSummary?.price?.value)}
+                    sx={{ ...theme.typography.otherInput }}
+                  >
+                    <InputLabel htmlFor="channel-price-label">价格</InputLabel>
+                    <OutlinedInput
+                      id="channel-price-label"
+                      label="价格"
+                      type="number"
+                      value={formik.values.pricingSummary?.price?.value}
+                      name="pricingSummary.price.value"
+                      onBlur={formik.handleBlur}
+                      onChange={formik.handleChange}
+                      inputProps={{ autoComplete: 'price' }}
+                      aria-describedby="helper-text-channel-price-label"
+                    />
+                    {formik.touched.pricingSummary?.price?.value && formik.errors.pricingSummary?.price?.value && (
+                      <FormHelperText error id="helper-tex-channel-price-label">
+                        {formik.errors.pricingSummary?.price?.value}
+                      </FormHelperText>
+                    )}
+                  </FormControl>
+                  {/*销售库存*/}
+                  <FormControl
+                    style={{ minWidth: 300 }}
+                    error={Boolean(formik.touched.availableQuantity && formik.errors.availableQuantity)}
+                    sx={{ ...theme.typography.otherInput }}
+                  >
+                    <InputLabel htmlFor="channel-availableQuantity-label">销售库存</InputLabel>
+                    <OutlinedInput
+                      id="channel-availableQuantity-label"
+                      label="销售库存"
+                      type="number"
+                      value={formik.values.availableQuantity}
+                      name="availableQuantity"
+                      onBlur={formik.handleBlur}
+                      onChange={formik.handleChange}
+                      inputProps={{ autoComplete: 'availableQuantity' }}
+                      aria-describedby="helper-text-channel-availableQuantity-label"
+                      readOnly={formik.values.format === ListingTypeEnum.AUCTION}
+                    />
+                    {formik.touched.availableQuantity && formik.errors.availableQuantity && (
+                      <FormHelperText error id="helper-tex-channel-availableQuantity-label">
+                        {formik.errors.availableQuantity}
+                      </FormHelperText>
+                    )}
                   </FormControl>
 
                   <FormControl
@@ -818,11 +1118,11 @@ const EditEbayGoods = ({ setOpen, open, goodsId }) => {
                     )}
                   </FormControl>
                   <FormControl sx={{ ...theme.typography.otherInput }}>
-                    <InputLabel htmlFor="channel-title-label">平台sku</InputLabel>
+                    <InputLabel htmlFor="channel-title-label">库存sku</InputLabel>
                     <OutlinedInput
                       id="channel-title-label"
                       style={{ width: '650px' }}
-                      label="平台sku"
+                      label="库存sku"
                       type="text"
                       value={formik.values.self_sku}
                       name="self_sku"
@@ -832,13 +1132,37 @@ const EditEbayGoods = ({ setOpen, open, goodsId }) => {
                       readOnly={true}
                     />
                   </FormControl>
+                  <FormControl sx={{ ...theme.typography.otherInput }} error={Boolean(formik.touched.sku && formik.errors.sku)}>
+                    <InputLabel htmlFor="channel-title-label">ebay sku</InputLabel>
+                    <OutlinedInput
+                      id="channel-title-label"
+                      style={{ width: '650px' }}
+                      label="ebay sku"
+                      type="text"
+                      value={formik.values.sku}
+                      name="sku"
+                      onBlur={formik.handleBlur}
+                      onChange={formik.handleChange}
+                      aria-describedby="helper-text-conditionDescription-label"
+                    />
+                    {formik.touched.sku && formik.errors.sku && (
+                      <FormHelperText error id="helper-tex-channel-title-label">
+                        {formik.errors.sku}
+                      </FormHelperText>
+                    )}
+                  </FormControl>
                 </Stack>
               </SubCard>
               <SubCard title="类目属性">
                 <Stack direction="column" justifyContent="flex-start" alignItems="flex-start" spacing={{ xs: 1, sm: 2, md: 4 }}>
                   {itemAspectsForCategoryOptions.map((item) => {
                     return (
-                      <FormControl style={{ minWidth: 300 }} sx={{ ...theme.typography.otherInput }} key={item.localizedAspectName} error={Boolean(item.aspectConstraint.aspectRequired)}>
+                      <FormControl
+                        style={{ minWidth: 300 }}
+                        sx={{ ...theme.typography.otherInput }}
+                        key={item.localizedAspectName}
+                        error={Boolean(item.aspectConstraint.aspectRequired)}
+                      >
                         {item.aspectConstraint.aspectMode === ModeEnum.SELECTION_ONLY ? (
                           <>
                             <InputLabel id="demo-multiple-checkbox-label">{item.localizedAspectName}</InputLabel>
@@ -982,31 +1306,26 @@ const EditEbayGoods = ({ setOpen, open, goodsId }) => {
                         {/*    </FormHelperText>*/}
                         {/*  )}*/}
                       </FormControl>
-                    )
+                    );
                   })}
                   <div>商品描述</div>
                   <FormControl sx={{ ...theme.typography.otherInput }} error={Boolean(!formik.product?.description)}>
-                    <div style={{ border: '1px solid #ccc', zIndex: 100}}>
-                      <Toolbar
-                        editor={editor}
-                        defaultConfig={toolbarConfig}
-                        mode="default"
-                        style={{ borderBottom: '1px solid #ccc' }}
-                      />
+                    <div style={{ border: '1px solid #ccc', zIndex: 100 }}>
+                      <Toolbar editor={editor} defaultConfig={toolbarConfig} mode="default" style={{ borderBottom: '1px solid #ccc' }} />
                       <Editor
                         defaultConfig={editorConfig}
                         value={formik.values.product.description}
                         onCreated={setEditor}
-                        onChange={editor => {
-                          formik.validateField('product.description')
-                          let html = editor.getHtml()
-                          if(html === '<p><br></p>') {
-                            html = ''
+                        onChange={(editor) => {
+                          formik.validateField('product.description');
+                          let html = editor.getHtml();
+                          if (html === '<p><br></p>') {
+                            html = '';
                           }
-                          setHtml(html)
-                          formik.setFieldValue('product.description', html)
-                          formik.setFieldTouched('product.description', html.lengt)
-                          formik.setFieldError('product.description', html.length > 0 ? undefined : '商品描述不能为空')
+                          setHtml(html);
+                          formik.setFieldValue('product.description', html);
+                          formik.setFieldTouched('product.description', html.lengt);
+                          formik.setFieldError('product.description', html.length > 0 ? undefined : '商品描述不能为空');
                         }}
                         name="product.description"
                         mode="default"
@@ -1019,15 +1338,193 @@ const EditEbayGoods = ({ setOpen, open, goodsId }) => {
                   </FormControl>
                 </Stack>
               </SubCard>
+              <SubCard title="政策信息">
+                <Stack direction="column" justifyContent="flex-start" alignItems="flex-start" spacing={{ xs: 1, sm: 2, md: 4 }}>
+                  <FormControl style={{ minWidth: 300 }} sx={{ ...theme.typography.otherInput }}>
+                    <Autocomplete
+                      value={formik.values.listingPolicies.paymentPolicyId}
+                      options={paymentPolicyOptions}
+                      loading={paymentPolicyLoading}
+                      renderOption={(props, option) => {
+                        console.log(option);
+                        console.log(props);
+                        return <li {...props}>{option.name}</li>;
+                      }}
+                      getOptionLabel={(option) => {
+                        if (typeof option === 'string') {
+                          return paymentPolicyOptions.find((item) => item.paymentPolicyId === option)?.name || '';
+                        } else if (option.name) {
+                          return option.name;
+                        }
+                        return '';
+                      }}
+                      onChange={(e, value) => {
+                        if (value) {
+                          formik.setFieldValue('listingPolicies.paymentPolicyId', value.paymentPolicyId);
+                        } else {
+                          formik.setFieldValue('listingPolicies.paymentPolicyId', '');
+                        }
+                        formik.setFieldTouched('listingPolicies.paymentPolicyId', true, false);
+                      }}
+                      onClose={(e, value) => {
+                        formik.setFieldTouched('listingPolicies.paymentPolicyId', true, false);
+                      }}
+                      renderInput={(params) => (
+                        <TextField
+                          error={Boolean(formik.touched.listingPolicies?.paymentPolicyId && formik.errors.listingPolicies?.paymentPolicyId)}
+                          {...params}
+                          label="支付政策"
+                        />
+                      )}
+                    />
+                    {formik.touched.listingPolicies?.paymentPolicyId && formik.errors.listingPolicies?.paymentPolicyId && (
+                      <FormHelperText error id="helper-tex-channel-paymentPolicyId-label">
+                        {formik.errors.listingPolicies?.paymentPolicyId}
+                      </FormHelperText>
+                    )}
+                  </FormControl>
+                  <FormControl style={{ minWidth: 300 }} sx={{ ...theme.typography.otherInput }}>
+                    <Autocomplete
+                      value={formik.values.listingPolicies.returnPolicyId}
+                      options={returnPolicyOptions}
+                      loading={returnPolicyLoading}
+                      renderOption={(props, option) => {
+                        return <li {...props}>{option.name}</li>;
+                      }}
+                      getOptionLabel={(option) => {
+                        if (typeof option === 'string') {
+                          return returnPolicyOptions.find((item) => item.returnPolicyId === option)?.name || '';
+                        } else if (option.name) {
+                          return option.name;
+                        }
+                        return '';
+                      }}
+                      onChange={(e, value) => {
+                        if (value) {
+                          formik.setFieldValue('listingPolicies.returnPolicyId', value.returnPolicyId);
+                        } else {
+                          formik.setFieldValue('listingPolicies.returnPolicyId', '');
+                        }
+                        formik.setFieldTouched('listingPolicies.returnPolicyId', true, false);
+                      }}
+                      onClose={(e, value) => {
+                        formik.setFieldTouched('listingPolicies.returnPolicyId', true, false);
+                      }}
+                      renderInput={(params) => (
+                        <TextField
+                          error={Boolean(formik.touched.listingPolicies?.returnPolicyId && formik.errors.listingPolicies?.returnPolicyId)}
+                          {...params}
+                          label="退货政策"
+                        />
+                      )}
+                    />
+                    {formik.touched.listingPolicies?.returnPolicyId && formik.errors.listingPolicies?.returnPolicyId && (
+                      <FormHelperText error id="helper-tex-channel-returnPolicyId-label">
+                        {formik.errors.listingPolicies?.returnPolicyId}
+                      </FormHelperText>
+                    )}
+                  </FormControl>
+                  <FormControl style={{ minWidth: 300 }} sx={{ ...theme.typography.otherInput }}>
+                    <Autocomplete
+                      value={formik.values.listingPolicies.fulfillmentPolicyId}
+                      options={fulfillmentPolicyOptions}
+                      loading={fulfillmentPolicyLoading}
+                      renderOption={(props, option) => {
+                        return <li {...props}>{option.name}</li>;
+                      }}
+                      getOptionLabel={(option) => {
+                        if (typeof option === 'string') {
+                          return fulfillmentPolicyOptions.find((item) => item.fulfillmentPolicyId === option)?.name || '';
+                        } else if (option.name) {
+                          return option.name;
+                        }
+                        return '';
+                      }}
+                      onChange={(e, value) => {
+                        if (value) {
+                          formik.setFieldValue('listingPolicies.fulfillmentPolicyId', value.fulfillmentPolicyId);
+                        } else {
+                          formik.setFieldValue('listingPolicies.fulfillmentPolicyId', '');
+                        }
+                        formik.setFieldTouched('listingPolicies.fulfillmentPolicyId', true, false);
+                      }}
+                      onClose={(e, value) => {
+                        formik.setFieldTouched('listingPolicies.fulfillmentPolicyId', true, false);
+                      }}
+                      renderInput={(params) => (
+                        <TextField
+                          error={Boolean(
+                            formik.touched.listingPolicies?.fulfillmentPolicyId && formik.errors.listingPolicies?.fulfillmentPolicyId
+                          )}
+                          {...params}
+                          label="发货政策"
+                        />
+                      )}
+                    />
+                    {formik.touched.listingPolicies?.fulfillmentPolicyId && formik.errors.listingPolicies?.fulfillmentPolicyId && (
+                      <FormHelperText error id="helper-tex-channel-fulfillmentPolicyId-label">
+                        {formik.errors.listingPolicies?.fulfillmentPolicyId}
+                      </FormHelperText>
+                    )}
+                  </FormControl>
+                  <FormControl style={{ minWidth: 300 }} sx={{ ...theme.typography.otherInput }}>
+                    <Autocomplete
+                      value={formik.values.merchantLocationKey}
+                      options={inventoryLocationOptions}
+                      loading={inventoryLocationLoading}
+                      renderOption={(props, option) => {
+                        return <li {...props}>{option.name}</li>;
+                      }}
+                      getOptionLabel={(option) => {
+                        if (typeof option === 'string') {
+                          return inventoryLocationOptions.find((item) => item.merchantLocationKey === option)?.name || '';
+                        } else if (option.name) {
+                          return option.name;
+                        }
+                        return '';
+                      }}
+                      onChange={(e, value) => {
+                        if (value) {
+                          formik.setFieldValue('merchantLocationKey', value.merchantLocationKey);
+                        } else {
+                          formik.setFieldValue('merchantLocationKey', '');
+                        }
+                        formik.setFieldTouched('merchantLocationKey', true, false);
+                      }}
+                      onClose={(e, value) => {
+                        formik.setFieldTouched('merchantLocationKey', true, false);
+                      }}
+                      renderInput={(params) => (
+                        <TextField
+                          error={Boolean(formik.touched.merchantLocationKey && formik.errors.merchantLocationKey)}
+                          {...params}
+                          label="物品所在地政策"
+                        />
+                      )}
+                    />
+                    {formik.touched.merchantLocationKey && formik.errors.merchantLocationKey && (
+                      <FormHelperText error id="helper-tex-channel-merchantLocationKey-label">
+                        {formik.errors.merchantLocationKey}
+                      </FormHelperText>
+                    )}
+                  </FormControl>
+                </Stack>
+              </SubCard>
             </Stack>
           </form>
         </DialogContent>
         <DialogActions>
           <Button onClick={handleClose}>取消</Button>
-          <Button type="submit" onClick={handleSave}>
+          <Button type="submit" onClick={(e)=>{
+            formik.setFieldValue('btnType', btnType.save);
+            formik.handleSubmit(e);
+          }}>
             保存
           </Button>
-          <Button type="submit" onClick={handlePublish}>
+          <Button type="submit" onClick={()=>{
+            formik.setFieldValue('btnType', btnType.publish);
+            formik.handleSubmit();
+          }}>
             刊登
           </Button>
         </DialogActions>

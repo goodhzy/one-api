@@ -29,17 +29,10 @@ API.interceptors.response.use(
   }
 );
 
-let ebayId = ''
-
-export const setEbayAccountId = (id)=>{
-  if(id){
-    ebayId = id
-  }
-}
-
 const requestConf = (config) => {
-  config.headers['Ebay-id'] = ebayId
-  config.headers['Authorization'] = 'Bearer sk-2yYQTVtkgvYmHYnx6028D902E785494487B86403B2D843D0'
+  config.headers['Ebay-id'] = localStorage.getItem('ebayId') || ''
+  config.headers['Authorization'] = `Bearer ${localStorage.getItem('token') || ''}`
+  config.headers['X-EBAY-SOA-GLOBAL-ID'] = localStorage.getItem('globalId') || ''
   return config
 }
 

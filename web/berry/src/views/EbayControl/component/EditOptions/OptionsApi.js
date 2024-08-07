@@ -119,6 +119,79 @@ const OptionsApi = () => {
     }
   };
 
+  const fetchPaymentPolicy = async (data) => {
+    try {
+      let res = await API.get('/api/ebay_get_payment_policy', {
+        params: data
+      });
+      if(res.data.success){
+        return res.data.data;
+      }else{
+        showError(res.data.message);
+        return Promise.reject(res.data.message)
+      }
+    } catch (error) {
+      showError(error.message);
+    }
+  };
+
+  const fetchFulfillmentPolicy = async (data) => {
+    try {
+      let res = await API.get('/api/ebay_get_fulfillment_policies', {
+        params: data
+      });
+      if(res.data.success){
+        return res.data.data;
+      }else{
+        showError(res.data.message);
+        return Promise.reject(res.data.message)
+      }
+    } catch (error) {
+      showError(error.message);
+    }
+  };
+
+  const fetchReturnPolicy = async (data) => {
+    try {
+      let res = await API.get('/api/ebay_get_return_policy', {
+        params: data
+      });
+      if(res.data.success){
+        return res.data.data;
+      }else{
+        showError(res.data.message);
+        return Promise.reject(res.data.message)
+      }
+    } catch (error) {
+      showError(error.message);
+    }
+  };
+
+  const fetchInventoryLocation = async (data) => {
+    try {
+      let res = await API.get('/api/ebay_get_inventory_location', {
+        params: data
+      });
+      if(res.data.success){
+        return res.data.data;
+      }else{
+        showError(res.data.message);
+        return Promise.reject(res.data.message)
+      }
+    } catch (error) {
+      showError(error.message);
+    }
+  };
+
+  const fetchListingDuration = async () => {
+    try {
+      let res = await API.get('/api/ebay_get_listing_duration');
+      return res.data.data;
+    } catch (error) {
+      showError(error.message);
+    }
+  }
+
   return {
     fetchSitesOption,
     fetchTypeOption,
@@ -128,7 +201,12 @@ const OptionsApi = () => {
     fetchStoreCategories,
     fetchConditionOption,
     fetchAspectsForCategory,
-    fetchDefaultCategoryTreeId
+    fetchDefaultCategoryTreeId,
+    fetchPaymentPolicy,
+    fetchFulfillmentPolicy,
+    fetchReturnPolicy,
+    fetchInventoryLocation,
+    fetchListingDuration
   };
 };
 
