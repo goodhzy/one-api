@@ -86,11 +86,7 @@ export default function ProduceLog() {
     setSearchKeyword({ ...searchKeyword, [event.target.name]: event.target.value });
   };
 
-  const handlePublish = async (id) => {
-    if (selected.length === 0) {
-      showError('请至少选择一条记录');
-      return;
-    }
+  const publishApi = async (id)=>{
     setIsDisabled(true)
     setSearching(true)
     const url = '/api/log/to_ebay';
@@ -105,6 +101,18 @@ export default function ProduceLog() {
     }
     setIsDisabled(false)
     setSearching(false)
+  }
+
+  const handleAllPublish = async () => {
+    if (selected.length === 0) {
+      showError('请至少选择一条记录');
+      return;
+    }
+    await publishApi()
+  }
+
+  const handlePublish = async (id)=>{
+    await publishApi(id)
   }
 
   const handleSelectAllClick = (event) => {
@@ -173,7 +181,7 @@ export default function ProduceLog() {
         >
           <Container sx={{textAlign: 'left'}}>
             <Button variant="contained" disabled={isDisabled} onClick={()=>{
-              handlePublish();
+              handleAllPublish();
             }}>批量刊登</Button>
           </Container>
 
