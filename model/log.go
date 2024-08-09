@@ -252,7 +252,7 @@ func SearchLogsByDayAndModel(userId, start, end int) (LogStatistics []*LogStatis
 	return LogStatistics, err
 }
 
-func GetLogsByIds(ids []int) ([]*Log, error) {
+func GetLogsByIds(ids []int64) ([]*Log, error) {
 	var logs []*Log
 	var err error
 	err = LOG_DB.Where("id in (?)", ids).Find(&logs).Error

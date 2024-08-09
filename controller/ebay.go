@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/gin-gonic/gin"
+	"github.com/songquanpeng/one-api/common"
 	"github.com/songquanpeng/one-api/common/config"
 	"github.com/songquanpeng/one-api/common/ctxkey"
 	"github.com/songquanpeng/one-api/common/helper"
@@ -21,12 +22,6 @@ import (
 )
 
 // status枚举 1未刊登 2. 创建库存 3. 创建报价 4. 发布报价
-const (
-	NotListed              = 1
-	CreateInventorySuccess = 2
-	CreateOfferSuccess     = 3
-	PublishOfferSuccess    = 4
-)
 
 const HeaderEbayId = "Ebay-id"
 const defaultMarketplaceId = "EBAY_US"
@@ -335,7 +330,7 @@ func EbayAuth(c *gin.Context) {
 }
 
 type LogRequest struct {
-	Ids []int `json:"ids"`
+	Ids []int64 `json:"ids"`
 }
 
 func LogToEbayGoods(c *gin.Context) {
@@ -369,7 +364,7 @@ func LogToEbayGoods(c *gin.Context) {
 			FrontOssImage:  log.FrontOssImage,
 			CompositeImage: log.OssImage,
 			SelfSku:        random.GetUUID(),
-			Status:         NotListed,
+			Status:         common.NotListed,
 			Sort:           1,
 			CreatedAt:      helper.GetTimestamp(),
 		})
@@ -392,10 +387,11 @@ func LogToEbayGoods(c *gin.Context) {
 
 func GetEbayGoodsList(c *gin.Context) {
 	p, _ := strconv.Atoi(c.Query("p"))
+	status := c.Query("status")
 	if p < 0 {
 		p = 0
 	}
-	ebayProducts, err := model.GetEbayProductList(p*config.ItemsPerPage, config.ItemsPerPage, int64(c.GetInt(ctxkey.Id)))
+	ebayProducts, err := model.GetEbayProductList(p*config.ItemsPerPage, config.ItemsPerPage, status, int64(c.GetInt(ctxkey.Id)))
 	if err != nil {
 		c.JSON(http.StatusOK, gin.H{
 			"success": false,
@@ -499,18 +495,9 @@ func SaveEbayGoods(c *gin.Context) {
 	return
 }
 
-// PublishEbayGoods 刊登商品
-// https://developer.ebay.com/api-docs/sell/inventory/resources/inventory_item/methods/publishOffer
-
-func PublishEbayGoods(c *gin.Context) {
-	ebayProduct, err := saveEbayGoods(c)
-	if err != nil {
-		c.JSON(http.StatusOK, gin.H{
-			"success": false,
-			"message": err.Error(),
-		})
-		return
-	}
+// CreateOrReplaceInventoryItem 创建库存商品
+// https://developer.ebay.com/api-docs/sell/inventory/resources/inventory_item/methods/createOrReplaceInventoryItem
+func CreateOrReplaceInventoryItem(c *gin.Context, ebayProduct *model.EbayProduct) error {
 	var path = "/sell/inventory/v1/inventory_item/" + ebayProduct.SKU
 	var payLoadJson = map[string]interface{}{
 		"availability":         ebayProduct.Availability,
@@ -524,47 +511,36 @@ func PublishEbayGoods(c *gin.Context) {
 	payloadBytes, err := json.Marshal(payLoadJson)
 	resp, err := doEbayRequest(c, "PUT", path, payloadBytes, nil, "")
 	if err != nil {
-		c.JSON(http.StatusOK, gin.H{
-			"success": false,
-			"message": err.Error(),
-		})
-		return
+		return err
 	}
 
 	var respBody model.EbayResponse
 	err = handleRespBody(c, resp, &respBody)
 	if err != nil {
-		c.JSON(http.StatusOK, gin.H{
-			"success": false,
-			"message": err.Error(),
-		})
-		return
+		ebayProduct.EbayError = err.Error()
+		err = ebayProduct.Update(int64(c.GetInt(ctxkey.Id)))
+		return err
 	}
 	// 更改状态
-	ebayProduct.Status = CreateInventorySuccess
+	ebayProduct.Status = common.CreateInventorySuccess
 	err = ebayProduct.Update(int64(c.GetInt(ctxkey.Id)))
 	if err != nil {
-		c.JSON(http.StatusOK, gin.H{
-			"success": false,
-			"message": err.Error(),
-		})
+		return err
 	}
 
-	// 查询ebaProduct详情
-	ebayProductDetail, err := model.GetEbayProductById(ebayProduct.Id, int64(c.GetInt(ctxkey.Id)))
-	if err != nil {
-		c.JSON(http.StatusOK, gin.H{
-			"success": false,
-			"message": err.Error(),
-		})
-	}
+	return nil
+}
+
+// CreateOffer 创建报价
+// https://developer.ebay.com/api-docs/sell/inventory/resources/offer/methods/createOffer
+func CreateOffer(c *gin.Context, ebayProduct *model.EbayProduct) error {
 	var createOfferPath = ""
 	var createOfferMethod = ""
-	if ebayProductDetail.OfferId == "" {
+	if ebayProduct.OfferId == "" {
 		createOfferPath = "/sell/inventory/v1/offer"
 		createOfferMethod = "POST"
 	} else {
-		createOfferPath = "/sell/inventory/v1/offer/" + ebayProductDetail.OfferId
+		createOfferPath = "/sell/inventory/v1/offer/" + ebayProduct.OfferId
 		createOfferMethod = "PUT"
 	}
 	var createOfferPayload []byte
@@ -585,77 +561,158 @@ func PublishEbayGoods(c *gin.Context) {
 		createOfferPayloadJson["listingDuration"] = ebayProduct.ListingDuration
 	}
 
-	createOfferPayload, err = json.Marshal(createOfferPayloadJson)
+	createOfferPayload, err := json.Marshal(createOfferPayloadJson)
 
 	if err != nil {
-		c.JSON(http.StatusOK, gin.H{
-			"success": false,
-			"message": err.Error(),
-		})
+		return err
 	}
 
-	resp, err = doEbayRequest(c, createOfferMethod, createOfferPath, createOfferPayload, nil, "")
+	resp, err := doEbayRequest(c, createOfferMethod, createOfferPath, createOfferPayload, nil, "")
 	if err != nil {
-		c.JSON(http.StatusOK, gin.H{
-			"success": false,
-			"message": err.Error(),
-		})
-		return
+		return err
 	}
 	var createOfferRespBody model.EbayCreateOfferResponse
 	err = handleRespBody(c, resp, &createOfferRespBody)
 	if err != nil {
-		c.JSON(http.StatusOK, gin.H{
-			"success": false,
-			"message": err.Error(),
-		})
-		return
+		ebayProduct.EbayError = err.Error()
+		err = ebayProduct.Update(int64(c.GetInt(ctxkey.Id)))
+		return err
 	}
-	var offerId = createOfferRespBody.OfferId
+	if createOfferRespBody.OfferId != "" {
+		ebayProduct.OfferId = createOfferRespBody.OfferId
+	}
 	// 更改状态
-	ebayProduct.Status = CreateOfferSuccess
-	ebayProduct.OfferId = offerId
+	ebayProduct.Status = common.CreateOfferSuccess
 	err = ebayProduct.Update(int64(c.GetInt(ctxkey.Id)))
-
-	// publish offer
-	var publishOfferId = ""
-	if ebayProductDetail.OfferId != "" {
-		publishOfferId = ebayProductDetail.OfferId
-	} else {
-		publishOfferId = offerId
-	}
-	var publishOfferPath = "/sell/inventory/v1/offer/" + publishOfferId + "/publish"
-	resp, err = doEbayRequest(c, "POST", publishOfferPath, nil, nil, "")
 	if err != nil {
-		c.JSON(http.StatusOK, gin.H{
-			"success": false,
-			"message": err.Error(),
-		})
-		return
+		return err
+	}
+	return nil
+}
+
+// PublishOffer 刊登报价
+// https://developer.ebay.com/api-docs/sell/inventory/resources/offer/methods/publishOffer
+func PublishOffer(c *gin.Context, ebayProduct *model.EbayProduct) error {
+	var publishOfferPath = "/sell/inventory/v1/offer/" + ebayProduct.OfferId + "/publish"
+	resp, err := doEbayRequest(c, "POST", publishOfferPath, nil, nil, "")
+	if err != nil {
+		return err
 	}
 	var publishOfferRespBody model.EbayPublishOfferResponse
 	err = handleRespBody(c, resp, &publishOfferRespBody)
 	if err != nil {
+		ebayProduct.EbayError = err.Error()
+		err = ebayProduct.Update(int64(c.GetInt(ctxkey.Id)))
+		return err
+	}
+	// 更改状态
+	ebayProduct.Status = common.PublishOfferSuccess
+	err = ebayProduct.Update(int64(c.GetInt(ctxkey.Id)))
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+// PublishEbayGoods 刊登商品
+// https://developer.ebay.com/api-docs/sell/inventory/resources/inventory_item/methods/publishOffer
+
+func PublishEbayGoods(c *gin.Context) {
+	ebayProduct, err := saveEbayGoods(c)
+	if err != nil {
 		c.JSON(http.StatusOK, gin.H{
 			"success": false,
 			"message": err.Error(),
 		})
 		return
 	}
-	// 更改状态
-	ebayProduct.Status = PublishOfferSuccess
-	ebayProduct.ListingId = publishOfferRespBody.ListingId
-	err = ebayProduct.Update(int64(c.GetInt(ctxkey.Id)))
+	err = CreateOrReplaceInventoryItem(c, &ebayProduct)
 	if err != nil {
 		c.JSON(http.StatusOK, gin.H{
 			"success": false,
 			"message": err.Error(),
 		})
+		return
 	}
-
+	err = CreateOffer(c, &ebayProduct)
+	if err != nil {
+		c.JSON(http.StatusOK, gin.H{
+			"success": false,
+			"message": err.Error(),
+		})
+		return
+	}
+	err = PublishOffer(c, &ebayProduct)
+	if err != nil {
+		c.JSON(http.StatusOK, gin.H{
+			"success": false,
+			"message": err.Error(),
+		})
+		return
+	}
 	c.JSON(http.StatusOK, gin.H{
 		"success": true,
 		"message": "publish ebay goods success",
+	})
+	return
+}
+
+// PublishEbayGoodsBatch 批量刊登商品
+func PublishEbayGoodsBatch(c *gin.Context) {
+	var logJson LogRequest
+	err := c.ShouldBind(&logJson)
+	if err != nil {
+		c.JSON(http.StatusOK, gin.H{
+			"success": false,
+			"message": err.Error(),
+		})
+		return
+	}
+	var ids = logJson.Ids
+	// 根据ids获取ebay_goods
+	ebayProducts, err := model.GetEbayProductsByIds(ids, int64(c.GetInt(ctxkey.Id)))
+	if err != nil {
+		c.JSON(http.StatusOK, gin.H{
+			"success": false,
+			"message": err.Error(),
+		})
+		return
+	}
+	var successEbayProducts []model.EbayProduct
+	var failedEbayProducts []model.EbayProduct
+	for _, ebayProduct := range ebayProducts {
+		err = CreateOrReplaceInventoryItem(c, &ebayProduct)
+		if err != nil {
+			failedEbayProducts = append(failedEbayProducts, ebayProduct)
+			continue
+		}
+		err = CreateOffer(c, &ebayProduct)
+		if err != nil {
+			failedEbayProducts = append(failedEbayProducts, ebayProduct)
+			continue
+		}
+		err = PublishOffer(c, &ebayProduct)
+		if err != nil {
+			failedEbayProducts = append(failedEbayProducts, ebayProduct)
+			continue
+		}
+		successEbayProducts = append(successEbayProducts, ebayProduct)
+	}
+	var successIds = make([]int64, 0)
+	var failedIds = make([]int64, 0)
+	for _, successEbayProduct := range successEbayProducts {
+		successIds = append(successIds, successEbayProduct.Id)
+	}
+	for _, failedEbayProduct := range failedEbayProducts {
+		failedIds = append(failedIds, failedEbayProduct.Id)
+	}
+	c.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"message": "publish ebay goods batch success",
+		"data": gin.H{
+			"successIds": successIds,
+			"failedIds":  failedIds,
+		},
 	})
 	return
 }
@@ -736,44 +793,6 @@ func GetFulfillmentPolicies(c *gin.Context) {
 		"success": true,
 		"message": "get fulfillment policies success",
 		"data":    respBody,
-	})
-	return
-}
-
-// CreateOffer 创建报价
-// https://developer.ebay.com/api-docs/sell/inventory/resources/offer/methods/createOffer
-func CreateOffer(c *gin.Context) {
-	var offer model.Offer
-	if err := c.ShouldBindJSON(&offer); err != nil {
-		c.JSON(http.StatusOK, gin.H{
-			"success": false,
-			"message": err.Error(),
-		})
-		return
-	}
-	payloadBytes, err := json.Marshal(offer)
-	if err != nil {
-		c.JSON(http.StatusOK, gin.H{
-			"success": false,
-			"message": err.Error(),
-		})
-		return
-	}
-	var path = "/sell/inventory/v1/offer"
-	resp, err := doEbayRequest(c, "POST", path, payloadBytes, nil, "")
-	if err != nil {
-		c.JSON(http.StatusOK, gin.H{
-			"success": false,
-			"message": err.Error(),
-		})
-		return
-	}
-
-	var respBody model.OfferResponse
-	err = handleRespBody(c, resp, &respBody)
-	c.JSON(http.StatusOK, gin.H{
-		"success": true,
-		"message": "create offer success",
 	})
 	return
 }

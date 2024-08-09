@@ -17,13 +17,14 @@ import {
   TablePagination,
   TableCell,
   TableHead,
-  TableRow
+  TableRow, Checkbox
 } from '@mui/material';
 
 import { API } from 'utils/api';
 import { ITEMS_PER_PAGE } from 'constants';
 import { IconRefresh, IconPlus, IconSearch } from '@tabler/icons-react';
 import PublishTableRow from './component/PublishTable/PublishTableRow';
+import { LoadingButton } from '@mui/lab';
 
 export default function PublishEbay() {
   const originalKeyword = {
@@ -36,6 +37,7 @@ export default function PublishEbay() {
   const [searching, setSearching] = useState(false);
   const [initPage, setInitPage] = useState(true);
   const [goodsList, setGoodsList] = useState([]);
+  const [publishBatchLoading, setPublishBatchLoading] = useState(false);
 
   const handleSearchKeyword = (event) => {
     setSearchKeyword({ ...searchKeyword, [event.target.name]: event.target.value });
@@ -75,6 +77,48 @@ export default function PublishEbay() {
     })();
   };
 
+  const handleCheckChange = (event) => {
+    const newGoodsList = goodsList.map((item) => {
+      return { ...item, checked: event.target.checked };
+    });
+    setGoodsList(newGoodsList);
+  }
+
+  const handleItemCheckChange = (event, id) => {
+    console.log(event.target.checked)
+    const newGoodsList = goodsList.map((item, idx) => {
+      if (item.id === id) {
+        return { ...item, checked: event.target.checked };
+      }
+      return item;
+    });
+    setGoodsList(newGoodsList);
+  }
+
+  const handlePublishBatch = async () => {
+    const ids = goodsList.filter((item) => item.checked).map((item) => item.id);
+    if (ids.length === 0) {
+      showSuccess('请先选择需要刊登的商品！');
+      return;
+    }
+    try {
+      setPublishBatchLoading(true)
+      const res = await API.post(`/api/ebay_publish_goods_batch`, {
+        ids: ids
+      });
+      const { success, message } = res.data;
+      if (success) {
+        showSuccess('操作成功完成！');
+        await LoadGoodsList(0);
+      } else {
+        showError(message);
+      }
+    } finally {
+      setSearching(false);
+      setPublishBatchLoading(false)
+    }
+  }
+
   useEffect(() => {
     setSearchKeyword(originalKeyword);
     setInitPage(false);
@@ -103,6 +147,9 @@ export default function PublishEbay() {
        >
          <Container>
            <ButtonGroup variant="outlined" aria-label="outlined small primary button group" sx={{marginBottom: 2}}>
+             <LoadingButton onClick={handleRefresh} startIcon={<IconPlus width={'18px'} />} onClick={handlePublishBatch} loading={publishBatchLoading}>
+               批量刊登
+             </LoadingButton>
              <Button onClick={handleRefresh} startIcon={<IconRefresh width={'18px'} />}>
                刷新/清除搜索条件
              </Button>
@@ -119,6 +166,13 @@ export default function PublishEbay() {
            <Table sx={{minWidth:800}}>
              <TableHead>
                <TableRow>
+                 <TableCell>
+                   <Checkbox
+                     checked={goodsList.length > 0 && goodsList.every((item) => item.checked)}
+                     indeterminate={goodsList.length > 0 && goodsList.some((item) => item.checked) && !goodsList.every((item) => item.checked)}
+                     onChange={handleCheckChange}
+                   />
+                 </TableCell>
                  <TableCell>图片</TableCell>
                  <TableCell>SKU</TableCell>
                  <TableCell>属地</TableCell>
@@ -134,6 +188,7 @@ export default function PublishEbay() {
                    key={row.id}
                    setSearching={setSearching}
                    LoadGoodsList={LoadGoodsList}
+                    handleItemCheckChange={handleItemCheckChange}
                  />
                ))}
              </TableBody>

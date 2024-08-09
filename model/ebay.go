@@ -2,6 +2,8 @@ package model
 
 import (
 	"encoding/json"
+	"fmt"
+	"github.com/songquanpeng/one-api/common"
 	"gorm.io/gorm"
 )
 
@@ -74,6 +76,7 @@ type EbayProduct struct {
 	StoreCategoryNames   json.RawMessage `json:"storeCategoryNames,omitempty"`
 	OfferId              string          `json:"offerId,omitempty"`
 	ListingId            string          `json:"listingId,omitempty"`
+	EbayError            string          `json:"ebayError,omitempty"`
 	CreatedAt            int64           `json:"created_at"`
 	UpdatedAt            int64           `json:"updated_at"`
 	DeletedAt            gorm.DeletedAt  `json:"deleted_at,omitempty"` // 删除时间
@@ -451,11 +454,19 @@ func (ebayProduct *EbayProduct) Update(userId int64) error {
 	return err
 }
 
-func GetEbayProductList(startIdx int, num int, userId int64) ([]EbayProduct, error) {
+func GetEbayProductList(startIdx int, num int, status string, userId int64) ([]EbayProduct, error) {
 	var ebayProduct []EbayProduct
 	var err error
 	// 时间倒序
-	err = DB.Model(&EbayProduct{}).Where("user_id = ?", userId).Order("created_at desc").Limit(num).Offset(startIdx).Find(&ebayProduct).Error
+	baseDb := DB.Model(&EbayProduct{}).Where("user_id = ?", userId)
+	fmt.Printf("status: %s\n", status)
+	if status != common.EbayProductPublish {
+		baseDb = baseDb.Where("status = ?", common.PublishOfferSuccess)
+	} else if status != common.EbayProductNotPublish {
+		var statusList = []int{common.CreateInventorySuccess, common.CreateOfferSuccess, common.NotListed}
+		baseDb = baseDb.Where("status in (?)", statusList)
+	}
+	err = baseDb.Order("created_at desc").Limit(num).Offset(startIdx).Find(&ebayProduct).Error
 	return ebayProduct, err
 }
 
@@ -464,6 +475,13 @@ func GetEbayProductById(id int64, userId int64) (*EbayProduct, error) {
 	var err error = nil
 	err = DB.First(&ebayProduct, "id = ? and user_id = ?", id, userId).Error
 	return &ebayProduct, err
+}
+
+func GetEbayProductsByIds(ids []int64, userId int64) ([]EbayProduct, error) {
+	var ebayProduct []EbayProduct
+	var err error
+	err = DB.Model(&EbayProduct{}).Where("id in (?) and user_id = ?", ids, userId).Find(&ebayProduct).Error
+	return ebayProduct, err
 }
 
 func DeleteEbayProductById(id int64, userId int64) (err error) {

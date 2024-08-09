@@ -14,6 +14,7 @@ import {
   MenuItem
 } from "@mui/material";
 import TableToolBar from '../../../Log/component/TableToolBar';
+import { EbayProductStatus } from '../../../../constants/Ebay';
 
 
 export default function PublishTableToolBar({ filterName,handleFilterName }){
@@ -22,9 +23,9 @@ export default function PublishTableToolBar({ filterName,handleFilterName }){
   const grey500 = theme.palette.grey[500];
 
   const publishTypes = [
-    { value: "0", text: "全部" },
-    { value: "1", text: "未刊登" },
-    { value: "2", text: "已刊登" },
+    { value: '', text: "全部" },
+    {  value: EbayProductStatus.NOT_PUBLISH,text: "未刊登" },
+    { value: EbayProductStatus.PUBLISH, text: "已刊登" },
   ];
 
   return(

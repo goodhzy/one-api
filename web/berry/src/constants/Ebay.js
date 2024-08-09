@@ -61,3 +61,8 @@ export const AvailabilityType = {
   OUT_OF_STOCK: 'OUT_OF_STOCK',
 
 }
+
+export const EbayProductStatus = {
+  NOT_PUBLISH: 'NOT_PUBLISH',
+  PUBLISH: 'PUBLISH',
+}

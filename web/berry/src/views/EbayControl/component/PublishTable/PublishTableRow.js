@@ -14,7 +14,7 @@ import {
   DialogTitle,
   Button,
   Tooltip,
-  Stack
+  Stack, Link, Checkbox
 } from '@mui/material';
 import TableSwitch from 'ui-component/Switch';
 import { IconDotsVertical, IconEdit, IconTrash, IconUser } from '@tabler/icons-react';
@@ -23,8 +23,9 @@ import EditEbayGoods from '../EditEbayGoods';
 import {PhotoProvider, PhotoView} from "react-photo-view";
 import { API, ImageUrl } from 'utils/api';
 import { showError, showSuccess } from '../../../../utils/common';
+import { width } from '@mui/system';
 
-export default function PublishTableRow({item,setModalGoodsId, setSearching, LoadGoodsList}){
+export default function PublishTableRow({item,setModalGoodsId, setSearching, LoadGoodsList, handleItemCheckChange}){
   const [statusSwitch, setStatusSwitch] = useState(item.status);
   const [open, setOpen] = useState(null);
   const [openDelete, setOpenDelete] = useState(false);
@@ -71,39 +72,53 @@ export default function PublishTableRow({item,setModalGoodsId, setSearching, Loa
     }
   };
 
-  return(
+  const  handlePublish = async () => {
+    try {
+      const res = await API.post(`/api/ebay_publish_goods_batch`,{
+        ids: [item.id]
+      });
+      const { success, message } = res.data;
+      if (success) {
+        showSuccess('操作成功完成！');
+        LoadGoodsList(0);
+      } else {
+        showError(message);
+      }
+    }finally {
+      setSearching(false);
+    }
+  }
+
+  return (
     <>
       <TableRow tabIndex={item.id}>
         <TableCell>
+          <Checkbox checked={item.checked ?? false} onChange={(event) => handleItemCheckChange(event, item.id)} />
+        </TableCell>
+        <TableCell>
           <PhotoProvider maskOpacity={0.2}>
-            <PhotoView key={item.id} src={ImageUrl+item.composite_image}>
-              <img alt='' style={{width:'180px',height:'120px'}} src={ImageUrl+item.composite_image}/>
+            <PhotoView key={item.id} src={ImageUrl + item.composite_image}>
+              <img alt="" style={{ width: '180px', height: '120px' }} src={ImageUrl + item.composite_image} />
             </PhotoView>
           </PhotoProvider>
         </TableCell>
 
-        <TableCell>
-          {item.sku || '无'}
-        </TableCell>
+        <TableCell>{item.sku ?? '无'}</TableCell>
 
-        <TableCell>
-          {item.site ||'无'}
-        </TableCell>
+        <TableCell>{item.marketplaceId ?? '无'}</TableCell>
 
-        <TableCell>
-          {item.title}
-        </TableCell>
+        <TableCell>{item.title}</TableCell>
 
         {/*<TableCell>*/}
         {/*  <TableSwitch id={`switch-${item.id}`} checked={statusSwitch === 1} onChange={handleStatus} />*/}
         {/*</TableCell>*/}
 
-        <TableCell>
+        <TableCell style={{ width: '100px' }}>
+          <Link onClick={handlePublish}>刊登</Link>
           <IconButton onClick={handleOpenMenu} sx={{ color: 'rgb(99, 115, 129)' }}>
             <IconDotsVertical />
           </IconButton>
         </TableCell>
-
       </TableRow>
 
       <Popover
@@ -146,7 +161,7 @@ export default function PublishTableRow({item,setModalGoodsId, setSearching, Loa
 
       <EditEbayGoods open={editEbayGoodsOpen} setOpen={setEditEbayGoodsOpen} goodsId={item.id} />
     </>
-  )
+  );
 }
 
 UsersTableRow.propTypes = {
