@@ -1,16 +1,29 @@
 import { Card,LinearProgress } from '@mui/material';
-import { DragDropContext } from 'react-beautiful-dnd'
+import { DragDropContext,Droppable,Draggable } from 'react-beautiful-dnd'
 
 export default function Picture() {
+
+  const onDragEnd = () =>{
+    console.log(1111);
+  }
 
   return(
     <>
       <Card>
-        <DragDropContext>
-          <div>111</div>
-          <div>111</div>
-          <div>111</div>
-          <div>111</div>
+        <DragDropContext onDragEnd={onDragEnd}>
+          <Droppable droppableId='picture'>
+            {(provided) => (
+              <div ref={provided.innerRef} {...provided.droppableProps}>
+                <Draggable draggableId='picture' index={0}>
+                  {(provided) => (
+                    <div ref={provided.innerRef} {...provided.draggableProps} {...provided.dragHandleProps}>
+                      xxx
+                    </div>
+                  )}
+                </Draggable>
+              </div>
+            )}
+          </Droppable>
         </DragDropContext>
       </Card>
     </>
