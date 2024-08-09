@@ -513,7 +513,7 @@ func PublishEbayGoods(c *gin.Context) {
 	}
 	var path = "/sell/inventory/v1/inventory_item/" + ebayProduct.SKU
 	var payLoadJson = map[string]interface{}{
-		//"availability":         ebayProduct.Availability,
+		"availability":         ebayProduct.Availability,
 		"condition":            ebayProduct.Condition,
 		"conditionDescription": ebayProduct.ConditionDescription,
 		"conditionDescriptors": ebayProduct.ConditionDescriptors,
@@ -521,12 +521,6 @@ func PublishEbayGoods(c *gin.Context) {
 		"product": ebayProduct.Product,
 		"locale":  ebayProduct.Locale,
 	}
-	//payLoadJson["availability"] = map[string]interface{}{
-	//	"shipToLocationAvailability": map[string]interface{}{
-	//		"quantity":         3,
-	//		"availabilityType": "IN_STOCK",
-	//	},
-	//}
 	payloadBytes, err := json.Marshal(payLoadJson)
 	resp, err := doEbayRequest(c, "PUT", path, payloadBytes, nil, "")
 	if err != nil {
@@ -576,8 +570,8 @@ func PublishEbayGoods(c *gin.Context) {
 	var createOfferPayload []byte
 
 	var createOfferPayloadJson = map[string]interface{}{
-		"sku":                 ebayProduct.SKU,
-		"availableQuantity":   ebayProduct.AvailableQuantity,
+		"sku": ebayProduct.SKU,
+		//"availableQuantity":   ebayProduct.AvailableQuantity,
 		"format":              ebayProduct.Format,
 		"categoryId":          ebayProduct.CategoryId,
 		"secondaryCategoryId": ebayProduct.SecondaryCategoryId,
@@ -622,6 +616,43 @@ func PublishEbayGoods(c *gin.Context) {
 	ebayProduct.Status = CreateOfferSuccess
 	ebayProduct.OfferId = offerId
 	err = ebayProduct.Update(int64(c.GetInt(ctxkey.Id)))
+
+	// publish offer
+	var publishOfferId = ""
+	if ebayProductDetail.OfferId != "" {
+		publishOfferId = ebayProductDetail.OfferId
+	} else {
+		publishOfferId = offerId
+	}
+	var publishOfferPath = "/sell/inventory/v1/offer/" + publishOfferId + "/publish"
+	resp, err = doEbayRequest(c, "POST", publishOfferPath, nil, nil, "")
+	if err != nil {
+		c.JSON(http.StatusOK, gin.H{
+			"success": false,
+			"message": err.Error(),
+		})
+		return
+	}
+	var publishOfferRespBody model.EbayPublishOfferResponse
+	err = handleRespBody(c, resp, &publishOfferRespBody)
+	if err != nil {
+		c.JSON(http.StatusOK, gin.H{
+			"success": false,
+			"message": err.Error(),
+		})
+		return
+	}
+	// 更改状态
+	ebayProduct.Status = PublishOfferSuccess
+	ebayProduct.ListingId = publishOfferRespBody.ListingId
+	err = ebayProduct.Update(int64(c.GetInt(ctxkey.Id)))
+	if err != nil {
+		c.JSON(http.StatusOK, gin.H{
+			"success": false,
+			"message": err.Error(),
+		})
+	}
+
 	c.JSON(http.StatusOK, gin.H{
 		"success": true,
 		"message": "publish ebay goods success",
@@ -1234,13 +1265,13 @@ func GetPaymentPolicies(c *gin.Context) {
 func GetListingDuration(c *gin.Context) {
 	// 创建带label, value的数组
 	durations := []map[string]string{
-		{"label": "1天", "value": "Days_1"},
-		{"label": "3天", "value": "Days_3"},
-		{"label": "5天", "value": "Days_5"},
-		{"label": "7天", "value": "Days_7"},
-		{"label": "10天", "value": "Days_10"},
-		//{"label": "21天", "value": "Days_21"},
-		//{"label": "30天", "value": "Days_30"},
+		{"label": "1天", "value": "DAYS_1"},
+		{"label": "3天", "value": "DAYS_3"},
+		{"label": "5天", "value": "DAYS_5"},
+		{"label": "7天", "value": "DAYS_7"},
+		{"label": "10天", "value": "DAYS_10"},
+		//{"label": "21天", "value": "DAYS_21"},
+		//{"label": "30天", "value": "DAYS_30"},
 		//{"label": "GTC", "value": "GTC"},
 	}
 

@@ -73,6 +73,7 @@ type EbayProduct struct {
 	SecondaryCategoryId  string          `json:"secondaryCategoryId,omitempty"`
 	StoreCategoryNames   json.RawMessage `json:"storeCategoryNames,omitempty"`
 	OfferId              string          `json:"offerId,omitempty"`
+	ListingId            string          `json:"listingId,omitempty"`
 	CreatedAt            int64           `json:"created_at"`
 	UpdatedAt            int64           `json:"updated_at"`
 	DeletedAt            gorm.DeletedAt  `json:"deleted_at,omitempty"` // 删除时间
@@ -213,6 +214,11 @@ type EbayResponse struct {
 type EbayCreateOfferResponse struct {
 	Errors  []ErrorDetail `json:"errors,omitempty"`
 	OfferId string        `json:"offerId,omitempty"`
+}
+
+type EbayPublishOfferResponse struct {
+	Errors    []ErrorDetail `json:"errors,omitempty"`
+	ListingId string        `json:"listingId,omitempty"`
 }
 
 // BulkCreateOrReplaceInventoryItemResponse struct to represent the full response

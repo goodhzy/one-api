@@ -55,3 +55,9 @@ export const ListingTypeEnum = {
   FIXED_PRICE: 'FIXED_PRICE',
   AUCTION: 'AUCTION',
 }
+
+export const AvailabilityType = {
+  IN_STOCK: 'IN_STOCK',
+  OUT_OF_STOCK: 'OUT_OF_STOCK',
+
+}

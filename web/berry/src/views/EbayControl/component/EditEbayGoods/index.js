@@ -29,18 +29,24 @@ import SubCard from '../../../../ui-component/cards/SubCard';
 import { LoadingButton } from '@mui/lab';
 import { IconLoader, IconPlus } from '@tabler/icons-react';
 import Uploader from 'rsuite/Uploader';
-import { API, setEbayAccountId } from '../../../../utils/api';
+import { API } from '../../../../utils/api';
 import Cascader from 'rsuite/Cascader';
 import { useTheme } from '@mui/material/styles';
 import { useNavigate } from 'react-router';
 import OptionsApi from '../EditOptions/OptionsApi';
 import { getOpenaiMsg, removeEmpty, showError, showInfo } from '../../../../utils/common';
-import { compressImage, handleIdentify } from '../../../../utils/image-processing';
+import { compressImage, handleIdentify, getFileName } from '../../../../utils/image-processing';
 import { MODEL } from '../../../../utils/preset';
 import { useEffect, useRef, useState } from 'react';
 import * as Yup from 'yup';
 import { ImageUrl } from '../../../../utils/api';
-import { CardinalityEnum, ConditionEnum, ListingTypeEnum, ModeEnum } from '../../../../constants/Ebay';
+import {
+  AvailabilityType,
+  CardinalityEnum,
+  ConditionEnum,
+  ListingTypeEnum,
+  ModeEnum
+} from '../../../../constants/Ebay';
 import _ from 'lodash';
 import { CheckTreePicker, MultiCascader } from 'rsuite';
 import { validate } from '@babel/core/lib/config/validation/options';
@@ -127,9 +133,14 @@ const originInputs = {
       value: 0.01
     }
   },
-  availableQuantity: 1 ,
+  // availableQuantity: 1 ,
   listingDuration: '',
-
+  availability:{
+    shipToLocationAvailability:{
+      quantity: 1,
+      availabilityType: AvailabilityType.IN_STOCK
+    }
+  }
 };
 
 const EditEbayGoods = ({ setOpen, open, goodsId }) => {
@@ -146,7 +157,7 @@ const EditEbayGoods = ({ setOpen, open, goodsId }) => {
     fetchTypeOption,
     fetchCategoryOption,
     fetchEbayAccountOption,
-    fetchPromp,
+    fetchPrompt,
     fetchStoreCategories,
     fetchConditionOption,
     fetchAspectsForCategory,
@@ -243,6 +254,18 @@ const EditEbayGoods = ({ setOpen, open, goodsId }) => {
       }
     }
   });
+
+  const getDefaultToken = () => {
+    return API.get('/api/token/default').then((res) => {
+      const { success, data, message } = res.data;
+      if (success) {
+        localStorage.setItem('openai_token', data.key);
+      } else {
+        showError(message);
+      }
+    })
+  }
+
   const fetchGoodsDetail = async () => {
     try {
       let res = await API.get('/api/ebay_get_goods_detail?id=' + goodsId);
@@ -271,7 +294,9 @@ const EditEbayGoods = ({ setOpen, open, goodsId }) => {
   };
 
   const fetchOptions = async () => {
-    fetchPromp().then();
+    fetchPrompt().then((res) => {
+      setPrompt(res)
+    })
 
     fetchTypeOption().then((res) => {
       setTypeOptions(res);
@@ -284,12 +309,28 @@ const EditEbayGoods = ({ setOpen, open, goodsId }) => {
   };
 
   const previewFile = (file, index) => {
-    let newImgList = [...formik.values.product.imageUrls];
+    // 使用上传接口上传图片
+
     const reader = new FileReader();
-    reader.onloadend = () => {
-      newImgList[index] = reader.result;
-      console.log(newImgList);
-      formik.setFieldValue('product.imageUrls', newImgList);
+    reader.onloadend = async () => {
+      const compressImaged = await compressImage(reader.result, ((400 * 1028) / 3) * 4);
+      console.log(compressImaged);
+      // base64转file文件对象
+      const blob = await fetch(compressImaged).then((res) => res.blob());
+      const compressFiled = new File([blob], getFileName(file.name) + '.webp', { type: 'image/webp' });
+      const formData = new FormData();
+      formData.append('file', compressFiled);
+      API.post('/api/upload', formData).then((res) => {
+        console.log(res);
+        const { success, data, message } = res.data;
+        if (success) {
+          let newImgList = [...formik.values.product.imageUrls];
+          newImgList[index] = ImageUrl + data.file_path;
+          formik.setFieldValue('product.imageUrls', newImgList);
+        } else {
+          showError(message);
+        }
+      })
     };
     reader.readAsDataURL(file);
   };
@@ -311,7 +352,10 @@ const EditEbayGoods = ({ setOpen, open, goodsId }) => {
       }
       // compositeDiagrams
       const { url } = await handleIdentify(formik.values.product.imageUrls);
-      console.log(url);
+      const openai_token = localStorage.getItem('openai_token');
+      if(!openai_token){
+        await getDefaultToken()
+      }
       const front_base_64_image = await compressImage(formik.values.product.imageUrls[0], ((300 * 1028) / 3) * 4);
       const back_base_64_image = await compressImage(formik.values.product.imageUrls[1], ((300 * 1028) / 3) * 4);
       MODEL.STARCARD.context[0].content[1].image_url.url = url;
@@ -327,7 +371,7 @@ const EditEbayGoods = ({ setOpen, open, goodsId }) => {
           Authorization: 'Bearer ' + localStorage.getItem('openai_token')
         }
       );
-      await formik.setFieldValue('title', data.choices[0].message.content);
+      await formik.setFieldValue('product.title', data.choices[0].message.content);
     } catch (err) {
       console.log(err);
     } finally {
@@ -337,6 +381,7 @@ const EditEbayGoods = ({ setOpen, open, goodsId }) => {
 
   useEffect(() => {
     if (open) {
+      getDefaultToken();
       fetchGoodsDetail().then();
     }
   }, [open]);
@@ -558,7 +603,7 @@ const EditEbayGoods = ({ setOpen, open, goodsId }) => {
   // 刊登类型为拍卖, 库存为1
   useEffect(() => {
     if (formik.values.format === ListingTypeEnum.AUCTION) {
-      formik.setFieldValue('availableQuantity', 1);
+      formik.setFieldValue('availability.shipToLocationAvailability.quantity', 1);
     }
   }, [formik.values.format]);
 
@@ -782,7 +827,7 @@ const EditEbayGoods = ({ setOpen, open, goodsId }) => {
                       id="channel-childTitle-label"
                       label="子标题"
                       type="text"
-                      value={formik.values.product.subtitle}
+                      value={formik.values.product.subtitle || ''}
                       name="product.subtitle"
                       onBlur={formik.handleBlur}
                       onChange={formik.handleChange}
@@ -820,7 +865,7 @@ const EditEbayGoods = ({ setOpen, open, goodsId }) => {
                         <OutlinedInput
                           id="channel-auctionStartPrice-label"
                           label="起拍价"
-                          type="text"
+                          type="number"
                           value={formik.values.pricingSummary.auctionStartPrice.value}
                           name="pricingSummary.auctionStartPrice.value"
                           onBlur={formik.handleBlur}
@@ -900,7 +945,7 @@ const EditEbayGoods = ({ setOpen, open, goodsId }) => {
                   {/*销售库存*/}
                   <FormControl
                     style={{ minWidth: 300 }}
-                    error={Boolean(formik.touched.availableQuantity && formik.errors.availableQuantity)}
+                    error={Boolean(formik.touched.availability?.shipToLocationAvailability?.quantity && formik.errors?.availability?.shipToLocationAvailability.quantity)}
                     sx={{ ...theme.typography.otherInput }}
                   >
                     <InputLabel htmlFor="channel-availableQuantity-label">销售库存</InputLabel>
@@ -908,17 +953,17 @@ const EditEbayGoods = ({ setOpen, open, goodsId }) => {
                       id="channel-availableQuantity-label"
                       label="销售库存"
                       type="number"
-                      value={formik.values.availableQuantity}
-                      name="availableQuantity"
+                      value={formik.values.availability?.shipToLocationAvailability?.quantity|| ''}
+                      name="availability.shipToLocationAvailability.quantity"
                       onBlur={formik.handleBlur}
                       onChange={formik.handleChange}
                       inputProps={{ autoComplete: 'availableQuantity' }}
                       aria-describedby="helper-text-channel-availableQuantity-label"
                       readOnly={formik.values.format === ListingTypeEnum.AUCTION}
                     />
-                    {formik.touched.availableQuantity && formik.errors.availableQuantity && (
+                    {formik.touched.availability?.shipToLocationAvailability?.quantity && formik.errors.availability?.shipToLocationAvailability?.quantity && (
                       <FormHelperText error id="helper-tex-channel-availableQuantity-label">
-                        {formik.errors.availableQuantity}
+                        {formik.errors.availability?.shipToLocationAvailability?.quantity}
                       </FormHelperText>
                     )}
                   </FormControl>

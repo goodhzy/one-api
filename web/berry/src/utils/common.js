@@ -81,7 +81,7 @@ export async function getOAuthState() {
 }
 
 export async function getOpenaiMsg (data, header){
-  const [res] = await Promise.all([API.post('/v1/chat/completions', data,{headers:header})])
+  const res = await API.post('/v1/chat/completions', data,{headers:header})
   return res
 }
 

@@ -31,7 +31,6 @@ API.interceptors.response.use(
 
 const requestConf = (config) => {
   config.headers['Ebay-id'] = localStorage.getItem('ebayId') || ''
-  config.headers['Authorization'] = `Bearer ${localStorage.getItem('token') || ''}`
   config.headers['X-EBAY-SOA-GLOBAL-ID'] = localStorage.getItem('globalId') || ''
   return config
 }
