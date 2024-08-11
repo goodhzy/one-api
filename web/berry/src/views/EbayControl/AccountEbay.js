@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { showError, showSuccess } from 'utils/common';
 import {  Button, Container,LinearProgress,ButtonGroup,Toolbar,TableContainer,Table,TableBody } from '@mui/material';
-import { IconRefresh } from '@tabler/icons-react';
+import { IconPlus, IconRefresh } from '@tabler/icons-react';
 import PerfectScrollbar from 'react-perfect-scrollbar';
 import AccountTableHead from './component/AccountTable/AccountTableHead';
 import AccountTableRow from './component/AccountTable/AccountTableRow'
@@ -87,7 +87,7 @@ export default function AccountEbay() {
       >
         <Container>
           <ButtonGroup variant="outlined" aria-label="outlined small primary button group" sx={{marginBottom: 2}}>
-            <Button onClick={handleBind} startIcon={<IconRefresh width={'18px'} />}>
+            <Button onClick={handleBind} startIcon={<IconPlus width={'18px'} />}>
               绑定账号
             </Button>
             <Button onClick={handleRefresh} startIcon={<IconRefresh width={'18px'} />}>
@@ -103,7 +103,7 @@ export default function AccountEbay() {
             <AccountTableHead/>
             <TableBody>
               {accounts.map((row) => (
-                <AccountTableRow key={row.id} item={row} deleteAccount={deleteAccount}
+                <AccountTableRow key={row.id} item={row} deleteAccount={deleteAccount} handleAuth={handleBind}
                 />
               ))}
             </TableBody>

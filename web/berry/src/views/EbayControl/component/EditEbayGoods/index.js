@@ -40,13 +40,7 @@ import { MODEL } from '../../../../utils/preset';
 import { useEffect, useRef, useState } from 'react';
 import * as Yup from 'yup';
 import { ImageUrl } from '../../../../utils/api';
-import {
-  AvailabilityType,
-  CardinalityEnum,
-  ConditionEnum,
-  ListingTypeEnum,
-  ModeEnum
-} from '../../../../constants/Ebay';
+import { AvailabilityType, CardinalityEnum, ConditionEnum, ListingTypeEnum, ModeEnum } from '../../../../constants/Ebay';
 import _ from 'lodash';
 import { CheckTreePicker, MultiCascader } from 'rsuite';
 import { validate } from '@babel/core/lib/config/validation/options';
@@ -135,8 +129,8 @@ const originInputs = {
   },
   // availableQuantity: 1 ,
   listingDuration: '',
-  availability:{
-    shipToLocationAvailability:{
+  availability: {
+    shipToLocationAvailability: {
       quantity: 1,
       availabilityType: AvailabilityType.IN_STOCK
     }
@@ -236,10 +230,10 @@ const EditEbayGoods = ({ setOpen, open, goodsId }) => {
 
       try {
         const reqData = removeEmpty(restValues);
-        if(reqData.format === ListingTypeEnum.FIXED_PRICE){
+        if (reqData.format === ListingTypeEnum.FIXED_PRICE) {
           delete reqData.pricingSummary.auctionStartPrice;
         }
-        if(reqData.product){
+        if (reqData.product) {
           reqData.product = removeEmpty(reqData.product);
         }
         const res = await API.post(url, removeEmpty(restValues));
@@ -263,8 +257,8 @@ const EditEbayGoods = ({ setOpen, open, goodsId }) => {
       } else {
         showError(message);
       }
-    })
-  }
+    });
+  };
 
   const fetchGoodsDetail = async () => {
     try {
@@ -295,8 +289,8 @@ const EditEbayGoods = ({ setOpen, open, goodsId }) => {
 
   const fetchOptions = async () => {
     fetchPrompt().then((res) => {
-      setPrompt(res)
-    })
+      setPrompt(res);
+    });
 
     fetchTypeOption().then((res) => {
       setTypeOptions(res);
@@ -330,7 +324,7 @@ const EditEbayGoods = ({ setOpen, open, goodsId }) => {
         } else {
           showError(message);
         }
-      })
+      });
     };
     reader.readAsDataURL(file);
   };
@@ -353,8 +347,8 @@ const EditEbayGoods = ({ setOpen, open, goodsId }) => {
       // compositeDiagrams
       const { url } = await handleIdentify(formik.values.product.imageUrls);
       const openai_token = localStorage.getItem('openai_token');
-      if(!openai_token){
-        await getDefaultToken()
+      if (!openai_token) {
+        await getDefaultToken();
       }
       const front_base_64_image = await compressImage(formik.values.product.imageUrls[0], ((300 * 1028) / 3) * 4);
       const back_base_64_image = await compressImage(formik.values.product.imageUrls[1], ((300 * 1028) / 3) * 4);
@@ -430,15 +424,14 @@ const EditEbayGoods = ({ setOpen, open, goodsId }) => {
     try {
       const defaultCategoryTreeIdRes = await getDefaultCategoryTreeId();
       if (defaultCategoryTreeIdRes) {
-        getCategoryOptions({ categoryTreeId: defaultCategoryTreeIdRes }).then(()=>{
-
-
-        });
-        getConditionOption({ marketplaceId: ebayProduct.current.marketplaceId, categoryId: ebayProduct.current.categoryId }).then();
+        getCategoryOptions({ categoryTreeId: defaultCategoryTreeIdRes }).then(() => {});
+        getConditionOption({
+          marketplaceId: ebayProduct.current.marketplaceId,
+          categoryId: ebayProduct.current.categoryId
+        }).then();
         getAspectsForCategory({ defaultCategoryTreeIdRes, categoryId: ebayProduct.current.categoryId }).then();
 
         getStoreCategories().then();
-
 
         getPaymentPolicy().then();
 
@@ -475,20 +468,44 @@ const EditEbayGoods = ({ setOpen, open, goodsId }) => {
   };
 
   const getConditionOption = async ({ marketplaceId, categoryId }) => {
-    console.log(categoryId);
-    console.log('ccc');
-    if(!categoryId){
+    if (!categoryId) {
       return;
     }
-    const { itemConditionPolicies } = await fetchConditionOption({
+    const res = await fetchConditionOption({
       marketplace_id: marketplaceId,
       category_ids: [categoryId]
     });
-    if (itemConditionPolicies?.length > 0) {
-      setCondition(itemConditionPolicies[0]);
+    if(res?.itemConditionPolicies?.length > 0) {
+      setCondition(res.itemConditionPolicies[0]);
     }
   };
 
+  const formatAspect = (aspects) => {
+    for (let i = 0; i < aspects.length; i++) {
+      let aspect = aspects[i];
+      let { aspectValues } = aspect;
+      if (aspectValues) {
+        for (let j = 0; j < aspectValues.length; j++) {
+          let aspectValue = aspect.aspectValues[j];
+          let { localizedValue, valueConstraints } = aspectValue;
+          if (valueConstraints) {
+            for (let k = 0; k < valueConstraints.length; k++) {
+              const valueConstraint = valueConstraints[k];
+              let { applicableForLocalizedAspectName } = valueConstraint || {};
+              const findItem = aspects.find((item) => item.localizedAspectName === applicableForLocalizedAspectName);
+              if (findItem) {
+                if (!findItem.valueConstraints) {
+                  findItem.valueConstraints = [];
+                }
+                findItem.valueConstraints.push(aspect.localizedAspectName);
+                findItem.valueConstraints = [...new Set(findItem.valueConstraints)];
+              }
+            }
+          }
+        }
+      }
+    }
+  };
   const getAspectsForCategory = async ({ defaultCategoryTreeId, categoryId }) => {
     try {
       if (!categoryId) {
@@ -498,6 +515,7 @@ const EditEbayGoods = ({ setOpen, open, goodsId }) => {
         category_tree_id: defaultCategoryTreeId || 0,
         category_id: categoryId
       });
+      formatAspect(aspects);
       setItemAspectsForCategoryOptions(aspects);
     } catch (error) {}
   };
@@ -600,6 +618,22 @@ const EditEbayGoods = ({ setOpen, open, goodsId }) => {
       setListingDurationLoading(false);
     }
   };
+
+  const resetForm = async() => {
+    await formik.setFieldValue('categoryId', '');
+    await formik.setFieldValue('condition', '');
+    await formik.setFieldValue('conditionDescriptors', []);
+    await formik.setFieldValue('categories', '');
+    await formik.setFieldValue('product.aspects', {});
+    await formik.setFieldValue('storeCategoryNames', {});
+    await formik.setFieldValue('listingPolicies', {
+      paymentPolicyId: '',
+      returnPolicyId: '',
+      fulfillmentPolicyId: ''
+    });
+    await formik.setFieldValue('merchantLocationKey', '');
+  }
+
   // 刊登类型为拍卖, 库存为1
   useEffect(() => {
     if (formik.values.format === ListingTypeEnum.AUCTION) {
@@ -635,6 +669,10 @@ const EditEbayGoods = ({ setOpen, open, goodsId }) => {
                         await formik.setFieldValue('locale', site.marketplaceId);
                         await formik.setFieldValue('marketplaceId', site.marketplaceId);
                         formik.handleChange(e);
+
+                        resetForm();
+
+                        getEbayAllOptions().then();
                       }}
                       MenuProps={{
                         PaperProps: {
@@ -671,9 +709,12 @@ const EditEbayGoods = ({ setOpen, open, goodsId }) => {
                       value={formik.values.ebayId}
                       name="ebayId"
                       onBlur={formik.handleBlur}
-                      onChange={(e) => {
+                      onChange={async(e) => {
                         localStorage.setItem('ebayId', e.target.value);
                         formik.handleChange(e);
+
+                        resetForm();
+                        getEbayAllOptions().then();
                       }}
                       MenuProps={{
                         PaperProps: {
@@ -784,11 +825,7 @@ const EditEbayGoods = ({ setOpen, open, goodsId }) => {
                       >
                         <Box style={{ width: '200px', height: '300px' }}>
                           {formik.values.product.imageUrls[0] ? (
-                            <img
-                              alt="第一张"
-                              style={{ width: '200px', height: '300px' }}
-                              src={formik.values.product.imageUrls[0]}
-                            />
+                            <img alt="第一张" style={{ width: '200px', height: '300px' }} src={formik.values.product.imageUrls[0]} />
                           ) : (
                             <IconPlus></IconPlus>
                           )}
@@ -805,11 +842,7 @@ const EditEbayGoods = ({ setOpen, open, goodsId }) => {
                       >
                         <Box style={{ width: '200px', height: '300px' }}>
                           {formik.values.product.imageUrls[1] ? (
-                            <img
-                              alt="第二张"
-                              style={{ width: '200px', height: '300px' }}
-                              src={formik.values.product.imageUrls[1]}
-                            />
+                            <img alt="第二张" style={{ width: '200px', height: '300px' }} src={formik.values.product.imageUrls[1]} />
                           ) : (
                             <IconPlus></IconPlus>
                           )}
@@ -945,7 +978,10 @@ const EditEbayGoods = ({ setOpen, open, goodsId }) => {
                   {/*销售库存*/}
                   <FormControl
                     style={{ minWidth: 300 }}
-                    error={Boolean(formik.touched.availability?.shipToLocationAvailability?.quantity && formik.errors?.availability?.shipToLocationAvailability.quantity)}
+                    error={Boolean(
+                      formik.touched.availability?.shipToLocationAvailability?.quantity &&
+                        formik.errors?.availability?.shipToLocationAvailability.quantity
+                    )}
                     sx={{ ...theme.typography.otherInput }}
                   >
                     <InputLabel htmlFor="channel-availableQuantity-label">销售库存</InputLabel>
@@ -953,7 +989,7 @@ const EditEbayGoods = ({ setOpen, open, goodsId }) => {
                       id="channel-availableQuantity-label"
                       label="销售库存"
                       type="number"
-                      value={formik.values.availability?.shipToLocationAvailability?.quantity|| ''}
+                      value={formik.values.availability?.shipToLocationAvailability?.quantity || ''}
                       name="availability.shipToLocationAvailability.quantity"
                       onBlur={formik.handleBlur}
                       onChange={formik.handleChange}
@@ -961,11 +997,12 @@ const EditEbayGoods = ({ setOpen, open, goodsId }) => {
                       aria-describedby="helper-text-channel-availableQuantity-label"
                       readOnly={formik.values.format === ListingTypeEnum.AUCTION}
                     />
-                    {formik.touched.availability?.shipToLocationAvailability?.quantity && formik.errors.availability?.shipToLocationAvailability?.quantity && (
-                      <FormHelperText error id="helper-tex-channel-availableQuantity-label">
-                        {formik.errors.availability?.shipToLocationAvailability?.quantity}
-                      </FormHelperText>
-                    )}
+                    {formik.touched.availability?.shipToLocationAvailability?.quantity &&
+                      formik.errors.availability?.shipToLocationAvailability?.quantity && (
+                        <FormHelperText error id="helper-tex-channel-availableQuantity-label">
+                          {formik.errors.availability?.shipToLocationAvailability?.quantity}
+                        </FormHelperText>
+                      )}
                   </FormControl>
 
                   <FormControl
@@ -1213,13 +1250,24 @@ const EditEbayGoods = ({ setOpen, open, goodsId }) => {
                               value={formik.values.product['aspects'][item.localizedAspectName] || []}
                               onChange={(e) => {
                                 const value = e.target.value;
-                                if (item.aspectConstraint.itemToAspectCardinality === CardinalityEnum.SINGLE) {
-                                  formik.setFieldValue(
-                                    `product.aspects.${item.localizedAspectName}`,
-                                    [e.target.value.pop()].filter((item) => item)
+                                if (value.length > 0) {
+                                  if (item.aspectConstraint.itemToAspectCardinality === CardinalityEnum.SINGLE) {
+                                    formik.setFieldValue(
+                                      `product.aspects.${item.localizedAspectName}`,
+                                      [e.target.value.pop()].filter((item) => item)
+                                    );
+                                  } else {
+                                    formik.setFieldValue(`product.aspects.${item.localizedAspectName}`, value);
+                                  }
+                                  const aspect = itemAspectsForCategoryOptions.find(
+                                    (aspect) => item.localizedAspectName === aspect.localizedAspectName
                                   );
-                                } else {
-                                  formik.setFieldValue(`product.aspects.${item.localizedAspectName}`, e.target.value);
+                                  const { valueConstraints } = aspect;
+                                  if (valueConstraints && valueConstraints.length > 0) {
+                                    for (let i = 0; i < valueConstraints.length; i++) {
+                                      formik.setFieldValue(`product.aspects.${valueConstraints[i]}`, '');
+                                    }
+                                  }
                                 }
                               }}
                               input={<OutlinedInput label={item.localizedAspectName} />}

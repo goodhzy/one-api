@@ -6,6 +6,7 @@ const UsersTableHead = () => {
       <TableRow>
         {/*<TableCell>ID</TableCell>*/}
         <TableCell>店铺名字</TableCell>
+        <TableCell>状态</TableCell>
         <TableCell>操作</TableCell>
       </TableRow>
     </TableHead>

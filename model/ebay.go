@@ -39,6 +39,7 @@ type Ebay struct {
 	Username                  string         `json:"username,omitempty"`
 	AccountType               string         `json:"account_type,omitempty"`
 	RegistrationMarketplaceId string         `json:"registration_marketplace_id,omitempty"`
+	Status                    int            `json:"status,omitempty"`
 	CreatedAt                 int64          `json:"created_at"`
 	UpdatedAt                 int64          `json:"updated_at"`
 	DeletedAt                 gorm.DeletedAt `json:"deleted_at,omitempty"` // 删除时间
@@ -405,7 +406,7 @@ func (ebay *Ebay) Insert() error {
 
 func (ebay *Ebay) Update() error {
 	var err error
-	err = DB.Model(&ebay).Where("ebay_user_id = ?", ebay.EbayUserId).Updates(ebay).Error
+	err = DB.Model(&ebay).Updates(ebay).Error
 	return err
 }
 
@@ -417,7 +418,7 @@ type MyEbayAccount struct {
 func GetAllEbayAccountByUserId(userId int64) (*[]Ebay, error) {
 	var ebays *[]Ebay
 	var err error
-	err = DB.Model(&Ebay{}).Where("user_id = ?", userId).Select("id,username, created_at, updated_at").Find(&ebays).Error
+	err = DB.Model(&Ebay{}).Where("user_id = ?", userId).Select("id,username, created_at, updated_at, status").Find(&ebays).Error
 	return ebays, err
 }
 
@@ -454,17 +455,20 @@ func (ebayProduct *EbayProduct) Update(userId int64) error {
 	return err
 }
 
-func GetEbayProductList(startIdx int, num int, status string, userId int64) ([]EbayProduct, error) {
+func GetEbayProductList(startIdx int, num int, status string, title string, userId int64) ([]EbayProduct, error) {
 	var ebayProduct []EbayProduct
 	var err error
 	// 时间倒序
 	baseDb := DB.Model(&EbayProduct{}).Where("user_id = ?", userId)
 	fmt.Printf("status: %s\n", status)
-	if status != common.EbayProductPublish {
+	if status == common.EbayProductPublish {
 		baseDb = baseDb.Where("status = ?", common.PublishOfferSuccess)
-	} else if status != common.EbayProductNotPublish {
+	} else if status == common.EbayProductNotPublish {
 		var statusList = []int{common.CreateInventorySuccess, common.CreateOfferSuccess, common.NotListed}
 		baseDb = baseDb.Where("status in (?)", statusList)
+	}
+	if title != "" {
+		baseDb = baseDb.Where("product -> '$.title' like ?", "%"+title+"%")
 	}
 	err = baseDb.Order("created_at desc").Limit(num).Offset(startIdx).Find(&ebayProduct).Error
 	return ebayProduct, err
@@ -509,7 +513,7 @@ func GetEbayBindInfoByUserIdAndEbayUserId(userId int64, ebayId int64) (*Ebay, er
 
 func UpdateAccessToken(userId int64, accessToken string) error {
 	ebay := Ebay{}
-	err := DB.Model(&ebay).Where("user_id = ?", userId).Update("AccessToken", accessToken).Error
+	err := DB.Model(&ebay).Where("user_id = ?", userId).Update("AccessToken", accessToken).Update("Status", common.EbayUserNormal).Error
 	return err
 }
 

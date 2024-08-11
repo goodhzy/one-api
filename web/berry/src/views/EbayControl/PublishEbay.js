@@ -25,12 +25,13 @@ import { ITEMS_PER_PAGE } from 'constants';
 import { IconRefresh, IconPlus, IconSearch } from '@tabler/icons-react';
 import PublishTableRow from './component/PublishTable/PublishTableRow';
 import { LoadingButton } from '@mui/lab';
+import { EbayProductStatus } from '../../constants/Ebay';
 
 export default function PublishEbay() {
   const originalKeyword = {
     p: 0,
-    type: 0,
-    goodsName:''
+    status:'all',
+    title:''
   };
   const [searchKeyword, setSearchKeyword] = useState(originalKeyword);
   const [activePage, setActivePage] = useState(0);
@@ -45,7 +46,9 @@ export default function PublishEbay() {
 
   const LoadGoodsList = async (startIdx) => {
     setSearching(true);
-    const res = await API.get(`/api/ebay_get_goods_list?p=${startIdx}`)
+    const res = await API.get(`/api/ebay_get_goods_list`,{
+      params: searchKeyword
+    })
     const { success, message, data } = res.data;
     if (success) {
       setGoodsList(data);
@@ -57,9 +60,10 @@ export default function PublishEbay() {
   }
 
   const searchLogs = async (event) => {
-    setTimeout(() => {
-      setSearching(true)
-    },1000)
+    event.preventDefault();
+    setSearching(true);
+    await LoadGoodsList(0);
+    setSearching(false);
   };
 
   // 处理刷新
@@ -101,6 +105,7 @@ export default function PublishEbay() {
       showSuccess('请先选择需要刊登的商品！');
       return;
     }
+
     try {
       setPublishBatchLoading(true)
       const res = await API.post(`/api/ebay_publish_goods_batch`, {
@@ -147,7 +152,7 @@ export default function PublishEbay() {
        >
          <Container>
            <ButtonGroup variant="outlined" aria-label="outlined small primary button group" sx={{marginBottom: 2}}>
-             <LoadingButton onClick={handleRefresh} startIcon={<IconPlus width={'18px'} />} onClick={handlePublishBatch} loading={publishBatchLoading}>
+             <LoadingButton startIcon={<IconPlus width={'18px'} />} onClick={handlePublishBatch} loading={publishBatchLoading}>
                批量刊登
              </LoadingButton>
              <Button onClick={handleRefresh} startIcon={<IconRefresh width={'18px'} />}>

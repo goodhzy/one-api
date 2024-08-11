@@ -44,11 +44,16 @@ const OptionsApi = () => {
   const fetchDefaultCategoryTreeId = async () => {
     try {
       let res = await API.get('/api/ebay_get_default_category_tree_id');
-      return res.data.data.categoryTreeId;
+      const { data } = res;
+      if (data.success) {
+        return data.data.categoryTreeId;
+      } else {
+        showError(data.message);
+      }
     } catch (error) {
       showError(error.message);
     }
-  }
+  };
 
   //获取刊登类目
   const fetchCategoryOption = async ({ categoryTreeId }) => {
@@ -107,12 +112,12 @@ const OptionsApi = () => {
         params: data
       });
       console.log(res.data);
-      console.log('--------------')
-      if(res.data.success){
+      console.log('--------------');
+      if (res.data.success) {
         return res.data.data;
-      }else{
+      } else {
         showError(res.data.message);
-        return Promise.reject(res.data.message)
+        return Promise.reject(res.data.message);
       }
     } catch (error) {
       showError(error.message);
@@ -124,11 +129,11 @@ const OptionsApi = () => {
       let res = await API.get('/api/ebay_get_payment_policy', {
         params: data
       });
-      if(res.data.success){
+      if (res.data.success) {
         return res.data.data;
-      }else{
+      } else {
         showError(res.data.message);
-        return Promise.reject(res.data.message)
+        return Promise.reject(res.data.message);
       }
     } catch (error) {
       showError(error.message);
@@ -140,11 +145,11 @@ const OptionsApi = () => {
       let res = await API.get('/api/ebay_get_fulfillment_policies', {
         params: data
       });
-      if(res.data.success){
+      if (res.data.success) {
         return res.data.data;
-      }else{
+      } else {
         showError(res.data.message);
-        return Promise.reject(res.data.message)
+        return Promise.reject(res.data.message);
       }
     } catch (error) {
       showError(error.message);
@@ -156,11 +161,11 @@ const OptionsApi = () => {
       let res = await API.get('/api/ebay_get_return_policy', {
         params: data
       });
-      if(res.data.success){
+      if (res.data.success) {
         return res.data.data;
-      }else{
+      } else {
         showError(res.data.message);
-        return Promise.reject(res.data.message)
+        return Promise.reject(res.data.message);
       }
     } catch (error) {
       showError(error.message);
@@ -172,11 +177,11 @@ const OptionsApi = () => {
       let res = await API.get('/api/ebay_get_inventory_location', {
         params: data
       });
-      if(res.data.success){
+      if (res.data.success) {
         return res.data.data;
-      }else{
+      } else {
         showError(res.data.message);
-        return Promise.reject(res.data.message)
+        return Promise.reject(res.data.message);
       }
     } catch (error) {
       showError(error.message);
@@ -190,7 +195,7 @@ const OptionsApi = () => {
     } catch (error) {
       showError(error.message);
     }
-  }
+  };
 
   return {
     fetchSitesOption,

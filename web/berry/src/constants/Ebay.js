@@ -66,3 +66,13 @@ export const EbayProductStatus = {
   NOT_PUBLISH: 'NOT_PUBLISH',
   PUBLISH: 'PUBLISH',
 }
+
+export const EbayUserStatus ={
+  NORMAL: 1,
+  EXPIRED: 2,
+}
+
+export const EbayUserStatusName = {
+  [EbayUserStatus.NORMAL]: '正常',
+  [EbayUserStatus.EXPIRED]: '过期',
+}

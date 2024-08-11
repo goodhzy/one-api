@@ -107,14 +107,14 @@ export default function PublishTableRow({item,setModalGoodsId, setSearching, Loa
 
         <TableCell>{item.marketplaceId ?? '无'}</TableCell>
 
-        <TableCell>{item.title}</TableCell>
+        <TableCell>{item?.product.title || item.title}</TableCell>
 
         {/*<TableCell>*/}
         {/*  <TableSwitch id={`switch-${item.id}`} checked={statusSwitch === 1} onChange={handleStatus} />*/}
         {/*</TableCell>*/}
 
         <TableCell style={{ width: '100px' }}>
-          <Link onClick={handlePublish}>刊登</Link>
+          <Link onClick={handlePublish} underline="none" style={{cursor: 'pointer'}}>刊登</Link>
           <IconButton onClick={handleOpenMenu} sx={{ color: 'rgb(99, 115, 129)' }}>
             <IconDotsVertical />
           </IconButton>

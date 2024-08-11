@@ -23,8 +23,8 @@ export default function PublishTableToolBar({ filterName,handleFilterName }){
   const grey500 = theme.palette.grey[500];
 
   const publishTypes = [
-    { value: '', text: "全部" },
-    {  value: EbayProductStatus.NOT_PUBLISH,text: "未刊登" },
+    { value: 'all', text: "全部" },
+    { value: EbayProductStatus.NOT_PUBLISH,text: "未刊登" },
     { value: EbayProductStatus.PUBLISH, text: "已刊登" },
   ];
 
@@ -40,8 +40,8 @@ export default function PublishTableToolBar({ filterName,handleFilterName }){
           <Select
             id="channel-type-label"
             label="状态"
-            name="type"
-            value={filterName.type}
+            name="status"
+            value={filterName.status}
             onChange={handleFilterName}
             sx={{
               minWidth: "100%",
@@ -65,22 +65,17 @@ export default function PublishTableToolBar({ filterName,handleFilterName }){
         </FormControl>
 
         <FormControl>
-          <InputLabel htmlFor="channel-goodsLabel-label">用户名称</InputLabel>
+          <InputLabel htmlFor="channel-goodsLabel-label">商品标题</InputLabel>
           <OutlinedInput
-            id="goodsLabel"
-            name="goodsLabel"
+            id="title"
+            name="title"
             sx={{
               minWidth: "100%",
             }}
             label="商品标题"
-            value={filterName.goodsName}
+            value={filterName.title}
             onChange={handleFilterName}
             placeholder="商品标题"
-            startAdornment={
-              <InputAdornment position="start">
-                <IconPaperclip stroke={1.5} size="20px" color={grey500} />
-              </InputAdornment>
-            }
           />
         </FormControl>
       </Stack>

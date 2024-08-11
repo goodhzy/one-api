@@ -11,8 +11,13 @@ const (
 )
 
 const (
-	NotListed              = 1
-	CreateInventorySuccess = 2
-	CreateOfferSuccess     = 3
-	PublishOfferSuccess    = 4
+	NotListed              = 1 // 未刊登
+	CreateInventorySuccess = 2 // 创建库存成功, 部分刊登
+	CreateOfferSuccess     = 3 // 创建报价成功, 部分刊登
+	PublishOfferSuccess    = 4 // 发布报价成功
+)
+
+const (
+	EbayUserNormal  = 1
+	EbayUserExpired = 2
 )

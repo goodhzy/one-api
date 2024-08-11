@@ -12,11 +12,12 @@ import {
   DialogContent,
   DialogContentText,
   DialogTitle,
-  Button
+  Button, Link
 } from '@mui/material';
 import { IconDotsVertical,  IconTrash } from '@tabler/icons-react';
+import { EbayUserStatus, EbayUserStatusName } from '../../../../constants/Ebay';
 
-export default function AccountTableRow({ item,deleteAccount }) {
+export default function AccountTableRow({ item,deleteAccount, handleAuth }) {
   const [openDelete, setOpenDelete] = useState(false);
   const [open, setOpen] = useState(null);
 
@@ -51,8 +52,17 @@ export default function AccountTableRow({ item,deleteAccount }) {
         <TableCell>
           {item.username}
         </TableCell>
+        <TableCell>
+          {EbayUserStatusName[item.status] || '未知'}
+        </TableCell>
 
         <TableCell>
+          {/*重新授权*/}
+          {
+            item.status === EbayUserStatus.EXPIRED ? (
+          <Link onClick={handleAuth} underline="none" style={{cursor: 'pointer'}}>重新授权</Link>
+            ) : null
+          }
           <IconButton onClick={handleOpenMenu} sx={{ color: 'rgb(99, 115, 129)' }}>
             <IconDotsVertical />
           </IconButton>

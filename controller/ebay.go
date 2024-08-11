@@ -26,6 +26,8 @@ import (
 const HeaderEbayId = "Ebay-id"
 const defaultMarketplaceId = "EBAY_US"
 
+const isProxy = false
+
 func doEbayRequest(c *gin.Context, method string, path string, body []byte, queryParams map[string]string, accessToken string) (*http.Response, error) {
 	// 获取ebay_user_id
 	ebayId, _ := strconv.Atoi(c.GetHeader(HeaderEbayId))
@@ -84,16 +86,17 @@ func doEbayRequest(c *gin.Context, method string, path string, body []byte, quer
 	req.Header.Set("X-EBAY-SOA-GLOBAL-ID", c.GetHeader("X-EBAY-SOA-GLOBAL-ID"))
 	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", cAccessToken))
 	var client *http.Client
-	// start
-	uri := url.URL{}
-	uriProxy, _ := uri.Parse("http://127.0.0.1:8888")
-	client = &http.Client{
-		Transport: &http.Transport{
-			Proxy: http.ProxyURL(uriProxy),
-		},
+	if isProxy {
+		uri := url.URL{}
+		uriProxy, _ := uri.Parse("http://127.0.0.1:8888")
+		client = &http.Client{
+			Transport: &http.Transport{
+				Proxy: http.ProxyURL(uriProxy),
+			},
+		}
+	} else {
+		client = &http.Client{}
 	}
-	// end
-	//client = &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
 		return nil, err
@@ -101,9 +104,15 @@ func doEbayRequest(c *gin.Context, method string, path string, body []byte, quer
 	if resp.StatusCode >= 400 {
 		if resp.StatusCode == http.StatusUnauthorized {
 			accessToken, err := RefreshToken(c)
+
 			if accessToken == "" {
 				// TODO 这里应该去重新授权获取token
-				return nil, fmt.Errorf("账号已过期, 请重新授权")
+				var ebay = model.Ebay{
+					Status: common.EbayUserExpired,
+					Id:     int64(ebayId),
+				}
+				err = ebay.Update()
+				return nil, fmt.Errorf("账号已过期, 请前往ebay账号管理重新授权")
 			}
 			if err != nil {
 				return nil, err
@@ -236,17 +245,18 @@ func EbayAuth(c *gin.Context) {
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	req.Header.Set("Authorization", "Basic "+helper.GetEncodedAuth())
 
-	// 发起请求
-	client := &http.Client{}
-	// start
-	uri := url.URL{}
-	uriProxy, _ := uri.Parse("http://127.0.0.1:8888")
-	client = &http.Client{
-		Transport: &http.Transport{
-			Proxy: http.ProxyURL(uriProxy),
-		},
+	var client *http.Client
+	if isProxy {
+		uri := url.URL{}
+		uriProxy, _ := uri.Parse("http://127.0.0.1:8888")
+		client = &http.Client{
+			Transport: &http.Transport{
+				Proxy: http.ProxyURL(uriProxy),
+			},
+		}
+	} else {
+		client = &http.Client{}
 	}
-	// end
 	resp, err := client.Do(req)
 	if err != nil {
 		c.JSON(http.StatusOK, gin.H{
@@ -293,9 +303,6 @@ func EbayAuth(c *gin.Context) {
 	}
 	// 查询是否有绑定信息
 	ebayBind, err := model.GetEbayBindInfoByEbayUserId(identity.UserId)
-	fmt.Printf("ebayBind: %+v\n", ebayBind)
-	fmt.Printf("err: %+v\n", err)
-	fmt.Printf(gorm.ErrRecordNotFound.Error())
 	if err != nil {
 		if err.Error() != gorm.ErrRecordNotFound.Error() {
 			c.JSON(http.StatusOK, gin.H{
@@ -309,6 +316,8 @@ func EbayAuth(c *gin.Context) {
 	ebay.RegistrationMarketplaceId = identity.RegistrationMarketplaceId
 	ebay.AccountType = identity.AccountType
 	ebay.EbayUserId = identity.UserId
+	ebay.Status = common.EbayUserNormal
+	ebay.Id = ebayBind.Id
 	if ebayBind.Id > 0 {
 		err = ebay.Update()
 	} else {
@@ -388,10 +397,11 @@ func LogToEbayGoods(c *gin.Context) {
 func GetEbayGoodsList(c *gin.Context) {
 	p, _ := strconv.Atoi(c.Query("p"))
 	status := c.Query("status")
+	title := c.Query("title")
 	if p < 0 {
 		p = 0
 	}
-	ebayProducts, err := model.GetEbayProductList(p*config.ItemsPerPage, config.ItemsPerPage, status, int64(c.GetInt(ctxkey.Id)))
+	ebayProducts, err := model.GetEbayProductList(p*config.ItemsPerPage, config.ItemsPerPage, status, title, int64(c.GetInt(ctxkey.Id)))
 	if err != nil {
 		c.JSON(http.StatusOK, gin.H{
 			"success": false,
