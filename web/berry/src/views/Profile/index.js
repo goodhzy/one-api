@@ -224,16 +224,16 @@ export default function Profile() {
                   >
                     {inputs.email ? '更换邮箱' : '绑定邮箱'}
                   </Button>
-                  {turnstileEnabled ? (
-                    <Turnstile
-                      sitekey={turnstileSiteKey}
-                      onVerify={(token) => {
-                        setTurnstileToken(token);
-                      }}
-                    />
-                  ) : (
-                    <></>
-                  )}
+                  {/*{turnstileEnabled ? (*/}
+                  {/*  <Turnstile*/}
+                  {/*    sitekey={turnstileSiteKey}*/}
+                  {/*    onVerify={(token) => {*/}
+                  {/*      setTurnstileToken(token);*/}
+                  {/*    }}*/}
+                  {/*  />*/}
+                  {/*) : (*/}
+                  {/*  <></>*/}
+                  {/*)}*/}
                 </Grid>
               </Grid>
             </SubCard>

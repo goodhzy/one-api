@@ -198,14 +198,14 @@ const SystemSetting = () => {
   //   }
   // };
   //
-  // const submitTurnstile = async () => {
-  //   if (originInputs['TurnstileSiteKey'] !== inputs.TurnstileSiteKey) {
-  //     await updateOption('TurnstileSiteKey', inputs.TurnstileSiteKey);
-  //   }
-  //   if (originInputs['TurnstileSecretKey'] !== inputs.TurnstileSecretKey && inputs.TurnstileSecretKey !== '') {
-  //     await updateOption('TurnstileSecretKey', inputs.TurnstileSecretKey);
-  //   }
-  // };
+  const submitTurnstile = async () => {
+    if (originInputs['TurnstileSiteKey'] !== inputs.TurnstileSiteKey) {
+      await updateOption('TurnstileSiteKey', inputs.TurnstileSiteKey);
+    }
+    if (originInputs['TurnstileSecretKey'] !== inputs.TurnstileSecretKey && inputs.TurnstileSecretKey !== '') {
+      await updateOption('TurnstileSecretKey', inputs.TurnstileSecretKey);
+    }
+  };
   //
   // const submitMessagePusher = async () => {
   //   if (originInputs['MessagePusherAddress'] !== inputs.MessagePusherAddress) {
@@ -303,14 +303,14 @@ const SystemSetting = () => {
                 control={<Checkbox checked={inputs.RegisterEnabled === 'true'} onChange={handleInputChange} name="RegisterEnabled" />}
               />
             </Grid>
-            {/*<Grid xs={12} md={3}>*/}
-            {/*  <FormControlLabel*/}
-            {/*    label="启用 Turnstile 用户校验"*/}
-            {/*    control={*/}
-            {/*      <Checkbox checked={inputs.TurnstileCheckEnabled === 'true'} onChange={handleInputChange} name="TurnstileCheckEnabled" />*/}
-            {/*    }*/}
-            {/*  />*/}
-            {/*</Grid>*/}
+            <Grid xs={12} md={3}>
+              <FormControlLabel
+                label="启用 Turnstile 用户校验"
+                control={
+                  <Checkbox checked={inputs.TurnstileCheckEnabled === 'true'} onChange={handleInputChange} name="TurnstileCheckEnabled" />
+                }
+              />
+            </Grid>
           </Grid>
         </SubCard>
         <SubCard title="配置邮箱域名白名单" subTitle="用以防止恶意用户利用临时邮箱批量注册">
@@ -665,55 +665,55 @@ const SystemSetting = () => {
         {/*    </Grid>*/}
         {/*  </Grid>*/}
         {/*</SubCard>*/}
-        {/*<SubCard*/}
-        {/*  title="配置 Turnstile"*/}
-        {/*  subTitle={*/}
-        {/*    <span>*/}
-        {/*      用以支持用户校验，*/}
-        {/*      <a href="https://dash.cloudflare.com/" target="_blank" rel="noopener noreferrer">*/}
-        {/*        点击此处*/}
-        {/*      </a>*/}
-        {/*      管理你的 Turnstile Sites，推荐选择 Invisible Widget Type*/}
-        {/*    </span>*/}
-        {/*  }*/}
-        {/*>*/}
-        {/*  <Grid container spacing={{ xs: 3, sm: 2, md: 4 }}>*/}
-        {/*    <Grid xs={12} md={6}>*/}
-        {/*      <FormControl fullWidth>*/}
-        {/*        <InputLabel htmlFor="TurnstileSiteKey">Turnstile Site Key</InputLabel>*/}
-        {/*        <OutlinedInput*/}
-        {/*          id="TurnstileSiteKey"*/}
-        {/*          name="TurnstileSiteKey"*/}
-        {/*          value={inputs.TurnstileSiteKey || ''}*/}
-        {/*          onChange={handleInputChange}*/}
-        {/*          label="Turnstile Site Key"*/}
-        {/*          placeholder="输入你注册的 Turnstile Site Key"*/}
-        {/*          disabled={loading}*/}
-        {/*        />*/}
-        {/*      </FormControl>*/}
-        {/*    </Grid>*/}
-        {/*    <Grid xs={12} md={6}>*/}
-        {/*      <FormControl fullWidth>*/}
-        {/*        <InputLabel htmlFor="TurnstileSecretKey">Turnstile Secret Key</InputLabel>*/}
-        {/*        <OutlinedInput*/}
-        {/*          id="TurnstileSecretKey"*/}
-        {/*          name="TurnstileSecretKey"*/}
-        {/*          type="password"*/}
-        {/*          value={inputs.TurnstileSecretKey || ''}*/}
-        {/*          onChange={handleInputChange}*/}
-        {/*          label="Turnstile Secret Key"*/}
-        {/*          placeholder="敏感信息不会发送到前端显示"*/}
-        {/*          disabled={loading}*/}
-        {/*        />*/}
-        {/*      </FormControl>*/}
-        {/*    </Grid>*/}
-        {/*    <Grid xs={12}>*/}
-        {/*      <Button variant="contained" onClick={submitTurnstile}>*/}
-        {/*        保存 Turnstile 设置*/}
-        {/*      </Button>*/}
-        {/*    </Grid>*/}
-        {/*  </Grid>*/}
-        {/*</SubCard>*/}
+        <SubCard
+          title="配置 Turnstile"
+          subTitle={
+            <span>
+              用以支持用户校验，
+              <a href="https://dash.cloudflare.com/" target="_blank" rel="noopener noreferrer">
+                点击此处
+              </a>
+              管理你的 Turnstile Sites，推荐选择 Invisible Widget Type
+            </span>
+          }
+        >
+          <Grid container spacing={{ xs: 3, sm: 2, md: 4 }}>
+            <Grid xs={12} md={6}>
+              <FormControl fullWidth>
+                <InputLabel htmlFor="TurnstileSiteKey">Turnstile Site Key</InputLabel>
+                <OutlinedInput
+                  id="TurnstileSiteKey"
+                  name="TurnstileSiteKey"
+                  value={inputs.TurnstileSiteKey || ''}
+                  onChange={handleInputChange}
+                  label="Turnstile Site Key"
+                  placeholder="输入你注册的 Turnstile Site Key"
+                  disabled={loading}
+                />
+              </FormControl>
+            </Grid>
+            <Grid xs={12} md={6}>
+              <FormControl fullWidth>
+                <InputLabel htmlFor="TurnstileSecretKey">Turnstile Secret Key</InputLabel>
+                <OutlinedInput
+                  id="TurnstileSecretKey"
+                  name="TurnstileSecretKey"
+                  type="password"
+                  value={inputs.TurnstileSecretKey || ''}
+                  onChange={handleInputChange}
+                  label="Turnstile Secret Key"
+                  placeholder="敏感信息不会发送到前端显示"
+                  disabled={loading}
+                />
+              </FormControl>
+            </Grid>
+            <Grid xs={12}>
+              <Button variant="contained" onClick={submitTurnstile}>
+                保存 Turnstile 设置
+              </Button>
+            </Grid>
+          </Grid>
+        </SubCard>
       </Stack>
       <Dialog open={showPasswordWarningModal} onClose={() => setShowPasswordWarningModal(false)} maxWidth={'md'}>
         <DialogTitle sx={{ margin: '0px', fontWeight: 700, lineHeight: '1.55556', padding: '24px', fontSize: '1.125rem' }}>
