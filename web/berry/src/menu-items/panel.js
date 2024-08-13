@@ -44,11 +44,28 @@ const panel = {
     {
       id:'ebayControl',
       title: 'ebay',
-      type:'item',
-      url:'/panel/ebayControl',
+      type:'collapse',
       icon:icons.IconShoppingBag,
       breadcrumbs: false,
-      isAdmin: false
+      isAdmin: false,
+      children:[
+        {
+          id:'account',
+          title:'账号',
+          type:'item',
+          url:'/panel/account',
+          icon:icons.IconUser,
+          breadcrumbs:false
+        },
+        {
+          id:'goods',
+          title:'商品',
+          type:'item',
+          url:'/panel/goods',
+          icon:icons.IconShoppingBag,
+          breadcrumbs:false
+        },
+        ]
     },
     {
       id: 'token',

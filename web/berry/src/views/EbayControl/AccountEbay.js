@@ -1,6 +1,16 @@
 import { useState, useEffect } from 'react';
 import { showError, showSuccess } from 'utils/common';
-import {  Button, Container,LinearProgress,ButtonGroup,Toolbar,TableContainer,Table,TableBody } from '@mui/material';
+import {
+  Button,
+  Container,
+  LinearProgress,
+  ButtonGroup,
+  Toolbar,
+  TableContainer,
+  Table,
+  TableBody,
+  Card, Box
+} from '@mui/material';
 import { IconPlus, IconRefresh } from '@tabler/icons-react';
 import PerfectScrollbar from 'react-perfect-scrollbar';
 import AccountTableHead from './component/AccountTable/AccountTableHead';
@@ -75,7 +85,8 @@ export default function AccountEbay() {
 
 
   return(
-    <>
+    <Card>
+      <Box component="form" noValidate sx={{ marginTop: 2 }}>
       <Toolbar
         sx={{
           textAlign: 'right',
@@ -85,6 +96,7 @@ export default function AccountEbay() {
           p: (theme) => theme.spacing(0, 1, 0, 3)
         }}
       >
+
         <Container>
           <ButtonGroup variant="outlined" aria-label="outlined small primary button group" sx={{marginBottom: 2}}>
             <Button onClick={handleBind} startIcon={<IconPlus width={'18px'} />}>
@@ -96,6 +108,8 @@ export default function AccountEbay() {
           </ButtonGroup>
         </Container>
       </Toolbar>
+      </Box>
+
       {searching && <LinearProgress />}
       <PerfectScrollbar component="div">
         <TableContainer sx={{ overflow: 'unset' }}>
@@ -111,6 +125,6 @@ export default function AccountEbay() {
         </TableContainer>
 
       </PerfectScrollbar>
-    </>
+    </Card>
   )
 }

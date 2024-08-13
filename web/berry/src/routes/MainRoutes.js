@@ -4,6 +4,9 @@ import { lazy } from 'react';
 import MainLayout from 'layout/MainLayout';
 import Loadable from 'ui-component/Loadable';
 import loadable from "ui-component/Loadable";
+import AccountEbay from '../views/EbayControl/AccountEbay';
+import MinimalLayout from '../layout/MinimalLayout';
+import PublishEbay from '../views/EbayControl/PublishEbay';
 
 const Channel = Loadable(lazy(() => import('views/Channel')));
 const Log = Loadable(lazy(() => import('views/Log')));
@@ -65,8 +68,18 @@ const MainRoutes = {
       element: <Identify />
     },
     {
-      path: 'ebayControl',
-      element: <EbayControl/>
+      type: 'collapse',
+      component: <MinimalLayout />,
+      children: [
+        {
+          path: 'goods',
+          element: <PublishEbay />
+        },
+        {
+          path: 'account',
+          element: <AccountEbay />
+        }
+      ]
     },
     {
       path: 'picture',

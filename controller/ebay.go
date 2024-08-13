@@ -26,7 +26,7 @@ import (
 const HeaderEbayId = "Ebay-id"
 const defaultMarketplaceId = "EBAY_US"
 
-const isProxy = false
+const isProxy = true
 
 func doEbayRequest(c *gin.Context, method string, path string, body []byte, queryParams map[string]string, accessToken string) (*http.Response, error) {
 	// 获取ebay_user_id
@@ -168,7 +168,8 @@ func handleRespBody[T any](c *gin.Context, resp *http.Response, respBody *T) err
 				longMessageField := firstErrorValue.FieldByName("LongMessage")
 				if messageField.IsValid() && messageField.Kind() == reflect.String &&
 					longMessageField.IsValid() && longMessageField.Kind() == reflect.String {
-					return fmt.Errorf("ebay request error: message %s; longMessage: %s", messageField.String(), longMessageField.String())
+					//return fmt.Errorf("ebay request error: message %s; longMessage: %s", messageField.String(), longMessageField.String())
+					return fmt.Errorf(string(body))
 				}
 			}
 		}
@@ -528,7 +529,10 @@ func CreateOrReplaceInventoryItem(c *gin.Context, ebayProduct *model.EbayProduct
 	err = handleRespBody(c, resp, &respBody)
 	if err != nil {
 		ebayProduct.EbayError = err.Error()
-		err = ebayProduct.Update(int64(c.GetInt(ctxkey.Id)))
+		updateErr := ebayProduct.Update(int64(c.GetInt(ctxkey.Id)))
+		if updateErr != nil {
+			return updateErr
+		}
 		return err
 	}
 	// 更改状态
@@ -585,7 +589,10 @@ func CreateOffer(c *gin.Context, ebayProduct *model.EbayProduct) error {
 	err = handleRespBody(c, resp, &createOfferRespBody)
 	if err != nil {
 		ebayProduct.EbayError = err.Error()
-		err = ebayProduct.Update(int64(c.GetInt(ctxkey.Id)))
+		updateErr := ebayProduct.Update(int64(c.GetInt(ctxkey.Id)))
+		if updateErr != nil {
+			return updateErr
+		}
 		return err
 	}
 	if createOfferRespBody.OfferId != "" {
@@ -612,7 +619,11 @@ func PublishOffer(c *gin.Context, ebayProduct *model.EbayProduct) error {
 	err = handleRespBody(c, resp, &publishOfferRespBody)
 	if err != nil {
 		ebayProduct.EbayError = err.Error()
-		err = ebayProduct.Update(int64(c.GetInt(ctxkey.Id)))
+		fmt.Printf("ebayProduct: %v", ebayProduct)
+		updateErr := ebayProduct.Update(int64(c.GetInt(ctxkey.Id)))
+		if updateErr != nil {
+			return updateErr
+		}
 		return err
 	}
 	// 更改状态

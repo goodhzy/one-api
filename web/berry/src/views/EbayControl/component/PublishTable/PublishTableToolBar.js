@@ -34,6 +34,7 @@ export default function PublishTableToolBar({ filterName,handleFilterName }){
         direction={{ xs: "column", sm: "row" }}
         spacing={{ xs: 3, sm: 2, md: 4 }}
         paddingBottom={"0px"}
+        paddingLeft={"24px"}
       >
         <FormControl sx={{ minWidth: "22%" }}>
           <InputLabel htmlFor="channel-type-label">状态</InputLabel>

@@ -879,7 +879,17 @@ const EditEbayGoods = ({ setOpen, open, goodsId }) => {
                     sx={{ ...theme.typography.otherInput }}
                   >
                     <FormLabel htmlFor="channel-type-label">刊登类型</FormLabel>
-                    <RadioGroup row id="channel-type-label" name="format" value={formik.values.format} onChange={formik.handleChange}>
+                    <RadioGroup row id="channel-type-label" name="format" value={formik.values.format} onChange={(e)=> {
+                      const value = e.target.value;
+                      formik.setFieldValue('format', e.target.value);
+                      if(value === ListingTypeEnum.AUCTION) {
+                        formik.setFieldValue('pricingSummary.auctionStartPrice', {
+                          value: 0,
+                          currency: 'USD'
+                        });
+                      }
+                    }
+                    }>
                       {typeOptions.map((option) => {
                         return <FormControlLabel key={option.value} value={option.value} control={<Radio />} label={option.label} />;
                       })}
@@ -899,7 +909,7 @@ const EditEbayGoods = ({ setOpen, open, goodsId }) => {
                           id="channel-auctionStartPrice-label"
                           label="起拍价"
                           type="number"
-                          value={formik.values.pricingSummary.auctionStartPrice.value}
+                          value={formik.values?.pricingSummary?.auctionStartPrice?.value || ''}
                           name="pricingSummary.auctionStartPrice.value"
                           onBlur={formik.handleBlur}
                           onChange={formik.handleChange}

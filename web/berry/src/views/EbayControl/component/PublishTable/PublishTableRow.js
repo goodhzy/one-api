@@ -107,7 +107,7 @@ export default function PublishTableRow({item,setModalGoodsId, setSearching, Loa
 
         <TableCell>{item.marketplaceId ?? '无'}</TableCell>
 
-        <TableCell>{item?.product.title || item.title}</TableCell>
+        <TableCell>{item?.product?.title || item?.title}</TableCell>
 
         {/*<TableCell>*/}
         {/*  <TableSwitch id={`switch-${item.id}`} checked={statusSwitch === 1} onChange={handleStatus} />*/}

@@ -14,12 +14,12 @@ export default function Picture() {
   }
 
   const addPic = (event) =>{
-    const files = [...event.target.files];
-    for (let i = 0; i < files.length; i++) {
-      const file = files[i];
-      file.url = getObjectURL(file);
-    }
-    setImageList(getNewFileList(files));
+    // const files = [...event.target.files];
+    // for (let i = 0; i < files.length; i++) {
+    //   const file = files[i];
+    //   file.url = getObjectURL(file);
+    // }
+    // setImageList(getNewFileList(files));
   }
 
   const VisuallyHiddenInput = styled('input')({

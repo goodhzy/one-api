@@ -17,7 +17,7 @@ import {
   TablePagination,
   TableCell,
   TableHead,
-  TableRow, Checkbox
+  TableRow, Checkbox, Card
 } from '@mui/material';
 
 import { API } from 'utils/api';
@@ -137,10 +137,9 @@ export default function PublishEbay() {
 
 
   return(
-     <>
+     <Card>
        <Box component="form" noValidate sx={{marginTop: 2}}>
         <PublishTableToolBar filterName={searchKeyword} handleFilterName={handleSearchKeyword}></PublishTableToolBar>
-       </Box>
        <Toolbar
          sx={{
            textAlign: 'right',
@@ -164,7 +163,7 @@ export default function PublishEbay() {
            </ButtonGroup>
          </Container>
        </Toolbar>
-
+       </Box>
        {searching && <LinearProgress />}
        <PerfectScrollbar component="div">
          <TableContainer sx={{ overflow: 'unset' }}>
@@ -210,6 +209,6 @@ export default function PublishEbay() {
          rowsPerPageOptions={[ITEMS_PER_PAGE]}
        />
 
-     </>
+     </Card>
   )
 }
