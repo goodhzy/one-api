@@ -3,6 +3,7 @@ package controller
 import (
 	"bytes"
 	"encoding/json"
+	"encoding/xml"
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/songquanpeng/one-api/common"
@@ -28,7 +29,7 @@ const defaultMarketplaceId = "EBAY_US"
 
 const isProxy = true
 
-func doEbayRequest(c *gin.Context, method string, path string, body []byte, queryParams map[string]string, accessToken string) (*http.Response, error) {
+func doEbayRequest(c *gin.Context, method string, path string, body []byte, queryParams map[string]string, accessToken string, isXml bool) (*http.Response, error) {
 	// 获取ebay_user_id
 	ebayId, _ := strconv.Atoi(c.GetHeader(HeaderEbayId))
 	// 如果path带有http或者https
@@ -37,6 +38,10 @@ func doEbayRequest(c *gin.Context, method string, path string, body []byte, quer
 		reqUrl = path
 	} else {
 		reqUrl = config.EbayApiUrl + path
+	}
+
+	if isXml {
+		reqUrl = config.EbayApiUrl + "/ws/api.dll"
 	}
 
 	var req *http.Request
@@ -84,7 +89,15 @@ func doEbayRequest(c *gin.Context, method string, path string, body []byte, quer
 
 	req.Header.Set("Content-Language", "en-US")
 	req.Header.Set("X-EBAY-SOA-GLOBAL-ID", c.GetHeader("X-EBAY-SOA-GLOBAL-ID"))
-	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", cAccessToken))
+	req.Header.Set("X-EBAY-API-SITEID", strconv.Itoa(0))
+	if isXml {
+		req.Header.Set("X-EBAY-API-CALL-NAME", path)
+		req.Header.Set("X-EBAY-API-IAF-TOKEN", fmt.Sprintf(cAccessToken))
+		req.Header.Set("X-EBAY-API-COMPATIBILITY-LEVEL", strconv.Itoa(967))
+	} else {
+		req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", cAccessToken))
+	}
+
 	var client *http.Client
 	if isProxy {
 		uri := url.URL{}
@@ -117,7 +130,12 @@ func doEbayRequest(c *gin.Context, method string, path string, body []byte, quer
 			if err != nil {
 				return nil, err
 			}
-			req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", accessToken))
+			if isXml {
+				req.Header.Set("X-EBAY-API-IAF-TOKEN", fmt.Sprintf(accessToken))
+			} else {
+				req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", accessToken))
+
+			}
 			req.Body = io.NopCloser(bytes.NewBuffer(body))
 			resp, err = client.Do(req)
 			if err != nil {
@@ -126,7 +144,7 @@ func doEbayRequest(c *gin.Context, method string, path string, body []byte, quer
 		}
 		if resp.StatusCode > http.StatusUnauthorized {
 			var respBody = model.EbayResponse{}
-			err = handleRespBody(c, resp, &respBody)
+			err = handleRespBody(c, resp, &respBody, false)
 			if err != nil {
 				return nil, err
 			}
@@ -136,9 +154,50 @@ func doEbayRequest(c *gin.Context, method string, path string, body []byte, quer
 			return nil, fmt.Errorf("ebay request error: %s", resp.Status)
 		}
 	}
+	if isXml {
+		var respBody model.EbayResponseXml
+		cacheBody, err := io.ReadAll(resp.Body)
+		if err != nil {
+			return nil, err
+		}
+		resp.Body = io.NopCloser(bytes.NewBuffer(cacheBody))
+		err = handleRespBody(c, resp, &respBody, true)
+		if err != nil {
+			return nil, err
+		}
+
+		resp.Body = io.NopCloser(bytes.NewBuffer(cacheBody))
+		if err != nil {
+			return nil, fmt.Errorf("read response body error: %s", err.Error())
+		}
+		if respBody.Errors != nil {
+			// ErrorCode带有931 重新授权
+			if respBody.Errors.ErrorCode == 931 {
+				accessToken, err := RefreshToken(c)
+				if accessToken == "" {
+					return nil, fmt.Errorf("账号已过期, 请前往ebay账号管理重新授权")
+				}
+				if err != nil {
+					return nil, err
+				}
+				if isXml {
+					req.Header.Set("X-EBAY-API-IAF-TOKEN", fmt.Sprintf(accessToken))
+				} else {
+					req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", accessToken))
+
+				}
+				req.Body = io.NopCloser(bytes.NewBuffer(body))
+				resp, err = client.Do(req)
+				if err != nil {
+					return nil, err
+				}
+			}
+		}
+	}
+	fmt.Printf("resp: %v", resp)
 	return resp, err
 }
-func handleRespBody[T any](c *gin.Context, resp *http.Response, respBody *T) error {
+func handleRespBody[T any](c *gin.Context, resp *http.Response, respBody *T, isXml bool) error {
 	defer func(Body io.ReadCloser) {
 		err := Body.Close()
 		if err != nil {
@@ -152,9 +211,16 @@ func handleRespBody[T any](c *gin.Context, resp *http.Response, respBody *T) err
 	if resp.StatusCode == http.StatusNoContent && (body == nil || len(body) == 0) {
 		return nil
 	}
-	if err := json.Unmarshal(body, &respBody); err != nil {
-		return err
+	if isXml {
+		if err := xml.Unmarshal(body, &respBody); err != nil {
+			return err
+		}
+	} else {
+		if err := json.Unmarshal(body, &respBody); err != nil {
+			return err
+		}
 	}
+
 	// 使用反射检查 respBody 是否包含 errors 字段
 	respBodyValue := reflect.ValueOf(respBody)
 	if respBodyValue.Kind() == reflect.Ptr {
@@ -268,7 +334,7 @@ func EbayAuth(c *gin.Context) {
 	}
 	// 获取body内容
 	var bodyData model.EbayOauthRes
-	err = handleRespBody(c, resp, &bodyData)
+	err = handleRespBody(c, resp, &bodyData, false)
 	if err != nil {
 		c.JSON(http.StatusOK, gin.H{
 			"success": false,
@@ -520,13 +586,13 @@ func CreateOrReplaceInventoryItem(c *gin.Context, ebayProduct *model.EbayProduct
 		"locale":  ebayProduct.Locale,
 	}
 	payloadBytes, err := json.Marshal(payLoadJson)
-	resp, err := doEbayRequest(c, "PUT", path, payloadBytes, nil, "")
+	resp, err := doEbayRequest(c, "PUT", path, payloadBytes, nil, "", false)
 	if err != nil {
 		return err
 	}
 
 	var respBody model.EbayResponse
-	err = handleRespBody(c, resp, &respBody)
+	err = handleRespBody(c, resp, &respBody, false)
 	if err != nil {
 		ebayProduct.EbayError = err.Error()
 		updateErr := ebayProduct.Update(int64(c.GetInt(ctxkey.Id)))
@@ -581,12 +647,12 @@ func CreateOffer(c *gin.Context, ebayProduct *model.EbayProduct) error {
 		return err
 	}
 
-	resp, err := doEbayRequest(c, createOfferMethod, createOfferPath, createOfferPayload, nil, "")
+	resp, err := doEbayRequest(c, createOfferMethod, createOfferPath, createOfferPayload, nil, "", false)
 	if err != nil {
 		return err
 	}
 	var createOfferRespBody model.EbayCreateOfferResponse
-	err = handleRespBody(c, resp, &createOfferRespBody)
+	err = handleRespBody(c, resp, &createOfferRespBody, false)
 	if err != nil {
 		ebayProduct.EbayError = err.Error()
 		updateErr := ebayProduct.Update(int64(c.GetInt(ctxkey.Id)))
@@ -611,12 +677,12 @@ func CreateOffer(c *gin.Context, ebayProduct *model.EbayProduct) error {
 // https://developer.ebay.com/api-docs/sell/inventory/resources/offer/methods/publishOffer
 func PublishOffer(c *gin.Context, ebayProduct *model.EbayProduct) error {
 	var publishOfferPath = "/sell/inventory/v1/offer/" + ebayProduct.OfferId + "/publish"
-	resp, err := doEbayRequest(c, "POST", publishOfferPath, nil, nil, "")
+	resp, err := doEbayRequest(c, "POST", publishOfferPath, nil, nil, "", false)
 	if err != nil {
 		return err
 	}
 	var publishOfferRespBody model.EbayPublishOfferResponse
-	err = handleRespBody(c, resp, &publishOfferRespBody)
+	err = handleRespBody(c, resp, &publishOfferRespBody, false)
 	if err != nil {
 		ebayProduct.EbayError = err.Error()
 		fmt.Printf("ebayProduct: %v", ebayProduct)
@@ -758,7 +824,7 @@ func BulkCreateOrReplaceInventoryItem(c *gin.Context) {
 		return
 	}
 	var path = "/sell/inventory/v1/bulk_create_or_replace_inventory_item"
-	resp, err := doEbayRequest(c, "POST", path, payloadBytes, nil, "")
+	resp, err := doEbayRequest(c, "POST", path, payloadBytes, nil, "", false)
 	if err != nil {
 		c.JSON(http.StatusOK, gin.H{
 			"success": false,
@@ -768,7 +834,7 @@ func BulkCreateOrReplaceInventoryItem(c *gin.Context) {
 	}
 
 	var respBody model.BulkCreateOrReplaceInventoryItemResponse
-	err = handleRespBody(c, resp, &respBody)
+	err = handleRespBody(c, resp, &respBody, false)
 	if err != nil {
 		c.JSON(http.StatusOK, gin.H{
 			"success": false,
@@ -793,7 +859,7 @@ func GetFulfillmentPolicies(c *gin.Context) {
 	}
 	queryParams["marketplace_id"] = marketPlaceId
 	var path = "/sell/account/v1/fulfillment_policy"
-	resp, err := doEbayRequest(c, "GET", path, nil, queryParams, "")
+	resp, err := doEbayRequest(c, "GET", path, nil, queryParams, "", false)
 	if err != nil {
 		c.JSON(http.StatusOK, gin.H{
 			"success": false,
@@ -802,7 +868,7 @@ func GetFulfillmentPolicies(c *gin.Context) {
 		return
 	}
 	var respBody any
-	err = handleRespBody(c, resp, &respBody)
+	err = handleRespBody(c, resp, &respBody, false)
 	if err != nil {
 		c.JSON(http.StatusOK, gin.H{
 			"success": false,
@@ -850,7 +916,7 @@ func RefreshToken(c *gin.Context) (string, error) {
 		return "", err
 	}
 	var bodyData model.EbayOauthRes
-	err = handleRespBody(c, resp, &bodyData)
+	err = handleRespBody(c, resp, &bodyData, false)
 
 	if err != nil {
 		return "", err
@@ -898,7 +964,7 @@ func GetFormatTypes(c *gin.Context) {
 
 func GetStores(c *gin.Context) {
 	urlStr := "/sell/stores/v1/store"
-	resp, err := doEbayRequest(c, "GET", urlStr, nil, nil, "")
+	resp, err := doEbayRequest(c, "GET", urlStr, nil, nil, "", false)
 	if err != nil {
 		c.JSON(http.StatusOK, gin.H{
 			"success": false,
@@ -907,7 +973,7 @@ func GetStores(c *gin.Context) {
 		return
 	}
 	var respBody any
-	err = handleRespBody(c, resp, &respBody)
+	err = handleRespBody(c, resp, &respBody, false)
 	if err != nil {
 		c.JSON(http.StatusOK, gin.H{
 			"success": false,
@@ -925,7 +991,7 @@ func GetStores(c *gin.Context) {
 
 func GetStoreCategories(c *gin.Context) {
 	urlStr := "/sell/stores/v1/store/categories"
-	resp, err := doEbayRequest(c, "GET", urlStr, nil, nil, "")
+	resp, err := doEbayRequest(c, "GET", urlStr, nil, nil, "", false)
 	if err != nil {
 		c.JSON(http.StatusOK, gin.H{
 			"success": false,
@@ -934,7 +1000,7 @@ func GetStoreCategories(c *gin.Context) {
 		return
 	}
 	var respBody any
-	err = handleRespBody(c, resp, &respBody)
+	err = handleRespBody(c, resp, &respBody, false)
 	if err != nil {
 		c.JSON(http.StatusOK, gin.H{
 			"success": false,
@@ -952,11 +1018,11 @@ func GetStoreCategories(c *gin.Context) {
 
 func GetEbayUser(c *gin.Context, accessToken string, identity *model.EbayIdentity) error {
 	urlStr := config.GetEbayUserUri + "/commerce/identity/v1/user/"
-	resp, err := doEbayRequest(c, "GET", urlStr, nil, nil, accessToken)
+	resp, err := doEbayRequest(c, "GET", urlStr, nil, nil, accessToken, false)
 	if err != nil {
 		return err
 	}
-	err = handleRespBody(c, resp, identity)
+	err = handleRespBody(c, resp, identity, false)
 	if err != nil {
 		return err
 	}
@@ -1016,7 +1082,7 @@ func GetDefaultCategoryTreeId(c *gin.Context) {
 		marketplaceId = "EBAY_US"
 	}
 	queryParams["marketplace_id"] = marketplaceId
-	resp, err := doEbayRequest(c, "GET", urlStr, nil, queryParams, "")
+	resp, err := doEbayRequest(c, "GET", urlStr, nil, queryParams, "", false)
 	if err != nil {
 		c.JSON(http.StatusOK, gin.H{
 			"success": false,
@@ -1025,7 +1091,7 @@ func GetDefaultCategoryTreeId(c *gin.Context) {
 		return
 	}
 	var respBody any
-	err = handleRespBody(c, resp, &respBody)
+	err = handleRespBody(c, resp, &respBody, false)
 	if err != nil {
 		c.JSON(http.StatusOK, gin.H{
 			"success": false,
@@ -1047,7 +1113,7 @@ func GetCategoryTree(c *gin.Context) {
 	urlStr := "/commerce/taxonomy/v1/category_tree/"
 	categoryTreeId := c.Query("category_tree_id")
 	urlStr += categoryTreeId
-	resp, err := doEbayRequest(c, "GET", urlStr, nil, nil, "")
+	resp, err := doEbayRequest(c, "GET", urlStr, nil, nil, "", false)
 	if err != nil {
 		c.JSON(http.StatusOK, gin.H{
 			"success": false,
@@ -1056,7 +1122,7 @@ func GetCategoryTree(c *gin.Context) {
 		return
 	}
 	var respBody any
-	err = handleRespBody(c, resp, &respBody)
+	err = handleRespBody(c, resp, &respBody, false)
 	if err != nil {
 		c.JSON(http.StatusOK, gin.H{
 			"success": false,
@@ -1081,7 +1147,7 @@ func GetCategorySubtree(c *gin.Context) {
 	urlStr += categoryTreeId + "/get_category_subtree"
 	queryParams := map[string]string{}
 	queryParams["category_id"] = c.Query("category_id")
-	resp, err := doEbayRequest(c, "GET", urlStr, nil, queryParams, "")
+	resp, err := doEbayRequest(c, "GET", urlStr, nil, queryParams, "", false)
 	if err != nil {
 		c.JSON(http.StatusOK, gin.H{
 			"success": false,
@@ -1090,7 +1156,7 @@ func GetCategorySubtree(c *gin.Context) {
 		return
 	}
 	var respBody any
-	err = handleRespBody(c, resp, &respBody)
+	err = handleRespBody(c, resp, &respBody, false)
 	if err != nil {
 		c.JSON(http.StatusOK, gin.H{
 			"success": false,
@@ -1114,7 +1180,7 @@ func GetCategorySuggestions(c *gin.Context) {
 	urlStr += categoryTreeId + "/get_category_suggestions"
 	queryParams := map[string]string{}
 	queryParams["q"] = c.Query("q")
-	resp, err := doEbayRequest(c, "GET", urlStr, nil, queryParams, "")
+	resp, err := doEbayRequest(c, "GET", urlStr, nil, queryParams, "", false)
 	if err != nil {
 		c.JSON(http.StatusOK, gin.H{
 			"success": false,
@@ -1123,7 +1189,7 @@ func GetCategorySuggestions(c *gin.Context) {
 		return
 	}
 	var respBody any
-	err = handleRespBody(c, resp, &respBody)
+	err = handleRespBody(c, resp, &respBody, false)
 	if err != nil {
 		c.JSON(http.StatusOK, gin.H{
 			"success": false,
@@ -1147,7 +1213,7 @@ func GetItemAspectsForCategory(c *gin.Context) {
 	urlStr += categoryTreeId + "/get_item_aspects_for_category"
 	queryParams := map[string]string{}
 	queryParams["category_id"] = c.Query("category_id")
-	resp, err := doEbayRequest(c, "GET", urlStr, nil, queryParams, "")
+	resp, err := doEbayRequest(c, "GET", urlStr, nil, queryParams, "", false)
 	if err != nil {
 		c.JSON(http.StatusOK, gin.H{
 			"success": false,
@@ -1156,7 +1222,7 @@ func GetItemAspectsForCategory(c *gin.Context) {
 		return
 	}
 	var respBody any
-	err = handleRespBody(c, resp, &respBody)
+	err = handleRespBody(c, resp, &respBody, false)
 	if err != nil {
 		c.JSON(http.StatusOK, gin.H{
 			"success": false,
@@ -1206,7 +1272,7 @@ func GetItemConditionPolicies(c *gin.Context) {
 		return
 	}
 
-	resp, err := doEbayRequest(c, "GET", urlStr, nil, queryParams, "")
+	resp, err := doEbayRequest(c, "GET", urlStr, nil, queryParams, "", false)
 	if err != nil {
 		c.JSON(http.StatusOK, gin.H{
 			"success": false,
@@ -1215,7 +1281,7 @@ func GetItemConditionPolicies(c *gin.Context) {
 		return
 	}
 	var respBody any
-	err = handleRespBody(c, resp, &respBody)
+	err = handleRespBody(c, resp, &respBody, false)
 	if err != nil {
 		c.JSON(http.StatusOK, gin.H{
 			"success": false,
@@ -1242,7 +1308,7 @@ func GetEbayReturnPolicies(c *gin.Context) {
 	}
 	fmt.Printf("marketPlaceId: %s\n", marketPlaceId)
 	queryParams["marketplace_id"] = marketPlaceId
-	resp, err := doEbayRequest(c, "GET", urlStr, nil, queryParams, "")
+	resp, err := doEbayRequest(c, "GET", urlStr, nil, queryParams, "", false)
 	if err != nil {
 		c.JSON(http.StatusOK, gin.H{
 			"success": false,
@@ -1251,7 +1317,7 @@ func GetEbayReturnPolicies(c *gin.Context) {
 		return
 	}
 	var respBody any
-	err = handleRespBody(c, resp, &respBody)
+	err = handleRespBody(c, resp, &respBody, false)
 	if err != nil {
 		c.JSON(http.StatusOK, gin.H{
 			"success": false,
@@ -1277,7 +1343,7 @@ func GetPaymentPolicies(c *gin.Context) {
 		marketPlaceId = defaultMarketplaceId
 	}
 	queryParams["marketplace_id"] = marketPlaceId
-	resp, err := doEbayRequest(c, "GET", urlStr, nil, queryParams, "")
+	resp, err := doEbayRequest(c, "GET", urlStr, nil, queryParams, "", false)
 	if err != nil {
 		c.JSON(http.StatusOK, gin.H{
 			"success": false,
@@ -1286,7 +1352,7 @@ func GetPaymentPolicies(c *gin.Context) {
 		return
 	}
 	var respBody any
-	err = handleRespBody(c, resp, &respBody)
+	err = handleRespBody(c, resp, &respBody, false)
 	if err != nil {
 		c.JSON(http.StatusOK, gin.H{
 			"success": false,
@@ -1333,7 +1399,7 @@ func GetInventoryLocations(c *gin.Context) {
 	queryParams["limit"] = strconv.Itoa(config.ItemsPerPage)
 	queryParams["offset"] = strconv.Itoa(p * config.ItemsPerPage)
 	urlStr := "/sell/inventory/v1/location"
-	resp, err := doEbayRequest(c, "GET", urlStr, nil, queryParams, "")
+	resp, err := doEbayRequest(c, "GET", urlStr, nil, queryParams, "", false)
 	if err != nil {
 		c.JSON(http.StatusOK, gin.H{
 			"success": false,
@@ -1342,7 +1408,7 @@ func GetInventoryLocations(c *gin.Context) {
 		return
 	}
 	var respBody any
-	err = handleRespBody(c, resp, &respBody)
+	err = handleRespBody(c, resp, &respBody, false)
 	if err != nil {
 		c.JSON(http.StatusOK, gin.H{
 			"success": false,
@@ -1356,4 +1422,66 @@ func GetInventoryLocations(c *gin.Context) {
 		"data":    respBody,
 	})
 	return
+}
+
+// 定义XML结构体
+
+// GetMyeBaySelling 获取我的eBay销售
+// https://developer.ebay.com/devzone/xml/docs/reference/ebay/GetMyeBaySelling.html
+func GetMyeBaySelling(c *gin.Context) {
+	p, _ := strconv.Atoi(c.Query("p"))
+	if p < 0 {
+		p = 0
+	}
+
+	request := model.GetMyeBaySellingRequest{
+		Xmlns:         "urn:ebay:apis:eBLBaseComponents",
+		ErrorLanguage: "en_US",
+		WarningLevel:  "High",
+		ActiveList: model.ActiveList{
+			Sort: "TimeLeft",
+			Pagination: model.Pagination{
+				EntriesPerPage: 10,
+				PageNumber:     p,
+			},
+		},
+	}
+
+	// 将结构体转为XML
+	output, err := xml.MarshalIndent(request, "", "    ")
+	if err != nil {
+		fmt.Println("Error:", err)
+	}
+
+	// 添加XML头
+	xmlHeader := []byte(xml.Header)
+	fullXML := append(xmlHeader, output...)
+
+	resp, err := doEbayRequest(c, "POST", "GetMyeBaySelling", fullXML, nil, "", true)
+	fmt.Printf("resp body: %v", resp)
+	fmt.Println("aaa")
+	if err != nil {
+		c.JSON(http.StatusOK, gin.H{
+			"success": false,
+			"message": err.Error(),
+		})
+		return
+	}
+
+	var response model.GetMyeBaySellingResponse
+	err = handleRespBody(c, resp, &response, true)
+
+	if err != nil {
+		c.JSON(http.StatusOK, gin.H{
+			"success": false,
+			"message": err.Error(),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"message": "get my eBay selling success",
+		"data":    response,
+	})
 }

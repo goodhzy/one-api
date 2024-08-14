@@ -62,6 +62,7 @@ func SetApiRouter(router *gin.Engine) {
 		apiRouter.GET("/ebay_get_payment_policy", middleware.UserAuth(), controller.GetPaymentPolicies)
 		apiRouter.GET("/ebay_get_listing_duration", middleware.UserAuth(), controller.GetListingDuration)
 		apiRouter.GET("/ebay_get_inventory_location", middleware.UserAuth(), controller.GetInventoryLocations)
+		apiRouter.GET("/ebay_get_my_selling", middleware.UserAuth(), controller.GetMyeBaySelling)
 
 		userRoute := apiRouter.Group("/user")
 		{
