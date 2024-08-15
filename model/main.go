@@ -12,7 +12,6 @@ import (
 	"gorm.io/driver/postgres"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
-	logger2 "gorm.io/gorm/logger"
 	"os"
 	"strings"
 	"time"
@@ -81,7 +80,7 @@ func chooseDB(envName string) (*gorm.DB, error) {
 		return gorm.Open(mysql.Open(dsn), &gorm.Config{
 			PrepareStmt: true, // precompile SQL
 			// TODO 数据库日志
-			Logger: logger2.Default.LogMode(logger2.Info), // 开启数据库语句日志
+			//Logger: logger2.Default.LogMode(logger2.Info), // 开启数据库语句日志
 		})
 	}
 	// Use SQLite

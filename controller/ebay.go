@@ -194,7 +194,6 @@ func doEbayRequest(c *gin.Context, method string, path string, body []byte, quer
 			}
 		}
 	}
-	fmt.Printf("resp: %v", resp)
 	return resp, err
 }
 func handleRespBody[T any](c *gin.Context, resp *http.Response, respBody *T, isXml bool) error {
@@ -220,7 +219,6 @@ func handleRespBody[T any](c *gin.Context, resp *http.Response, respBody *T, isX
 			return err
 		}
 	}
-
 	// 使用反射检查 respBody 是否包含 errors 字段
 	respBodyValue := reflect.ValueOf(respBody)
 	if respBodyValue.Kind() == reflect.Ptr {
@@ -300,7 +298,6 @@ func EbayAuth(c *gin.Context) {
 	// 创建HTTP请求
 	req, err := http.NewRequest("POST", urlStr, bytes.NewBuffer([]byte(encodedFormData)))
 	if err != nil {
-		fmt.Println("Error creating request:", err)
 		c.JSON(http.StatusOK, gin.H{
 			"success": false,
 			"message": "request error",
@@ -685,7 +682,6 @@ func PublishOffer(c *gin.Context, ebayProduct *model.EbayProduct) error {
 	err = handleRespBody(c, resp, &publishOfferRespBody, false)
 	if err != nil {
 		ebayProduct.EbayError = err.Error()
-		fmt.Printf("ebayProduct: %v", ebayProduct)
 		updateErr := ebayProduct.Update(int64(c.GetInt(ctxkey.Id)))
 		if updateErr != nil {
 			return updateErr
@@ -1260,8 +1256,6 @@ func GetItemConditionPolicies(c *gin.Context) {
 	urlStr += marketplaceId + "/get_item_condition_policies"
 	queryParams := map[string]string{}
 	categoryIds := c.QueryArray("category_ids[]")
-	fmt.Printf("categoryIds: %v\n", categoryIds)
-	fmt.Printf("marketplaceId: %s\n", marketplaceId)
 	if len(categoryIds) > 0 {
 		queryParams["filter"] = generateFilter(categoryIds)
 	} else {
@@ -1306,7 +1300,6 @@ func GetEbayReturnPolicies(c *gin.Context) {
 	if strings.TrimSpace(marketPlaceId) == "" {
 		marketPlaceId = defaultMarketplaceId
 	}
-	fmt.Printf("marketPlaceId: %s\n", marketPlaceId)
 	queryParams["marketplace_id"] = marketPlaceId
 	resp, err := doEbayRequest(c, "GET", urlStr, nil, queryParams, "", false)
 	if err != nil {
@@ -1433,24 +1426,41 @@ func GetMyeBaySelling(c *gin.Context) {
 	if p < 0 {
 		p = 0
 	}
+	var status = c.Query("status")
 
 	request := model.GetMyeBaySellingRequest{
 		Xmlns:         "urn:ebay:apis:eBLBaseComponents",
 		ErrorLanguage: "en_US",
 		WarningLevel:  "High",
-		ActiveList: model.ActiveList{
+	}
+	if status == "ActiveList" {
+		request.ActiveList = &model.ActiveList{
 			Sort: "TimeLeft",
 			Pagination: model.Pagination{
 				EntriesPerPage: 10,
 				PageNumber:     p,
 			},
-		},
+		}
+		request.UnsoldList = nil
+	} else {
+		request.UnsoldList = &model.UnsoldList{
+			DurationInDays: 60,
+			Pagination: model.Pagination{
+				EntriesPerPage: 10,
+				PageNumber:     p,
+			},
+		}
+		request.ActiveList = nil
 	}
 
 	// 将结构体转为XML
 	output, err := xml.MarshalIndent(request, "", "    ")
 	if err != nil {
-		fmt.Println("Error:", err)
+		c.JSON(http.StatusOK, gin.H{
+			"success": false,
+			"message": err.Error(),
+		})
+		return
 	}
 
 	// 添加XML头
@@ -1458,8 +1468,6 @@ func GetMyeBaySelling(c *gin.Context) {
 	fullXML := append(xmlHeader, output...)
 
 	resp, err := doEbayRequest(c, "POST", "GetMyeBaySelling", fullXML, nil, "", true)
-	fmt.Printf("resp body: %v", resp)
-	fmt.Println("aaa")
 	if err != nil {
 		c.JSON(http.StatusOK, gin.H{
 			"success": false,
@@ -1484,4 +1492,142 @@ func GetMyeBaySelling(c *gin.Context) {
 		"message": "get my eBay selling success",
 		"data":    response,
 	})
+}
+
+// GetItem 获取商品
+// https://developer.ebay.com/devzone/xml/docs/reference/ebay/GetItem.html
+func GetItem(c *gin.Context) {
+	itemId := c.Query("item_id")
+	request := model.GetItemRequest{
+		Xmlns:         "urn:ebay:apis:eBLBaseComponents",
+		ErrorLanguage: "en_US",
+		WarningLevel:  "High",
+		ItemID:        itemId,
+	}
+
+	output, err := xml.MarshalIndent(request, "", "    ")
+	if err != nil {
+		c.JSON(http.StatusOK, gin.H{
+			"success": false,
+			"message": err.Error(),
+		})
+		return
+	}
+
+	xmlHeader := []byte(xml.Header)
+	fullXML := append(xmlHeader, output...)
+
+	resp, err := doEbayRequest(c, "POST", "GetItem", fullXML, nil, "", true)
+	if err != nil {
+		c.JSON(http.StatusOK, gin.H{
+			"success": false,
+			"message": err.Error(),
+		})
+		return
+	}
+
+	var response model.GetItemResponse
+	err = handleRespBody(c, resp, &response, true)
+
+	if err != nil {
+		c.JSON(http.StatusOK, gin.H{
+			"success": false,
+			"message": err.Error(),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"message": "get item success",
+		"data":    response,
+	})
+
+}
+
+type EndItemsJson struct {
+	ItemIds []string `json:"item_ids"`
+}
+
+// EndItems 下架商品
+// https://developer.ebay.com/devzone/xml/docs/reference/ebay/EndItems.html
+func EndItems(c *gin.Context) {
+	// 从post获取请求参数
+	var endItemsJson EndItemsJson
+	err := c.ShouldBindJSON(&endItemsJson)
+
+	if err != nil {
+		c.JSON(http.StatusOK, gin.H{
+			"success": false,
+			"message": err.Error(),
+		})
+		return
+	}
+	request := model.EndItemsRequest{
+		XMLNs:         "urn:ebay:apis:eBLBaseComponents",
+		ErrorLanguage: "en_US",
+		WarningLevel:  "High",
+	}
+	itemIds := endItemsJson.ItemIds
+	if len(itemIds) == 0 {
+		c.JSON(http.StatusOK, gin.H{
+			"success": false,
+			"message": "itemIds is required",
+		})
+		return
+	}
+	for i, itemId := range itemIds {
+		container := model.EndItemRequestContainer{
+			MessageID:    fmt.Sprintf("Listing%d", i+1),
+			EndingReason: "NotAvailable", // or another reason based on your logic
+			ItemID:       itemId,
+		}
+		request.EndItemRequestContainer = append(request.EndItemRequestContainer, container)
+	}
+
+	output, err := xml.MarshalIndent(request, "", "  ")
+	if err != nil {
+		c.JSON(http.StatusOK, gin.H{
+			"success": false,
+			"message": err.Error(),
+		})
+		return
+	}
+
+	// Adding the XML declaration manually
+	xmlDeclaration := `<?xml version="1.0" encoding="utf-8" ?>`
+	fullXML := xmlDeclaration + "\n" + string(output)
+
+	resp, err := doEbayRequest(c, "POST", "EndItems", []byte(fullXML), nil, "", true)
+	if err != nil {
+		c.JSON(http.StatusOK, gin.H{
+			"success": false,
+			"message": err.Error(),
+		})
+		return
+	}
+
+	var response model.EndItemsResponse
+	err = handleRespBody(c, resp, &response, true)
+	if response.Errors != nil {
+		c.JSON(http.StatusOK, gin.H{
+			"success": false,
+			"message": response.Errors,
+		})
+		return
+	}
+	if err != nil {
+		c.JSON(http.StatusOK, gin.H{
+			"success": false,
+			"message": err.Error(),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"message": "end items success",
+		"data":    response,
+	})
+	return
 }
