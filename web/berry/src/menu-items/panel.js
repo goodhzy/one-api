@@ -8,14 +8,29 @@ import {
   IconKey,
   IconGardenCart,
   IconUser,
-  IconUserScan, IconCards,
+  IconUserScan,
+  IconCards,
   IconShoppingBag,
   IconBrandStorybook,
   IconPhotoScan
 } from '@tabler/icons-react';
 
 // constant
-const icons = {IconShoppingBag,IconPhotoScan, IconCards,IconDashboard, IconSitemap, IconArticle, IconCoin, IconAdjustments, IconKey, IconGardenCart, IconUser, IconUserScan,IconBrandStorybook };
+const icons = {
+  IconShoppingBag,
+  IconPhotoScan,
+  IconCards,
+  IconDashboard,
+  IconSitemap,
+  IconArticle,
+  IconCoin,
+  IconAdjustments,
+  IconKey,
+  IconGardenCart,
+  IconUser,
+  IconUserScan,
+  IconBrandStorybook
+};
 
 // ==============================|| DASHBOARD MENU ITEMS ||============================== //
 
@@ -42,30 +57,55 @@ const panel = {
       isAdmin: true
     },
     {
-      id:'ebayControl',
+      id: 'ebayControl',
       title: 'ebay',
-      type:'collapse',
-      icon:icons.IconShoppingBag,
+      type: 'collapse',
+      icon: icons.IconShoppingBag,
       breadcrumbs: false,
       isAdmin: false,
-      children:[
+      children: [
         {
-          id:'account',
-          title:'账号',
-          type:'item',
-          url:'/panel/account',
-          icon:icons.IconUser,
-          breadcrumbs:false
+          id: 'account',
+          title: '账号管理',
+          type: 'item',
+          url: '/panel/account',
+          icon: icons.IconUser,
+          breadcrumbs: false
         },
         {
-          id:'goods',
-          title:'商品',
-          type:'item',
-          url:'/panel/goods',
-          icon:icons.IconShoppingBag,
-          breadcrumbs:false
+          id: 'goods',
+          title: '刊登管理',
+          url: '/panel/goods',
+          type: 'item',
+          icon: icons.IconShoppingBag,
+          breadcrumbs: false,
+
         },
-        ]
+        {
+          id: 'listing',
+          title: 'listing管理',
+          type: 'item',
+          icon: icons.IconShoppingBag,
+          breadcrumbs: false,
+          url: '/panel/listing'
+          // children: [
+          //   {
+          //     id: 'activeList',
+          //     title: '已上架listing',
+          //     url: '/panel/listing/activeList',
+          //     icon: icons.IconShoppingBag,
+          //     breadcrumbs: false
+          //   },
+          //   {
+          //     id: 'unsoldList',
+          //     listing: '已下架listing',
+          //     url: '/panel/listing/unsoldList',
+          //     icon: icons.IconShoppingBag,
+          //     breadcrumbs: false
+          //   }
+          // ]
+        }
+      ]
     },
     {
       id: 'token',
@@ -76,20 +116,20 @@ const panel = {
       breadcrumbs: false
     },
     {
-      id:'identify',
-      title:'AI标题',
-      type:'item',
-      url:'/panel/identify',
-      icon:icons.IconCards,
-      breadcrumbs:false
+      id: 'identify',
+      title: 'AI标题',
+      type: 'item',
+      url: '/panel/identify',
+      icon: icons.IconCards,
+      breadcrumbs: false
     },
     {
-      id:'picture',
+      id: 'picture',
       title: '图片合成',
-      type:'item',
-      url:'/panel/picture',
-      icon:icons.IconPhotoScan,
-      breadcrumbs:false
+      type: 'item',
+      url: '/panel/picture',
+      icon: icons.IconPhotoScan,
+      breadcrumbs: false
     },
     {
       id: 'ProduceLog',

@@ -76,3 +76,13 @@ export const EbayUserStatusName = {
   [EbayUserStatus.NORMAL]: '正常',
   [EbayUserStatus.EXPIRED]: '过期',
 }
+
+export const ListingStatus = {
+  ActiveList: 'ActiveList',
+  UnsoldList: 'UnsoldList',
+}
+
+export const ListingStatusList = [
+  { value: ListingStatus.ActiveList, text: '在售' },
+  { value: ListingStatus.UnsoldList, text: '已下架' },
+]

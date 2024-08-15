@@ -172,7 +172,7 @@ func doEbayRequest(c *gin.Context, method string, path string, body []byte, quer
 		}
 		if respBody.Errors != nil {
 			// ErrorCode带有931 重新授权
-			if respBody.Errors.ErrorCode == 931 {
+			if respBody.Errors.ErrorCode == 931 || respBody.Errors.ErrorCode == 932 {
 				accessToken, err := RefreshToken(c)
 				if accessToken == "" {
 					return nil, fmt.Errorf("账号已过期, 请前往ebay账号管理重新授权")
@@ -1423,9 +1423,7 @@ func GetInventoryLocations(c *gin.Context) {
 // https://developer.ebay.com/devzone/xml/docs/reference/ebay/GetMyeBaySelling.html
 func GetMyeBaySelling(c *gin.Context) {
 	p, _ := strconv.Atoi(c.Query("p"))
-	if p < 0 {
-		p = 0
-	}
+	p = p + 1
 	var status = c.Query("status")
 
 	request := model.GetMyeBaySellingRequest{
@@ -1630,4 +1628,67 @@ func EndItems(c *gin.Context) {
 		"data":    response,
 	})
 	return
+}
+
+// RelistItems 重新上架商品
+// https://developer.ebay.com/devzone/xml/docs/reference/ebay/RelistItem.html
+func RelistItems(c *gin.Context) {
+	var endItemsJson EndItemsJson
+	err := c.ShouldBindJSON(&endItemsJson)
+
+	if err != nil {
+		c.JSON(http.StatusOK, gin.H{
+			"success": false,
+			"message": err.Error(),
+		})
+		return
+	}
+	itemIds := endItemsJson.ItemIds
+
+	for _, itemId := range itemIds {
+		request := model.RelistItemRequest{
+			Xmlns:         "urn:ebay:apis:eBLBaseComponents",
+			ErrorLanguage: "en_US",
+			WarningLevel:  "High",
+			Item: model.RelistItem{
+				ItemID: itemId,
+			},
+		}
+		output, err := xml.MarshalIndent(request, "", "    ")
+		if err != nil {
+			//c.JSON(http.StatusOK, gin.H{
+			//	"success": false,
+			//	"message": err.Error(),
+			//})
+			//return
+		}
+
+		xmlHeader := []byte(xml.Header)
+		fullXML := append(xmlHeader, output...)
+
+		resp, err := doEbayRequest(c, "POST", "RelistItem", fullXML, nil, "", true)
+		if err != nil {
+			//c.JSON(http.StatusOK, gin.H{
+			//	"success": false,
+			//	"message": err.Error(),
+			//})
+			//return
+		}
+
+		var response model.RelistItemResponse
+		err = handleRespBody(c, resp, &response, true)
+
+		if err != nil {
+			//c.JSON(http.StatusOK, gin.H{
+			//	"success": false,
+			//	"message": err.Error(),
+			//})
+			//return
+		}
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"message": "relist item success",
+	})
 }

@@ -372,3 +372,38 @@ type ShippingPackageDetails struct {
 	WeightMajor       Measurement `xml:"WeightMajor"`
 	WeightMinor       Measurement `xml:"WeightMinor"`
 }
+
+type RelistItem struct {
+	ItemID string `xml:"ItemID"`
+}
+
+type RelistItemRequest struct {
+	Xmlns         string     `xml:"xmlns,attr"`
+	ErrorLanguage string     `xml:"ErrorLanguage"`
+	WarningLevel  string     `xml:"WarningLevel"`
+	Item          RelistItem `xml:"Item"`
+}
+
+type RelistItemResponse struct {
+	XMLName        xml.Name `xml:"RelistItemResponse"`
+	Xmlns          string   `xml:"xmlns,attr"`
+	Timestamp      string   `xml:"Timestamp"`
+	Ack            string   `xml:"Ack"`
+	Version        string   `xml:"Version"`
+	Build          string   `xml:"Build"`
+	ItemID         string   `xml:"ItemID"`
+	Fees           Fees     `xml:"Fees"`
+	StartTime      string   `xml:"StartTime"`
+	EndTime        string   `xml:"EndTime"`
+	DiscountReason string   `xml:"DiscountReason"`
+}
+
+type Fees struct {
+	FeeList []Fee `xml:"Fee"`
+}
+
+type Fee struct {
+	Name                string `xml:"Name"`
+	Fee                 Price  `xml:"Fee"`
+	PromotionalDiscount *Price `xml:"PromotionalDiscount,omitempty"`
+}

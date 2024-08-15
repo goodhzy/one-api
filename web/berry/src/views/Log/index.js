@@ -56,7 +56,9 @@ export default function Log() {
         setLogs(data);
       } else {
         let newLogs = [...logs];
+        console.log(newLogs, data, startIdx * ITEMS_PER_PAGE, data.length);
         newLogs.splice(startIdx * ITEMS_PER_PAGE, data.length, ...data);
+        console.log(newLogs);
         setLogs(newLogs);
       }
     } else {

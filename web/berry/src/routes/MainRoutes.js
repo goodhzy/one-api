@@ -7,6 +7,7 @@ import loadable from "ui-component/Loadable";
 import AccountEbay from '../views/EbayControl/AccountEbay';
 import MinimalLayout from '../layout/MinimalLayout';
 import PublishEbay from '../views/EbayControl/PublishEbay';
+import EbayListing from '../views/EbayControl/listing';
 
 const Channel = Loadable(lazy(() => import('views/Channel')));
 const Log = Loadable(lazy(() => import('views/Log')));
@@ -78,6 +79,10 @@ const MainRoutes = {
         {
           path: 'account',
           element: <AccountEbay />
+        },
+        {
+          path: 'listing',
+          element: <EbayListing />
         }
       ]
     },
