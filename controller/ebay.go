@@ -20,6 +20,7 @@ import (
 	"reflect"
 	"strconv"
 	"strings"
+	"time"
 )
 
 // status枚举 1未刊登 2. 创建库存 3. 创建报价 4. 发布报价
@@ -29,9 +30,55 @@ const defaultMarketplaceId = "EBAY_US"
 
 const isProxy = true
 
+func getEbayId(c *gin.Context) string {
+	ebayId := c.GetHeader(HeaderEbayId)
+	return ebayId
+}
+
+func getGlobalId(c *gin.Context) string {
+	globalId := c.GetHeader("X-EBAY-SOA-GLOBAL-ID")
+	return globalId
+}
+
+func redisGet(key string) (map[string]interface{}, error) {
+	if common.RedisEnabled {
+		cacheStr, err := common.RedisGet(key)
+		if err != nil {
+			fmt.Printf("Error occurred while getting cache: %s\n", err)
+			return nil, err
+		}
+		if cacheStr != "" {
+			var cacheJson map[string]interface{}
+			err := json.Unmarshal([]byte(cacheStr), &cacheJson)
+			if err != nil {
+				fmt.Printf("Error occurred while unmarshaling JSON: %s\n", err)
+				return nil, err
+			}
+			return cacheJson, nil
+		}
+	}
+	return nil, nil
+}
+
+func redisSet[T any](key string, value T, expiration time.Duration) error {
+	if common.RedisEnabled {
+		cacheJson, err := json.Marshal(value)
+		if err != nil {
+			fmt.Printf("Error occurred while marshaling JSON: %s\n", err)
+			return err
+		}
+		err = common.RedisSet(key, string(cacheJson), expiration)
+		if err != nil {
+			fmt.Printf("Error occurred while setting cache: %s\n", err)
+			return err
+		}
+	}
+	return nil
+}
+
 func doEbayRequest(c *gin.Context, method string, path string, body []byte, queryParams map[string]string, accessToken string, isXml bool) (*http.Response, error) {
 	// 获取ebay_user_id
-	ebayId, _ := strconv.Atoi(c.GetHeader(HeaderEbayId))
+	ebayId, _ := strconv.Atoi(getEbayId(c))
 	// 如果path带有http或者https
 	var reqUrl = ""
 	if len(path) > 4 && (path[:4] == "http" || path[:5] == "https") {
@@ -853,6 +900,19 @@ func GetFulfillmentPolicies(c *gin.Context) {
 	if strings.TrimSpace(marketPlaceId) == "" {
 		marketPlaceId = defaultMarketplaceId
 	}
+
+	redisKey := fmt.Sprintf("ebayId=%s_marketPlaceId=%s_globalId=%s_name=fulfillmentPolicies", getEbayId(c), marketPlaceId, getGlobalId(c))
+
+	cacheJson, _ := redisGet(redisKey)
+	if cacheJson != nil {
+		c.JSON(http.StatusOK, gin.H{
+			"success": true,
+			"message": "get fulfillment policies success",
+			"data":    cacheJson,
+		})
+		return
+	}
+
 	queryParams["marketplace_id"] = marketPlaceId
 	var path = "/sell/account/v1/fulfillment_policy"
 	resp, err := doEbayRequest(c, "GET", path, nil, queryParams, "", false)
@@ -872,6 +932,19 @@ func GetFulfillmentPolicies(c *gin.Context) {
 		})
 		return
 	}
+	_ = redisSet(redisKey, respBody, time.Duration(60*5)*time.Second)
+	if common.RedisEnabled {
+		// 缓存数据
+		cacheJson, err := json.Marshal(respBody)
+		if err != nil {
+			fmt.Printf("Error occurred while marshaling JSON: %s", err)
+		}
+		err = common.RedisSet(redisKey, string(cacheJson), time.Duration(60*5)*time.Second)
+		if err != nil {
+			fmt.Printf("Error occurred while setting cache: %s", err)
+		}
+	}
+
 	c.JSON(http.StatusOK, gin.H{
 		"success": true,
 		"message": "get fulfillment policies success",
@@ -987,6 +1060,19 @@ func GetStores(c *gin.Context) {
 
 func GetStoreCategories(c *gin.Context) {
 	urlStr := "/sell/stores/v1/store/categories"
+
+	redisKey := fmt.Sprintf("ebayId=%s_globalId=%s_name=storeCategories", getEbayId(c), getGlobalId(c))
+
+	cacheJson, _ := redisGet(redisKey)
+	if cacheJson != nil {
+		c.JSON(http.StatusOK, gin.H{
+			"success": true,
+			"message": "get store categories success",
+			"data":    cacheJson,
+		})
+		return
+	}
+
 	resp, err := doEbayRequest(c, "GET", urlStr, nil, nil, "", false)
 	if err != nil {
 		c.JSON(http.StatusOK, gin.H{
@@ -1004,6 +1090,7 @@ func GetStoreCategories(c *gin.Context) {
 		})
 		return
 	}
+	_ = redisSet(redisKey, respBody, time.Duration(60*5)*time.Second)
 	c.JSON(http.StatusOK, gin.H{
 		"success": true,
 		"message": "get store categories success",
@@ -1075,8 +1162,20 @@ func GetDefaultCategoryTreeId(c *gin.Context) {
 	if c.Query("marketplace_id") != "" {
 		marketplaceId = c.Query("marketplace_id")
 	} else {
-		marketplaceId = "EBAY_US"
+		marketplaceId = defaultMarketplaceId
 	}
+	redisKey := fmt.Sprintf("ebayId=%s_marketplaceId=%s_globalId=%s_name=defaultCategoryTreeId", getEbayId(c), marketplaceId, getGlobalId(c))
+
+	cacheJson, _ := redisGet(redisKey)
+	if cacheJson != nil {
+		c.JSON(http.StatusOK, gin.H{
+			"success": true,
+			"message": "get default category tree id success",
+			"data":    cacheJson,
+		})
+		return
+	}
+
 	queryParams["marketplace_id"] = marketplaceId
 	resp, err := doEbayRequest(c, "GET", urlStr, nil, queryParams, "", false)
 	if err != nil {
@@ -1095,6 +1194,7 @@ func GetDefaultCategoryTreeId(c *gin.Context) {
 		})
 		return
 	}
+	_ = redisSet(redisKey, respBody, time.Duration(60*60*24)*time.Second)
 	c.JSON(http.StatusOK, gin.H{
 		"success": true,
 		"message": "get default category tree id success",
@@ -1109,6 +1209,18 @@ func GetCategoryTree(c *gin.Context) {
 	urlStr := "/commerce/taxonomy/v1/category_tree/"
 	categoryTreeId := c.Query("category_tree_id")
 	urlStr += categoryTreeId
+
+	cacheKey := fmt.Sprintf("ebayId=%s_categoryTreeId=%s_globalId=%s_name=categoryTree", getEbayId(c), categoryTreeId, getGlobalId(c))
+	cacheJson, _ := redisGet(cacheKey)
+	if cacheJson != nil {
+		c.JSON(http.StatusOK, gin.H{
+			"success": true,
+			"message": "get category tree success",
+			"data":    cacheJson,
+		})
+		return
+	}
+
 	resp, err := doEbayRequest(c, "GET", urlStr, nil, nil, "", false)
 	if err != nil {
 		c.JSON(http.StatusOK, gin.H{
@@ -1126,6 +1238,7 @@ func GetCategoryTree(c *gin.Context) {
 		})
 		return
 	}
+	_ = redisSet(cacheKey, respBody, time.Duration(60*60*24*7)*time.Second)
 	c.JSON(http.StatusOK, gin.H{
 		"success": true,
 		"message": "get category tree success",
@@ -1204,11 +1317,24 @@ func GetCategorySuggestions(c *gin.Context) {
 // GetItemAspectsForCategory 获取类目属性
 // https://developer.ebay.com/api-docs/commerce/taxonomy/resources/category_tree/methods/getItemAspectsForCategory
 func GetItemAspectsForCategory(c *gin.Context) {
+
 	urlStr := "/commerce/taxonomy/v1/category_tree/"
 	categoryTreeId := c.Query("category_tree_id")
 	urlStr += categoryTreeId + "/get_item_aspects_for_category"
 	queryParams := map[string]string{}
 	queryParams["category_id"] = c.Query("category_id")
+
+	redisKey := fmt.Sprintf("ebayId=%s_categoryTreeId=%s_categoryId=%s_globalId=%s_name=itemAspectsForCategory", getEbayId(c), categoryTreeId, c.Query("category_id"), getGlobalId(c))
+	cacheJson, _ := redisGet(redisKey)
+	if cacheJson != nil {
+		c.JSON(http.StatusOK, gin.H{
+			"success": true,
+			"message": "get item aspects for category success",
+			"data":    cacheJson,
+		})
+		return
+	}
+
 	resp, err := doEbayRequest(c, "GET", urlStr, nil, queryParams, "", false)
 	if err != nil {
 		c.JSON(http.StatusOK, gin.H{
@@ -1226,6 +1352,7 @@ func GetItemAspectsForCategory(c *gin.Context) {
 		})
 		return
 	}
+	_ = redisSet(redisKey, respBody, time.Duration(60*60*24*7)*time.Second)
 	c.JSON(http.StatusOK, gin.H{
 		"success": true,
 		"message": "get item aspects for category success",
@@ -1266,6 +1393,17 @@ func GetItemConditionPolicies(c *gin.Context) {
 		return
 	}
 
+	redisKey := fmt.Sprintf("ebayId=%s_marketplaceId=%s_categoryIds=%s_globalId=%s_name=itemConditionPolicies", getEbayId(c), marketplaceId, strings.Join(categoryIds, ","), getGlobalId(c))
+	cacheJson, _ := redisGet(redisKey)
+	if cacheJson != nil {
+		c.JSON(http.StatusOK, gin.H{
+			"success": true,
+			"message": "get item condition policies success",
+			"data":    cacheJson,
+		})
+		return
+	}
+
 	resp, err := doEbayRequest(c, "GET", urlStr, nil, queryParams, "", false)
 	if err != nil {
 		c.JSON(http.StatusOK, gin.H{
@@ -1283,6 +1421,7 @@ func GetItemConditionPolicies(c *gin.Context) {
 		})
 		return
 	}
+	_ = redisSet(redisKey, respBody, time.Duration(60*5)*time.Second)
 	c.JSON(http.StatusOK, gin.H{
 		"success": true,
 		"message": "get item condition policies success",
@@ -1301,6 +1440,18 @@ func GetEbayReturnPolicies(c *gin.Context) {
 		marketPlaceId = defaultMarketplaceId
 	}
 	queryParams["marketplace_id"] = marketPlaceId
+
+	redisKey := fmt.Sprintf("ebayId=%s_marketPlaceId=%s_globalId=%s_name=returnPolicies", getEbayId(c), marketPlaceId, getGlobalId(c))
+	cacheJson, _ := redisGet(redisKey)
+	if cacheJson != nil {
+		c.JSON(http.StatusOK, gin.H{
+			"success": true,
+			"message": "get return policies success",
+			"data":    cacheJson,
+		})
+		return
+	}
+
 	resp, err := doEbayRequest(c, "GET", urlStr, nil, queryParams, "", false)
 	if err != nil {
 		c.JSON(http.StatusOK, gin.H{
@@ -1318,6 +1469,7 @@ func GetEbayReturnPolicies(c *gin.Context) {
 		})
 		return
 	}
+	_ = redisSet(redisKey, respBody, time.Duration(60*5)*time.Second)
 	c.JSON(http.StatusOK, gin.H{
 		"success": true,
 		"message": "get return policies success",
@@ -1336,6 +1488,18 @@ func GetPaymentPolicies(c *gin.Context) {
 		marketPlaceId = defaultMarketplaceId
 	}
 	queryParams["marketplace_id"] = marketPlaceId
+
+	redisKey := fmt.Sprintf("ebayId=%s_marketPlaceId=%s_globalId=%s_name=paymentPolicies", getEbayId(c), marketPlaceId, getGlobalId(c))
+	cacheJson, _ := redisGet(redisKey)
+	if cacheJson != nil {
+		c.JSON(http.StatusOK, gin.H{
+			"success": true,
+			"message": "get payment policies success",
+			"data":    cacheJson,
+		})
+		return
+	}
+
 	resp, err := doEbayRequest(c, "GET", urlStr, nil, queryParams, "", false)
 	if err != nil {
 		c.JSON(http.StatusOK, gin.H{
@@ -1353,6 +1517,7 @@ func GetPaymentPolicies(c *gin.Context) {
 		})
 		return
 	}
+	_ = redisSet(redisKey, respBody, time.Duration(60*5)*time.Second)
 	c.JSON(http.StatusOK, gin.H{
 		"success": true,
 		"message": "get payment policies success",
@@ -1392,6 +1557,19 @@ func GetInventoryLocations(c *gin.Context) {
 	queryParams["limit"] = strconv.Itoa(config.ItemsPerPage)
 	queryParams["offset"] = strconv.Itoa(p * config.ItemsPerPage)
 	urlStr := "/sell/inventory/v1/location"
+
+	// TODO 这里没有针对分页做缓存, 因为暂时没有分页需求
+	redisKey := fmt.Sprintf("ebayId=%s_globalId=%s_name=inventoryLocations", getEbayId(c), getGlobalId(c))
+	cacheJson, _ := redisGet(redisKey)
+	if cacheJson != nil {
+		c.JSON(http.StatusOK, gin.H{
+			"success": true,
+			"message": "get inventory locations success",
+			"data":    cacheJson,
+		})
+		return
+	}
+
 	resp, err := doEbayRequest(c, "GET", urlStr, nil, queryParams, "", false)
 	if err != nil {
 		c.JSON(http.StatusOK, gin.H{
@@ -1409,6 +1587,7 @@ func GetInventoryLocations(c *gin.Context) {
 		})
 		return
 	}
+	_ = redisSet(redisKey, respBody, time.Duration(60*5)*time.Second)
 	c.JSON(http.StatusOK, gin.H{
 		"success": true,
 		"message": "get inventory locations success",
