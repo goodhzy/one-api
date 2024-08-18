@@ -40,6 +40,14 @@ func getGlobalId(c *gin.Context) string {
 	return globalId
 }
 
+func errorResponse(c *gin.Context, msg string) {
+	c.JSON(http.StatusOK, gin.H{
+		"success": false,
+		"message": msg,
+	})
+
+}
+
 func redisGet(key string) (map[string]interface{}, error) {
 	if common.RedisEnabled {
 		cacheStr, err := common.RedisGet(key)
@@ -811,6 +819,25 @@ func PublishEbayGoodsBatch(c *gin.Context) {
 	var successEbayProducts []model.EbayProduct
 	var failedEbayProducts []model.EbayProduct
 	for _, ebayProduct := range ebayProducts {
+		if ebayProduct.EbayId == 0 {
+			errorResponse(c, "请先绑定或者选择ebay账号")
+			return
+		}
+		if ebayProduct.Product == nil {
+			errorResponse(c, "Product is required")
+			return
+
+		}
+
+		if ebayProduct.CategoryId == "" {
+			errorResponse(c, "CategoryId is required")
+			return
+
+		}
+		if ebayProduct.ListingPolicies == nil {
+			errorResponse(c, "ListingPolicies is required")
+			return
+		}
 		err = CreateOrReplaceInventoryItem(c, &ebayProduct)
 		if err != nil {
 			failedEbayProducts = append(failedEbayProducts, ebayProduct)

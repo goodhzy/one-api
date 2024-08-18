@@ -83,7 +83,8 @@ const validationSchema = Yup.object().shape({
       })
     })
   }),
-  sku: Yup.string().required('SKU为必填')
+  sku: Yup.string().required('SKU为必填'),
+  format: Yup.string().required('刊登类型为必填'),
 });
 
 const originInputs = {
@@ -414,7 +415,6 @@ const EditEbayGoods = ({ setOpen, open, goodsId }) => {
         } else {
           showInfo('请添加先ebay账号');
           // await new Promise((resolve) => setTimeout(resolve, 2000));
-          navigate('/panel/profile');
         }
       }
     } catch (e) {}
@@ -475,12 +475,18 @@ const EditEbayGoods = ({ setOpen, open, goodsId }) => {
       marketplace_id: marketplaceId,
       category_ids: [categoryId]
     });
-    if(res?.itemConditionPolicies?.length > 0) {
+    if (res?.itemConditionPolicies?.length > 0) {
       setCondition(res.itemConditionPolicies[0]);
     }
   };
 
   const formatAspect = (aspects) => {
+    if(aspects.length > 0){
+      // aspectRequired排序放前面
+      aspects.sort((a, b) => {
+        return a.aspectRequired ? -1 : 1;
+      })
+    }
     for (let i = 0; i < aspects.length; i++) {
       let aspect = aspects[i];
       let { aspectValues } = aspect;
@@ -619,7 +625,7 @@ const EditEbayGoods = ({ setOpen, open, goodsId }) => {
     }
   };
 
-  const resetForm = async() => {
+  const resetForm = async () => {
     await formik.setFieldValue('categoryId', '');
     await formik.setFieldValue('condition', '');
     await formik.setFieldValue('conditionDescriptors', []);
@@ -632,7 +638,7 @@ const EditEbayGoods = ({ setOpen, open, goodsId }) => {
       fulfillmentPolicyId: ''
     });
     await formik.setFieldValue('merchantLocationKey', '');
-  }
+  };
 
   // 刊登类型为拍卖, 库存为1
   useEffect(() => {
@@ -709,7 +715,7 @@ const EditEbayGoods = ({ setOpen, open, goodsId }) => {
                       value={formik.values.ebayId}
                       name="ebayId"
                       onBlur={formik.handleBlur}
-                      onChange={async(e) => {
+                      onChange={async (e) => {
                         localStorage.setItem('ebayId', e.target.value);
                         formik.handleChange(e);
 
@@ -879,21 +885,29 @@ const EditEbayGoods = ({ setOpen, open, goodsId }) => {
                     sx={{ ...theme.typography.otherInput }}
                   >
                     <FormLabel htmlFor="channel-type-label">刊登类型</FormLabel>
-                    <RadioGroup row id="channel-type-label" name="format" value={formik.values.format} onChange={(e)=> {
-                      const value = e.target.value;
-                      formik.setFieldValue('format', e.target.value);
-                      if(value === ListingTypeEnum.AUCTION) {
-                        formik.setFieldValue('pricingSummary.auctionStartPrice', {
-                          value: 0,
-                          currency: 'USD'
-                        });
-                      }
-                    }
-                    }>
+                    <RadioGroup
+                      row
+                      id="channel-type-label"
+                      name="format"
+                      value={formik.values.format}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        formik.setFieldValue('format', e.target.value);
+                        if (value === ListingTypeEnum.AUCTION) {
+                          formik.setFieldValue('pricingSummary.auctionStartPrice', {
+                            value: 0,
+                            currency: 'USD'
+                          });
+                        }
+                        formik.setFieldTouched('format', true, false);
+                        formik.setFieldError('format', value ? undefined : '请选择刊登类型');
+                      }}
+                    >
                       {typeOptions.map((option) => {
                         return <FormControlLabel key={option.value} value={option.value} control={<Radio />} label={option.label} />;
                       })}
                     </RadioGroup>
+                    <FormHelperText id="helper-text-channel-title-label">{formik.touched.format && formik.errors.format}</FormHelperText>
                   </FormControl>
                   {formik.values.format === ListingTypeEnum.AUCTION ? (
                     <Stack direction="row" spacing={2}>
@@ -1249,7 +1263,9 @@ const EditEbayGoods = ({ setOpen, open, goodsId }) => {
                         sx={{ ...theme.typography.otherInput }}
                         key={item.localizedAspectName}
                         error={Boolean(item.aspectConstraint.aspectRequired)}
+                        required={Boolean(item.aspectConstraint.aspectRequired)}
                       >
+                        {Boolean(item.aspectConstraint.aspectRequired) ? <span style={{ color: 'red',paddingBottom:'5px' }}>*必选项</span> : ''}
                         {item.aspectConstraint.aspectMode === ModeEnum.SELECTION_ONLY ? (
                           <>
                             <InputLabel id="demo-multiple-checkbox-label">{item.localizedAspectName}</InputLabel>
@@ -1298,7 +1314,7 @@ const EditEbayGoods = ({ setOpen, open, goodsId }) => {
                             <InputLabel htmlFor="channel-title-label">{item.localizedAspectName}</InputLabel>
                             <OutlinedInput
                               id="channel-title-label"
-                              style={{ width: '650px' }}
+                              style={{ minWidth: 300 }}
                               label={item.localizedAspectName}
                               type="text"
                               value={
@@ -1412,7 +1428,7 @@ const EditEbayGoods = ({ setOpen, open, goodsId }) => {
                       <Toolbar editor={editor} defaultConfig={toolbarConfig} mode="default" style={{ borderBottom: '1px solid #ccc' }} />
                       <Editor
                         defaultConfig={editorConfig}
-                        value={formik.values.product.description}
+                        value={formik.values.product.description || ''}
                         onCreated={setEditor}
                         onChange={(editor) => {
                           formik.validateField('product.description');
@@ -1422,12 +1438,12 @@ const EditEbayGoods = ({ setOpen, open, goodsId }) => {
                           }
                           setHtml(html);
                           formik.setFieldValue('product.description', html);
-                          formik.setFieldTouched('product.description', html.lengt);
+                          formik.setFieldTouched('product.description', true, false);
                           formik.setFieldError('product.description', html.length > 0 ? undefined : '商品描述不能为空');
                         }}
                         name="product.description"
                         mode="default"
-                        style={{ height: '300px', overflowY: 'hidden' }}
+                        style={{ height: '400px', overflowY: 'hidden' }}
                       />
                     </div>
                     <FormHelperText id="helper-text-channel-title-label">
@@ -1632,6 +1648,7 @@ const EditEbayGoods = ({ setOpen, open, goodsId }) => {
             刊登
           </Button>
         </DialogActions>
+        ;
       </Dialog>
     </>
   );
