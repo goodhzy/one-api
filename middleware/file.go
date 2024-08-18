@@ -1,0 +1,30 @@
+package middleware
+
+import (
+	"github.com/gin-gonic/gin"
+	model "github.com/songquanpeng/one-api/model"
+	"github.com/songquanpeng/one-api/pkg/serializer"
+)
+
+// ValidateSourceLink validates if the perm source link is a valid redirect link
+func ValidateSourceLink() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		linkID, ok := c.Get("object_id")
+		if !ok {
+			c.JSON(200, serializer.Err(serializer.CodeFileNotFound, "", nil))
+			c.Abort()
+			return
+		}
+
+		sourceLink, err := model.GetSourceLinkByID(linkID)
+		if err != nil || sourceLink.File.ID == 0 || sourceLink.File.Name != c.Param("name") {
+			c.JSON(200, serializer.Err(serializer.CodeFileNotFound, "", nil))
+			c.Abort()
+			return
+		}
+
+		sourceLink.Downloaded()
+		c.Set("source_link", sourceLink)
+		c.Next()
+	}
+}

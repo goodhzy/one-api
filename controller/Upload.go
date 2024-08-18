@@ -107,13 +107,5 @@ func Upload(c *gin.Context) {
 }
 
 func TestUpload(c *gin.Context) {
-	base64Str := c.PostForm("base64Str")
-
-	helper.UploadFromBase64(base64Str)
-	c.JSON(http.StatusOK, gin.H{
-		"success": true,
-		"message": "上传成功",
-		"data":    base64Str,
-	})
 
 }

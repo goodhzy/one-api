@@ -27,9 +27,16 @@ const (
 	UserStatusDeleted  = 3
 )
 
+// UserOption 用户个性化配置字段
+type UserOption struct {
+	ProfileOff     bool   `json:"profile_off,omitempty"`
+	PreferredTheme string `json:"preferred_theme,omitempty"`
+}
+
 // User if you add sensitive fields, don't forget to clean them in setupLogin function.
 // Otherwise, the sensitive information will be saved on local storage in plain text!
 type User struct {
+	gorm.Model
 	Id               int    `json:"id"`
 	Username         string `json:"username" gorm:"unique;index" validate:"max=12"`
 	Password         string `json:"password" gorm:"not null;" validate:"min=8,max=20"`
@@ -45,12 +52,25 @@ type User struct {
 	Quota            int64  `json:"quota" gorm:"bigint;default:0"`
 	UsedQuota        int64  `json:"used_quota" gorm:"bigint;default:0;column:used_quota"` // used quota
 	RequestCount     int    `json:"request_count" gorm:"type:int;default:0;"`             // request number
-	Group            string `json:"group" gorm:"type:varchar(32);default:'default'"`
 	AffCode          string `json:"aff_code" gorm:"type:varchar(32);column:aff_code;uniqueIndex"`
 	InviterId        int    `json:"inviter_id" gorm:"type:int;column:inviter_id;index"`
 	Phone            string `json:"phone" gorm:"type:varchar(20);column:phone;index"`
 	PhoneCode        string `json:"phone_code" gorm:"default:''"`
 	EbayBind         bool   `json:"ebay_bind" gorm:"-"`
+	Nick             string `gorm:"size:50"`
+	GroupID          uint
+	Storage          uint64
+	TwoFactor        string
+	Avatar           string
+	Options          string `json:"-" gorm:"size:4294967295"`
+	Authn            string `gorm:"size:4294967295"`
+
+	// 关联模型
+	Group  Group  `gorm:"save_associations:false:false;foreignKey:GroupID"`
+	Policy Policy `gorm:"PRELOAD:false,association_autoupdate:false;foreignKey:GroupID"`
+
+	// 数据库忽略字段
+	OptionsSerialized UserOption `gorm:"-"`
 }
 
 func GetMaxUserId() int {
@@ -180,6 +200,11 @@ func (user *User) Update(updatePassword bool) error {
 	}
 	err = DB.Model(user).Updates(user).Error
 	return err
+}
+
+// Update 更新用户
+func (user *User) UpdateUser(val map[string]interface{}) error {
+	return DB.Model(user).Updates(val).Error
 }
 
 func (user *User) Delete() error {
@@ -452,4 +477,12 @@ func updateUserRequestCount(id int, count int) {
 func GetUsernameById(id int) (username string) {
 	DB.Model(&User{}).Where("id = ?", id).Select("username").Find(&username)
 	return username
+}
+
+// UpdateOptions 更新用户偏好设定
+func (user *User) UpdateOptions() error {
+	if err := user.SerializeOptions(); err != nil {
+		return err
+	}
+	return user.UpdateUser(map[string]interface{}{"options": user.Options})
 }

@@ -68,6 +68,7 @@ func Login(c *gin.Context) {
 func SetupLogin(user *model.User, c *gin.Context) {
 	session := sessions.Default(c)
 	session.Set("id", user.Id)
+	session.Set("user_id", user.Id) // 兼容cloudreve 获取用户id
 	session.Set("username", user.Username)
 	session.Set("role", user.Role)
 	session.Set("status", user.Status)
