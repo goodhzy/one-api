@@ -5,7 +5,7 @@ import {
     changeViewMethod,
     setSiteConfig,
     toggleSnackbar,
-} from "../redux/explorer";
+} from "../store/explorer";
 import i18next from "../i18n";
 import { msDocPreviewSuffix, setWopiExts } from "../config";
 

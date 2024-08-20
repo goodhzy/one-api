@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from "react";
 import { useDrop } from "react-dnd";
-import { PaginationItem } from "@material-ui/lab";
+import PaginationItem from "@mui/material/PaginationItem";
 
 export default function CustomPaginationItem(props) {
     const inputRef = useRef(null);
@@ -17,34 +17,34 @@ export default function CustomPaginationItem(props) {
 
     useEffect(() => {
         if (
-            isActive &&
-            props.onClick &&
-            props.type !== "start-ellipsis" &&
-            props.type !== "end-ellipsis"
+          isActive &&
+          props.onClick &&
+          props.type !== "start-ellipsis" &&
+          props.type !== "end-ellipsis"
         ) {
-            console.log("ss");
             props.onClick();
         }
-    }, [isActive, inputRef]);
+    }, [isActive, props.onClick, props.type]);
 
     if (
-        props.isMobile &&
-        (props.type === "start-ellipsis" ||
-            props.type === "end-ellipsis" ||
-            props.type === "page")
+      props.isMobile &&
+      (props.type === "start-ellipsis" ||
+        props.type === "end-ellipsis" ||
+        props.type === "page")
     ) {
         if (props.selected) {
             return (
-                <div>
-                    {props.page} / {props.count}
-                </div>
+              <div>
+                  {props.page} / {props.count}
+              </div>
             );
         }
-        return <></>;
+        return null;
     }
+
     return (
-        <div ref={inputRef}>
-            <PaginationItem ref={drop} {...props} />
-        </div>
+      <div ref={inputRef}>
+          <PaginationItem ref={drop} {...props} />
+      </div>
     );
 }

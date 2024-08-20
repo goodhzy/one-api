@@ -22,8 +22,7 @@ const Topup = Loadable(lazy(() => import('views/Topup')));
 const User = Loadable(lazy(() => import('views/User')));
 const Profile = Loadable(lazy(() => import('views/Profile')));
 const NotFoundView = Loadable(lazy(() => import('views/Error')));
-const Explorer = Loadable(lazy(() => import('component/FileManager/Explorer')));
-
+const FileManager = Loadable(lazy(() => import('component/FileManager/FileManager.js')));
 // dashboard routing
 const Dashboard = Loadable(lazy(() => import('views/Dashboard')));
 
@@ -105,7 +104,7 @@ const MainRoutes = {
     },
     {
       path: 'pan',
-      element: <Explorer />
+      element: <FileManager />
     },
     {
       path: '404',

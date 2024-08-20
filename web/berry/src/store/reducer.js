@@ -6,6 +6,7 @@ import accountReducer from './accountReducer';
 import siteInfoReducer from './siteInfoReducer';
 import viewUpdate from './viewUpdate/reducer';
 import explorer from './explorer/reducer';
+import navigator from './navigator/reducer';
 
 // ==============================|| COMBINE REDUCER ||============================== //
 
@@ -15,6 +16,7 @@ const reducer = combineReducers({
   siteInfo: siteInfoReducer,
   viewUpdate: viewUpdate,
   explorer:explorer,
+  navigator,
 
 });
 

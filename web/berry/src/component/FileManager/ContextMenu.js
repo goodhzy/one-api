@@ -177,7 +177,7 @@ const ContextMenuComponent = (props) => {
                 text: "上传目录",
             },
             {
-                condition: user.group.allowRemoteDownload,
+                condition: user?.group?.allowRemoteDownload,
                 onClick: () => props.openRemoteDownloadDialog(),
                 icon: <DownloadIcon />,
                 text: "离线下载",

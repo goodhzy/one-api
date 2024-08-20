@@ -16,6 +16,7 @@
     "@tabler/icons-react": "^2.44.0",
     "@wangeditor/editor": "^5.1.23",
     "@wangeditor/editor-for-react": "^1.0.6",
+    "ahooks": "^3.8.1",
     "apexcharts": "3.35.3",
     "axios": "^0.27.2",
     "classnames": "^2.5.1",
@@ -61,6 +62,7 @@
     "rsuite": "^5.68.0",
     "streamsaver": "^2.0.6",
     "swiper": "^11.1.4",
+    "timeago-react": "^3.0.6",
     "yup": "^0.32.11"
   },
   "scripts": {

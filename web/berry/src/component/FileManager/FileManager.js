@@ -1,8 +1,8 @@
-import React, { Component } from "react";
+import React, { useEffect, useRef } from "react";
 import { DndProvider } from "react-dnd";
-import HTML5Backend from "react-dnd-html5-backend";
-import { connect } from "react-redux";
-import { withRouter } from "react-router-dom";
+import { HTML5Backend } from "react-dnd-html5-backend";
+import { useDispatch } from "react-redux";
+import { useNavigate, useLocation } from "react-router-dom";
 import { changeSubTitle } from "../../store/viewUpdate/action";
 import pathHelper from "../../utils/page";
 import DragLayer from "./DnD/DragLayer";
@@ -18,99 +18,56 @@ import {
     toggleSnackbar,
 } from "../../store/explorer";
 import PaginationFooter from "./Pagination";
-import withStyles from "@mui/material/styles/withStyles";
+import { styled } from "@mui/material/styles";
 
-const styles = (theme) => ({
-    root: {
-        display: "flex",
-        flexDirection: "column",
-        height: "calc(100vh - 64px)",
-        [theme.breakpoints.down("xs")]: {
-            height: "100%",
-        },
-    },
-    rootShare: {
-        display: "flex",
-        flexDirection: "column",
+const Root = styled('div')(({ theme, share }) => ({
+    display: "flex",
+    flexDirection: "column",
+    height: share ? "100%" : "calc(100vh - 64px)",
+    minHeight: share ? 500 : undefined,
+    [theme.breakpoints.down("xs")]: {
         height: "100%",
-        minHeight: 500,
     },
-    explorer: {
-        display: "flex",
-        flexDirection: "column",
-        overflowY: "auto",
-    },
+}));
+
+const ExplorerContainer = styled('div')({
+    display: "flex",
+    flexDirection: "column",
+    overflowY: "auto",
 });
 
-const mapStateToProps = () => ({});
+function FileManager({ share, isShare }) {
+    const dispatch = useDispatch();
+    const navigate = useNavigate();
+    const location = useLocation();
+    const image = useRef();
 
-const mapDispatchToProps = (dispatch) => {
-    return {
-        changeSubTitle: (text) => {
-            dispatch(changeSubTitle(text));
-        },
-        setSelectedTarget: (targets) => {
-            dispatch(setSelectedTarget(targets));
-        },
-        toggleSnackbar: (vertical, horizontal, msg, color) => {
-            dispatch(toggleSnackbar(vertical, horizontal, msg, color));
-        },
-        closeAllModals: () => {
-            dispatch(closeAllModals());
-        },
-        navigateTo: (path) => {
-            dispatch(navigateTo(path));
-        },
-    };
-};
-
-class FileManager extends Component {
-    constructor(props) {
-        super(props);
-        this.image = React.createRef();
-    }
-    componentWillUnmount() {
-        this.props.setSelectedTarget([]);
-        this.props.closeAllModals();
-        this.props.navigateTo("/");
-    }
-
-    componentDidMount() {
-        if (pathHelper.isHomePage(this.props.location.pathname)) {
-            this.props.changeSubTitle(null);
+    useEffect(() => {
+        if (pathHelper.isHomePage(location.pathname)) {
+            dispatch(changeSubTitle(null));
         }
-    }
-    render() {
-        const { classes } = this.props;
-        return (
-            <div
-                className={classNames({
-                    [classes.rootShare]: this.props.share,
-                    [classes.root]: !this.props.share,
-                })}
-            >
-                <DndProvider backend={HTML5Backend}>
-                    <Modals share={this.props.share} />
-                    <Navigator
-                        isShare={this.props.isShare}
-                        share={this.props.share}
-                    />
-                    <div className={classes.explorer} id={"explorer-container"}>
-                        <Explorer share={this.props.share} />
-                        <PaginationFooter />
-                    </div>
 
-                    <DragLayer />
-                </DndProvider>
-                <SideDrawer />
-            </div>
-        );
-    }
+        return () => {
+            dispatch(setSelectedTarget([]));
+            dispatch(closeAllModals());
+            navigate("/");
+        };
+    }, [location.pathname, dispatch, navigate]);
+
+    return (
+      <Root share={share}>
+          <DndProvider backend={HTML5Backend}>
+              <Modals share={share} />
+              <Navigator isShare={isShare} share={share} />
+              <ExplorerContainer id={"explorer-container"}>
+                  <Explorer share={share} />
+                  <PaginationFooter />
+              </ExplorerContainer>
+              <DragLayer />
+          </DndProvider>
+          <SideDrawer />
+      </Root>
+    );
 }
 
-FileManager.propTypes = {};
-
-export default connect(
-    mapStateToProps,
-    mapDispatchToProps
-)(withStyles(styles)(withRouter(FileManager)));
+export default FileManager;
