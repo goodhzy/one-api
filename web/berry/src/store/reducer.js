@@ -4,13 +4,18 @@ import { combineReducers } from 'redux';
 import customizationReducer from './customizationReducer';
 import accountReducer from './accountReducer';
 import siteInfoReducer from './siteInfoReducer';
+import viewUpdate from './viewUpdate/reducer';
+import explorer from './explorer/reducer';
 
 // ==============================|| COMBINE REDUCER ||============================== //
 
 const reducer = combineReducers({
   customization: customizationReducer,
   account: accountReducer,
-  siteInfo: siteInfoReducer
+  siteInfo: siteInfoReducer,
+  viewUpdate: viewUpdate,
+  explorer:explorer,
+
 });
 
 export default reducer;

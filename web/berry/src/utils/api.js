@@ -1,8 +1,10 @@
 import { showError } from './common';
 import axios from 'axios';
-import { store } from 'store/index';
+import { store } from '../store';
 import { LOGIN } from 'store/actions';
 import config from 'config';
+import { list } from "../services/navigate";
+import { pathJoin } from "../component/Uploader/core/utils";
 
 export const API = axios.create({
   baseURL: process.env.REACT_APP_SERVER ? process.env.REACT_APP_SERVER : '/'
@@ -36,3 +38,34 @@ const requestConf = (config) => {
 }
 
 API.interceptors.request.use(requestConf, (error) => {})
+
+export function getPreviewPath(selected) {
+  return encodeURIComponent(
+    selected.path === "/"
+      ? selected.path + selected.name
+      : selected.path + "/" + selected.name
+  );
+}
+
+export async function walk(file, share) {
+  let res = [];
+  for (const f of file) {
+    if (f.type === "file") {
+      res.push(f);
+      continue;
+    }
+
+    if (f.type === "dir") {
+      const response = await list(
+        pathJoin([f.path, f.name]),
+        share,
+        "",
+        ""
+      );
+      const subs = await walk(response.data.objects, share);
+      res = [...res, ...subs];
+    }
+  }
+
+  return res;
+}

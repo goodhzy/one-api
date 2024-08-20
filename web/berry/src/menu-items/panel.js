@@ -165,6 +165,14 @@ const panel = {
       breadcrumbs: false
     },
     {
+      id: 'pan',
+      title: '网盘',
+      type: 'item',
+      url: '/panel/pan',
+      icon: icons.IconAdjustments,
+      breadcrumbs: false
+    },
+    {
       id: 'user',
       title: '用户',
       type: 'item',
