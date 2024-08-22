@@ -3,11 +3,12 @@ package main
 import (
 	"embed"
 	"fmt"
+	"net/http"
 	"os"
 	"strconv"
 
 	"github.com/gin-contrib/sessions"
-	"github.com/gin-contrib/sessions/cookie"
+	"github.com/gin-contrib/sessions/redis"
 	"github.com/gin-gonic/gin"
 	"github.com/songquanpeng/one-api/common"
 	"github.com/songquanpeng/one-api/common/client"
@@ -107,7 +108,18 @@ func main() {
 	server.Use(middleware.RequestId())
 	middleware.SetUpLogger(server)
 	// Initialize session store
-	store := cookie.NewStore([]byte(config.SessionSecret))
+	store, err := redis.NewStore(10, "tcp", "8.138.99.112:6379", "Lr3hXjtPeRyJ8LMx", []byte(config.SessionSecret))
+	if err != nil {
+		fmt.Printf("failed to create redis store: %v", err)
+	}
+	store.Options(sessions.Options{
+		Domain:   os.Getenv("DOMAIN"),
+		HttpOnly: true,
+		MaxAge:   60 * 86400, // 设置有效期为60天
+		Path:     "/",
+		SameSite: http.SameSiteLaxMode, // 根据需要设置SameSite策略
+		Secure:   true,
+	})
 	server.Use(sessions.Sessions("session", store))
 
 	router.SetRouter(server, buildFS)
