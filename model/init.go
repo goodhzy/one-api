@@ -8,7 +8,7 @@ package model
 //	"github.com/songquanpeng/one-api/pkg/conf"
 //	"github.com/songquanpeng/one-api/pkg/util"
 //	"github.com/gin-gonic/gin"
-//	"github.com/jinzhu/gorm"
+//	"gorm.io/gorm"
 //
 //	_ "github.com/songquanpeng/one-api/model/dialects"
 //	_ "github.com/glebarez/go-sqlite"

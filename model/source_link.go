@@ -2,8 +2,8 @@ package model
 
 import (
 	"fmt"
-	"github.com/jinzhu/gorm"
 	"github.com/songquanpeng/one-api/pkg/hashid"
+	"gorm.io/gorm"
 	"net/url"
 )
 
@@ -16,6 +16,10 @@ type SourceLink struct {
 
 	// 关联模型
 	File File `gorm:"save_associations:false:false"`
+}
+
+func (SourceLink) TableName() string {
+	return "cd_source_links" // 添加前缀的表名
 }
 
 // Link gets the URL of a SourceLink

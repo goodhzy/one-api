@@ -6,9 +6,9 @@ import (
 	"time"
 
 	"github.com/DATA-DOG/go-sqlmock"
-	"github.com/jinzhu/gorm"
 	"github.com/songquanpeng/one-api/pkg/conf"
 	"github.com/stretchr/testify/assert"
+	"gorm.io/gorm"
 )
 
 func TestFolder_Create(t *testing.T) {

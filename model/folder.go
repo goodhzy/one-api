@@ -22,6 +22,10 @@ type Folder struct {
 	WebdavDstName string `gorm:"-"`
 }
 
+func (Folder) TableName() string {
+	return "cd_folders" // 添加前缀的表名
+}
+
 // Create 创建目录
 func (folder *Folder) Create() (uint, error) {
 	if err := DB.FirstOrCreate(folder, *folder).Error; err != nil {

@@ -1,7 +1,7 @@
 package model
 
 import (
-	"github.com/jinzhu/gorm"
+	"gorm.io/gorm"
 )
 
 // Webdav 应用账户
@@ -13,6 +13,10 @@ type Webdav struct {
 	Root     string `gorm:"type:text"`                     // 根目录
 	Readonly bool   `gorm:"type:bool"`                     // 是否只读
 	UseProxy bool   `gorm:"type:bool"`                     // 是否进行反代
+}
+
+func (Webdav) TableName() string {
+	return "cd_webdavs" // 添加前缀的表名
 }
 
 // Create 创建账户

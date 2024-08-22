@@ -71,7 +71,8 @@ func chooseDB(envName string) (*gorm.DB, error) {
 				DSN:                  dsn,
 				PreferSimpleProtocol: true, // disables implicit prepared statement usage
 			}), &gorm.Config{
-				PrepareStmt: true, // precompile SQL
+				PrepareStmt:                              true, // precompile SQL
+				DisableForeignKeyConstraintWhenMigrating: true, // 数据迁移时不生成外键
 			})
 		}
 		// Use MySQL
@@ -79,8 +80,9 @@ func chooseDB(envName string) (*gorm.DB, error) {
 		common.UsingMySQL = true
 		return gorm.Open(mysql.Open(dsn), &gorm.Config{
 			PrepareStmt: true, // precompile SQL
-			// TODO 数据库日志
-			//Logger: logger2.Default.LogMode(logger2.Info), // 开启数据库语句日志
+			// TODO 数据库日志 logger2 "gorm.io/gorm/logger"
+			//Logger:                                   logger2.Default.LogMode(logger2.Info), // 开启数据库语句日志
+			DisableForeignKeyConstraintWhenMigrating: true, // 数据迁移时不生成外键
 		})
 	}
 	// Use SQLite

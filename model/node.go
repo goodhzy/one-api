@@ -22,6 +22,10 @@ type Node struct {
 	Aria2OptionsSerialized Aria2Option `gorm:"-"`
 }
 
+func (Node) TableName() string {
+	return "cd_nodes" // 添加前缀的表名
+}
+
 // Aria2Option 非公有的Aria2配置属性
 type Aria2Option struct {
 	// RPC 服务器地址
@@ -66,7 +70,7 @@ func GetNodesByStatus(status ...NodeStatus) ([]Node, error) {
 }
 
 // AfterFind 找到节点后的钩子
-func (node *Node) AfterFind() (err error) {
+func (node *Node) AfterFind(tx *gorm.DB) (err error) {
 	// 解析离线下载设置到 Aria2OptionsSerialized
 	if node.Aria2Options != "" {
 		err = json.Unmarshal([]byte(node.Aria2Options), &node.Aria2OptionsSerialized)
@@ -76,7 +80,7 @@ func (node *Node) AfterFind() (err error) {
 }
 
 // BeforeSave Save策略前的钩子
-func (node *Node) BeforeSave() (err error) {
+func (node *Node) BeforeSave(tx *gorm.DB) (err error) {
 	optionsValue, err := json.Marshal(&node.Aria2OptionsSerialized)
 	node.Aria2Options = string(optionsValue)
 	return err

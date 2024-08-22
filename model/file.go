@@ -36,6 +36,10 @@ type File struct {
 	MetadataSerialized map[string]string `gorm:"-"`
 }
 
+func (Files) TableName() string {
+	return "cd_files" // 添加前缀的表名
+}
+
 // Thumb related metadata
 const (
 	ThumbStatusNotExist     = ""
@@ -86,7 +90,7 @@ func (file *File) AfterFind() (err error) {
 }
 
 // BeforeSave Save策略前的钩子
-func (file *File) BeforeSave() (err error) {
+func (file *File) BeforeSave(tx *gorm.DB) (err error) {
 	if len(file.MetadataSerialized) > 0 {
 		metaValue, err := json.Marshal(&file.MetadataSerialized)
 		file.Metadata = string(metaValue)

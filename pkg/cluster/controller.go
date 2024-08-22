@@ -66,8 +66,7 @@ func InitController() {
 func (c *slaveController) HandleHeartBeat(req *serializer.NodePingReq) (serializer.NodePingResp, error) {
 	c.lock.Lock()
 	defer c.lock.Unlock()
-
-	req.Node.AfterFind()
+	req.Node.AfterFind(&gorm.DB{})
 
 	// close old node if exist
 	origin, ok := c.masters[req.SiteID]

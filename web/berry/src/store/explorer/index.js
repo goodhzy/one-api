@@ -1,6 +1,8 @@
 import * as actions from "./action";
 import * as reducers from "./reducer";
 import { setPagination } from "../viewUpdate/action";
+import { sortMethodFuncs } from '../../component/FileManager/Sort';
+import { setDirList, setFileList } from './action';
 
 export default {
     actions,
@@ -85,6 +87,39 @@ export const changeContextMenu = (type, open) => {
         open: open,
     };
 };
+export const setCurrentPolicy = (policy: Policy) => {
+    return {
+        type: "SET_CURRENT_POLICY",
+        policy,
+    };
+};
+
+export const updateFileList = (list) => {
+    return (dispatch, getState) => {
+        const state = getState();
+        // TODO: define state type
+        const { sortMethod, pagination } = state.viewUpdate;
+        const dirList = list.filter((x) => {
+            return x.type === "dir";
+        });
+        const fileList = list.filter((x) => {
+            return x.type === "file";
+        });
+        const sortFunc = sortMethodFuncs[sortMethod];
+        dispatch(setDirList(dirList.sort(sortFunc)));
+        dispatch(setFileList(fileList.sort(sortFunc)));
+        const total = dirList.length + fileList.length;
+        if (pagination.page * pagination.size > total) {
+            dispatch(
+              setPagination({
+                  ...pagination,
+                  page: Math.max(Math.ceil(total / pagination.size), 1),
+              })
+            );
+        }
+    };
+};
+
 export const setNavigatorLoadingStatus = (status) => {
     return {
         type: "SET_NAVIGATOR_LOADING_STATUE",

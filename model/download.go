@@ -15,7 +15,7 @@ import (
 
 const (
 	// Active 账户正常状态
-	Active = iota
+	Active = iota + 1
 	// NotActivicated 未激活
 	NotActivicated
 	// Baned 被封禁
@@ -51,8 +51,12 @@ type Download struct {
 	NodeName   string         `gorm:"-"`
 }
 
+func (Download) TableName() string {
+	return "cd_download" // 添加前缀的表名
+}
+
 // AfterFind 找到下载任务后的钩子，处理Status结构
-func (task *Download) AfterFind() (err error) {
+func (task *Download) AfterFind(tx *gorm.DB) (err error) {
 	// 解析状态
 	if task.Attrs != "" {
 		err = json.Unmarshal([]byte(task.Attrs), &task.StatusInfo)
@@ -66,7 +70,7 @@ func (task *Download) AfterFind() (err error) {
 }
 
 // BeforeSave Save下载任务前的钩子
-func (task *Download) BeforeSave() (err error) {
+func (task *Download) BeforeSave(tx *gorm.DB) (err error) {
 	// 解析状态
 	if task.Attrs != "" {
 		err = json.Unmarshal([]byte(task.Attrs), &task.StatusInfo)
@@ -222,7 +226,11 @@ func GetUserByID(ID interface{}) (User, error) {
 // GetActiveUserByID 用ID获取可登录用户
 func GetActiveUserByID(ID interface{}) (User, error) {
 	var user User
-	result := DB.Set("gorm:auto_preload", true).Where("status = ?", Active).First(&user, ID)
+	result := DB.Preload("Group").Where("status = ?", Active).First(&user, ID)
+	err := user.Group.AfterFind(&gorm.DB{})
+	if err != nil {
+		return User{}, err
+	}
 	return user, result.Error
 }
 
@@ -256,7 +264,7 @@ func NewUser() User {
 }
 
 // BeforeSave Save用户前的钩子
-func (user *User) BeforeSave() (err error) {
+func (user *User) BeforeSave(tx *gorm.DB) (err error) {
 	err = user.SerializeOptions()
 	return err
 }
@@ -273,7 +281,7 @@ func (user *User) AfterCreate(tx *gorm.DB) (err error) {
 }
 
 // AfterFind 找到用户后的钩子
-func (user *User) AfterFind() (err error) {
+func (user *User) AfterFind(tx *gorm.DB) (err error) {
 	// 解析用户设置到OptionsSerialized
 	if user.Options != "" {
 		err = json.Unmarshal([]byte(user.Options), &user.OptionsSerialized)

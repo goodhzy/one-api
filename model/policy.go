@@ -11,9 +11,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/jinzhu/gorm"
 	"github.com/songquanpeng/one-api/pkg/cache"
 	"github.com/songquanpeng/one-api/pkg/util"
+	"gorm.io/gorm"
 )
 
 // Policy 存储策略
@@ -38,6 +38,10 @@ type Policy struct {
 	// 数据库忽略字段
 	OptionsSerialized PolicyOption `gorm:"-"`
 	MasterID          string       `gorm:"-"`
+}
+
+func (Policy) TableName() string {
+	return "cd_policies" // 添加前缀的表名
 }
 
 // PolicyOption 非公有的存储策略属性
@@ -98,7 +102,7 @@ func GetPolicyByID(ID interface{}) (Policy, error) {
 }
 
 // AfterFind 找到存储策略后的钩子
-func (policy *Policy) AfterFind() (err error) {
+func (policy *Policy) AfterFind(tx *gorm.DB) (err error) {
 	// 解析存储策略设置到OptionsSerialized
 	if policy.Options != "" {
 		err = json.Unmarshal([]byte(policy.Options), &policy.OptionsSerialized)
@@ -111,7 +115,7 @@ func (policy *Policy) AfterFind() (err error) {
 }
 
 // BeforeSave Save策略前的钩子
-func (policy *Policy) BeforeSave() (err error) {
+func (policy *Policy) BeforeSave(tx *gorm.DB) (err error) {
 	err = policy.SerializeOptions()
 	return err
 }

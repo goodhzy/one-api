@@ -10,7 +10,6 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/jinzhu/gorm"
 	model "github.com/songquanpeng/one-api/model"
 	"github.com/songquanpeng/one-api/pkg/cache"
 	"github.com/songquanpeng/one-api/pkg/cluster"
@@ -20,6 +19,7 @@ import (
 	"github.com/songquanpeng/one-api/pkg/task"
 	"github.com/songquanpeng/one-api/pkg/task/slavetask"
 	"github.com/songquanpeng/one-api/pkg/util"
+	"gorm.io/gorm"
 )
 
 // SlaveDownloadService 从机文件下載服务

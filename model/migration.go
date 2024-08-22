@@ -1,12 +1,13 @@
 package model
 
 import (
+	"errors"
 	//"github.com/songquanpeng/one-api/model/scripts/invoker"
 	"github.com/fatih/color"
-	"github.com/jinzhu/gorm"
 	"github.com/songquanpeng/one-api/pkg/cache"
 	"github.com/songquanpeng/one-api/pkg/conf"
 	"github.com/songquanpeng/one-api/pkg/util"
+	"gorm.io/gorm"
 )
 
 // 是否需要迁移
@@ -64,7 +65,7 @@ func migration() {
 func addDefaultPolicy() {
 	_, err := GetPolicyByID(uint(1))
 	// 未找到初始存储策略时，则创建
-	if gorm.IsRecordNotFoundError(err) {
+	if errors.Is(err, gorm.ErrRecordNotFound) {
 		defaultPolicy := Policy{
 			Name:               "Default storage policy",
 			Type:               "local",
@@ -92,7 +93,7 @@ func addDefaultSettings() {
 func addDefaultGroups() {
 	_, err := GetGroupByID(1)
 	// 未找到初始管理组时，则创建
-	if gorm.IsRecordNotFoundError(err) {
+	if errors.Is(err, gorm.ErrRecordNotFound) {
 		defaultAdminGroup := Group{
 			Name:          "Admin",
 			PolicyList:    []uint{1},
@@ -118,7 +119,7 @@ func addDefaultGroups() {
 	err = nil
 	_, err = GetGroupByID(2)
 	// 未找到初始注册会员时，则创建
-	if gorm.IsRecordNotFoundError(err) {
+	if errors.Is(err, gorm.ErrRecordNotFound) {
 		defaultAdminGroup := Group{
 			Name:          "User",
 			PolicyList:    []uint{1},
@@ -140,7 +141,7 @@ func addDefaultGroups() {
 	err = nil
 	_, err = GetGroupByID(3)
 	// 未找到初始游客用户组时，则创建
-	if gorm.IsRecordNotFoundError(err) {
+	if errors.Is(err, gorm.ErrRecordNotFound) {
 		defaultAdminGroup := Group{
 			Name:       "Anonymous",
 			PolicyList: []uint{},
@@ -160,7 +161,7 @@ func addDefaultUser() {
 	password := util.RandStringRunes(8)
 
 	// 未找到初始用户时，则创建
-	if gorm.IsRecordNotFoundError(err) {
+	if errors.Is(err, gorm.ErrRecordNotFound) {
 		defaultUser := NewUser()
 		defaultUser.Email = "admin@cloudreve.org"
 		defaultUser.Nick = "admin"
@@ -183,7 +184,7 @@ func addDefaultUser() {
 func addDefaultNode() {
 	_, err := GetNodeByID(1)
 
-	if gorm.IsRecordNotFoundError(err) {
+	if errors.Is(err, gorm.ErrRecordNotFound) {
 		defaultAdminGroup := Node{
 			Name:   "Master (Local machine)",
 			Status: NodeActive,

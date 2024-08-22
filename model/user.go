@@ -24,7 +24,7 @@ const (
 const (
 	UserStatusEnabled  = 1 // don't use 0, 0 is the default value!
 	UserStatusDisabled = 2 // also don't use 0
-	UserStatusDeleted  = 3
+	UserStatusDeleted  = 5
 )
 
 // UserOption 用户个性化配置字段
@@ -58,7 +58,7 @@ type User struct {
 	PhoneCode        string `json:"phone_code" gorm:"default:''"`
 	EbayBind         bool   `json:"ebay_bind" gorm:"-"`
 	Nick             string `gorm:"size:50"`
-	GroupID          uint
+	GroupID          uint   `json:"group_id"`
 	Storage          uint64
 	TwoFactor        string
 	Avatar           string
@@ -66,8 +66,8 @@ type User struct {
 	Authn            string `gorm:"size:4294967295"`
 
 	// 关联模型
-	Group  Group  `gorm:"save_associations:false:false;foreignKey:GroupID"`
-	Policy Policy `gorm:"PRELOAD:false,association_autoupdate:false;foreignKey:GroupID"`
+	Group  Group  `gorm:"foreignKey:GroupID;"`
+	Policy Policy `gorm:"-"`
 
 	// 数据库忽略字段
 	OptionsSerialized UserOption `gorm:"-"`

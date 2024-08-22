@@ -26,24 +26,31 @@ import { Trans, useTranslation } from "react-i18next";
 import RemoteDownload from "../Modals/RemoteDownload";
 import Delete from "../Modals/Delete";
 import { useNavigate } from "react-router-dom";
-import { closeAllModals, openLoadingDialog, refreshFileList, refreshStorage, setModalsLoading, toggleSnackbar } from "../../store/explorer";
+import {
+    closeAllModals,
+    openLoadingDialog,
+    refreshFileList,
+    refreshStorage,
+    setModalsLoading,
+    toggleSnackbar,
+} from "../../store/explorer";
 
-const useStyles = styled((theme) => ({
-    wrapper: {
-        margin: theme.spacing(1),
-        position: "relative",
-    },
-    buttonProgress: {
-        color: theme.palette.secondary.light,
-        position: "absolute",
-        top: "50%",
-        left: "50%",
-        marginTop: -12,
-        marginLeft: -12,
-    },
-    contentFix: {
-        padding: "10px 24px 0px 24px",
-    },
+const Wrapper = styled('div')(({ theme }) => ({
+    margin: theme.spacing(1),
+    position: "relative",
+}));
+
+const ButtonProgress = styled(CircularProgress)(({ theme }) => ({
+    color: theme.palette.secondary.light,
+    position: "absolute",
+    top: "50%",
+    left: "50%",
+    marginTop: -12,
+    marginLeft: -12,
+}));
+
+const ContentFix = styled(DialogContent)(({ theme }) => ({
+    padding: "10px 24px 0px 24px",
 }));
 
 const ModalsCompoment = (props) => {
@@ -61,21 +68,8 @@ const ModalsCompoment = (props) => {
 
     const { t } = useTranslation();
     const navigate = useNavigate();
-    const classes = useStyles();
 
-    // useEffect(() => {
-    //     if (props.dndSignale !== props.prevDndSignale) {
-    //         dragMove(props.dndSource, props.dndTarget);
-    //     }
-    //
-    //     if (props.modalsStatus.rename !== props.prevModalsStatus.rename) {
-    //         const name = props.selected[0].name;
-    //         setState((prevState) => ({
-    //             ...prevState,
-    //             newName: name,
-    //         }));
-    //     }
-    // }, [props]);
+    // Existing logic and handlers ...
 
     const handleInputChange = (e) => {
         setState({
@@ -89,7 +83,6 @@ const ModalsCompoment = (props) => {
           .then((response) => {
               window.location.assign(response.data);
               onClose();
-              this.downloaded = true;
           })
           .catch((error) => {
               props.toggleSnackbar("top", "right", error.message, "error");
@@ -98,31 +91,20 @@ const ModalsCompoment = (props) => {
     };
 
     const submitMove = (e) => {
-        if (e) {
-            e.preventDefault();
-        }
+        if (e) e.preventDefault();
         props.setModalsLoading(true);
         const dirs = [];
         const items = [];
         props.selected.forEach((value) => {
-            if (value.type === "dir") {
-                dirs.push(value.id);
-            } else {
-                items.push(value.id);
-            }
+            if (value.type === "dir") dirs.push(value.id);
+            else items.push(value.id);
         });
+
         API.patch("/object", {
             action: "move",
             src_dir: props.selected[0].path,
-            src: {
-                dirs: dirs,
-                items: items,
-            },
-            dst: state.DragSelectedPath
-              ? state.DragSelectedPath
-              : state.selectedPath === "//"
-                ? "/"
-                : state.selectedPath,
+            src: { dirs, items },
+            dst: state.DragSelectedPath || (state.selectedPath === "//" ? "/" : state.selectedPath),
         })
           .then(() => {
               onClose();
@@ -135,9 +117,7 @@ const ModalsCompoment = (props) => {
               props.setModalsLoading(false);
               state.DragSelectedPath = "";
           })
-          .then(() => {
-              props.closeAllModals();
-          });
+          .then(() => props.closeAllModals());
     };
 
     const dragMove = (source, target) => {
@@ -151,18 +131,13 @@ const ModalsCompoment = (props) => {
                 doMove = false;
                 return;
             }
-            if (
-              value.path === target.path + (target.path === "/" ? "" : "/") + target.name
-            ) {
+            if (value.path === target.path + (target.path === "/" ? "" : "/") + target.name) {
                 doMove = false;
                 return;
             }
         });
         if (doMove) {
-            state.DragSelectedPath =
-              target.path === "/"
-                ? target.path + target.name
-                : target.path + "/" + target.name;
+            state.DragSelectedPath = target.path === "/" ? target.path + target.name : target.path + "/" + target.name;
             props.openLoadingDialog(t("modals.processing"));
             submitMove();
         }
@@ -257,10 +232,7 @@ const ModalsCompoment = (props) => {
     };
 
     const setMoveTarget = (folder) => {
-        const path =
-          folder.path === "/"
-            ? folder.path + folder.name
-            : folder.path + "/" + folder.name;
+        const path = folder.path === "/" ? folder.path + folder.name : folder.path + "/" + folder.name;
         setState({
             ...state,
             selectedPath: path,
@@ -279,7 +251,6 @@ const ModalsCompoment = (props) => {
             sharePwd: "",
             shareUrl: "",
         });
-        state.newNameSuffix = "";
         props.closeAllModals();
     };
 
@@ -289,8 +260,6 @@ const ModalsCompoment = (props) => {
 
     return (
       <React.Fragment>
-          {/* Modal Components */}
-          {/* Example for Rename Modal */}
           <Dialog open={props?.modalsStatus?.rename} onClose={onClose}>
               <DialogTitle>{t("modals.rename.title")}</DialogTitle>
               <DialogContent>

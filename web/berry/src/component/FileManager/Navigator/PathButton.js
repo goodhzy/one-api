@@ -3,19 +3,16 @@ import ExpandMore from "@mui/icons-material/ExpandMore";
 import MoreIcon from "@mui/icons-material/MoreHoriz";
 import { Button } from "@mui/material";
 import { useDrop } from "react-dnd";
-import { styled } from "@mui/material/styles";
+import { styled } from "@mui/material";
 import classNames from "classnames";
 
-const useStyles = styled((theme) => ({
-    expandMore: {
-        color: "#8d8d8d",
-    },
-    active: {
-        boxShadow: `0 0 0 2px ${theme.palette.primary.light}`,
-    },
-    button: {
-        textTransform: "none",
-    },
+const StyledButton = styled(Button)(({ theme, isActive }) => ({
+    textTransform: "none",
+    boxShadow: isActive ? `0 0 0 2px ${theme.palette.primary.light}` : "none",
+}));
+
+const ExpandMoreIcon = styled(ExpandMore)(({ theme }) => ({
+    color: "#8d8d8d",
 }));
 
 const PathButton = (props) => {
@@ -43,25 +40,18 @@ const PathButton = (props) => {
     });
 
     const isActive = canDrop && isOver;
-    const classes = useStyles();
 
     useEffect(() => {
         if (props.more && isActive) {
             inputRef.current?.click();
         }
-        // eslint-disable-next-line
-    }, [isActive]);
+    }, [isActive, props.more]);
 
     return (
       <span onClick={props.onClick} ref={inputRef}>
-            <Button
+            <StyledButton
               ref={drop}
-              className={classNames(
-                {
-                    [classes.active]: isActive,
-                },
-                classes.button
-              )}
+              isActive={isActive}
               component="span"
               title={props.title}
             >
@@ -69,10 +59,10 @@ const PathButton = (props) => {
                 {!props.more && (
                   <>
                       {props.folder}
-                      {props.last && <ExpandMore className={classes.expandMore} />}
+                      {props.last && <ExpandMoreIcon />}
                   </>
                 )}
-            </Button>
+            </StyledButton>
         </span>
     );
 };

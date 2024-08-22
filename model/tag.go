@@ -1,8 +1,8 @@
 package model
 
 import (
-	"github.com/jinzhu/gorm"
 	"github.com/songquanpeng/one-api/pkg/util"
+	"gorm.io/gorm"
 )
 
 // Tag 用户自定义标签
@@ -14,6 +14,10 @@ type Tag struct {
 	Type       int    // 标签类型（文件分类/目录直达）
 	Expression string `gorm:"type:text"` // 搜索表表达式/直达路径
 	UserID     uint   // 创建者ID
+}
+
+func (Tag) TableName() string {
+	return "cd_tags" // 添加前缀的表名
 }
 
 const (

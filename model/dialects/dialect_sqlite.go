@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/jinzhu/gorm"
+	"gorm.io/gorm"
 )
 
 var keyNameRegex = regexp.MustCompile("[^a-zA-Z0-9]+")

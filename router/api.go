@@ -4,11 +4,10 @@ import (
 	"github.com/gin-contrib/gzip"
 	"github.com/gin-gonic/gin"
 	"github.com/songquanpeng/one-api/controller"
-	"github.com/songquanpeng/one-api/controller/auth"
+	auth2 "github.com/songquanpeng/one-api/controller/auth"
 	"github.com/songquanpeng/one-api/middleware"
 	pkgAuth "github.com/songquanpeng/one-api/pkg/auth"
 	"github.com/songquanpeng/one-api/pkg/cache"
-	"github.com/songquanpeng/one-api/pkg/conf"
 	"github.com/songquanpeng/one-api/pkg/hashid"
 	wopi2 "github.com/songquanpeng/one-api/pkg/wopi"
 	"github.com/songquanpeng/one-api/router/controllers"
@@ -27,11 +26,11 @@ func SetApiRouter(router *gin.Engine) {
 		apiRouter.GET("/verification", middleware.CriticalRateLimit(), middleware.TurnstileCheck(), controller.SendEmailVerification)
 		apiRouter.GET("/reset_password", middleware.CriticalRateLimit(), middleware.TurnstileCheck(), controller.SendPasswordResetEmail)
 		apiRouter.POST("/user/reset", middleware.CriticalRateLimit(), controller.ResetPassword)
-		apiRouter.GET("/oauth/lark", middleware.CriticalRateLimit(), auth.LarkOAuth)
-		apiRouter.GET("/oauth/state", middleware.CriticalRateLimit(), auth.GenerateOAuthCode)
-		apiRouter.GET("/oauth/wechat", middleware.CriticalRateLimit(), auth.WeChatAuth)
-		apiRouter.GET("/oauth/ebay", middleware.CriticalRateLimit(), auth.EbayOAuth)
-		apiRouter.GET("/oauth/wechat/bind", middleware.CriticalRateLimit(), middleware.UserAuth(), auth.WeChatBind)
+		apiRouter.GET("/oauth/lark", middleware.CriticalRateLimit(), auth2.LarkOAuth)
+		apiRouter.GET("/oauth/state", middleware.CriticalRateLimit(), auth2.GenerateOAuthCode)
+		apiRouter.GET("/oauth/wechat", middleware.CriticalRateLimit(), auth2.WeChatAuth)
+		apiRouter.GET("/oauth/ebay", middleware.CriticalRateLimit(), auth2.EbayOAuth)
+		apiRouter.GET("/oauth/wechat/bind", middleware.CriticalRateLimit(), middleware.UserAuth(), auth2.WeChatBind)
 		apiRouter.GET("/oauth/email/bind", middleware.CriticalRateLimit(), middleware.UserAuth(), controller.EmailBind)
 		apiRouter.POST("/topup", middleware.AdminAuth(), controller.AdminTopUp)
 		apiRouter.GET("/prompt", controller.GetPrompt)
@@ -77,6 +76,7 @@ func SetApiRouter(router *gin.Engine) {
 			userRoute.POST("/register", middleware.CriticalRateLimit(), middleware.TurnstileCheck(), controller.Register)
 			userRoute.POST("/login", middleware.CriticalRateLimit(), controller.Login)
 			userRoute.GET("/logout", controller.Logout)
+			userRoute.GET("/storage", middleware.UserAuth(), middleware.CurrentUser(), controllers.UserStorage)
 
 			selfRoute := userRoute.Group("/")
 			selfRoute.Use(middleware.UserAuth())
@@ -193,7 +193,7 @@ func InitMasterRouter(r *gin.Engine) {
 	/*
 		中间件
 	*/
-	v3.Use(middleware.Session(conf.SystemConfig.SessionSecret))
+	//v3.Use(middleware.Session(conf.SystemConfig.SessionSecret))
 	// 测试模式加入Mock助手中间件
 	if gin.Mode() == gin.TestMode {
 		v3.Use(middleware.MockHelper())

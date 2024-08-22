@@ -25,7 +25,7 @@ import FolderOpenOutlinedIcon from "@mui/icons-material/FolderOpenOutlined";
 import LinkIcon from "@mui/icons-material/Link";
 import { useTheme } from "@mui/material/styles";
 import useMediaQuery from "@mui/material/useMediaQuery";
-
+import { pathBack } from "../../utils";
 export default function RemoteDownload(props) {
     const { t } = useTranslation();
     const [selectPathOpen, setSelectPathOpen] = useState(false);
@@ -236,6 +236,7 @@ export default function RemoteDownload(props) {
               <DialogTitle id="form-dialog-title">
                   {t("modals.remoteDownloadDst")}
               </DialogTitle>
+
               <PathSelector
                 presentPath={pathBack(props.presentPath)}
                 selected={[]}

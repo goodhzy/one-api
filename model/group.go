@@ -2,7 +2,7 @@ package model
 
 import (
 	"encoding/json"
-	"github.com/jinzhu/gorm"
+	"gorm.io/gorm"
 )
 
 // Group 用户组模型
@@ -19,6 +19,10 @@ type Group struct {
 	// 数据库忽略字段
 	PolicyList        []uint      `gorm:"-"`
 	OptionsSerialized GroupOption `gorm:"-"`
+}
+
+func (Group) TableName() string {
+	return "cd_groups" // 添加前缀的表名
 }
 
 // GroupOption 用户组其他配置
@@ -46,7 +50,7 @@ func GetGroupByID(ID interface{}) (Group, error) {
 }
 
 // AfterFind 找到用户组后的钩子，处理Policy列表
-func (group *Group) AfterFind() (err error) {
+func (group *Group) AfterFind(tx *gorm.DB) (err error) {
 	// 解析用户组策略列表
 	if group.Policies != "" {
 		err = json.Unmarshal([]byte(group.Policies), &group.PolicyList)
@@ -64,7 +68,7 @@ func (group *Group) AfterFind() (err error) {
 }
 
 // BeforeSave Save用户前的钩子
-func (group *Group) BeforeSave() (err error) {
+func (group *Group) BeforeSave(tx *gorm.DB) (err error) {
 	err = group.SerializePolicyList()
 	return err
 }

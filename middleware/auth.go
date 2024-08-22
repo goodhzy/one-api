@@ -80,6 +80,7 @@ func authHelper(c *gin.Context, minRole int) {
 	c.Set("username", username)
 	c.Set("role", role)
 	c.Set("id", id)
+	c.Set("user_id", id)
 	c.Next()
 }
 
@@ -202,7 +203,7 @@ func SignRequired(authInstance auth.Auth) gin.HandlerFunc {
 func CurrentUser() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		session := sessions.Default(c)
-		uid := session.Get("user_id")
+		uid := session.Get("id")
 		if uid != nil {
 			user, err := model.GetActiveUserByID(uid)
 			if err == nil {

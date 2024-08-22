@@ -16,6 +16,10 @@ type Task struct {
 	Props    string `gorm:"type:text"` // 任务属性
 }
 
+func (Task) TableName() string {
+	return "cd_tasks" // 添加前缀的表名
+}
+
 // Create 创建任务记录
 func (task *Task) Create() (uint, error) {
 	if err := DB.Create(task).Error; err != nil {

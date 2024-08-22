@@ -7,10 +7,10 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/jinzhu/gorm"
 	"github.com/songquanpeng/one-api/pkg/cache"
 	"github.com/songquanpeng/one-api/pkg/hashid"
 	"github.com/songquanpeng/one-api/pkg/util"
+	"gorm.io/gorm"
 )
 
 // Share 分享模型
@@ -31,6 +31,10 @@ type Share struct {
 	User   User   `gorm:"PRELOAD:false,association_autoupdate:false"`
 	File   File   `gorm:"PRELOAD:false,association_autoupdate:false"`
 	Folder Folder `gorm:"PRELOAD:false,association_autoupdate:false"`
+}
+
+func (Share) TableName() string {
+	return "cd_shares" // 添加前缀的表名
 }
 
 // Create 创建分享
