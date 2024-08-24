@@ -1,10 +1,9 @@
 import panel from './panel';
-import pages from './pages';
 
 // ==============================|| MENU ITEMS ||============================== //
 
 const menuItems = {
-  items: [panel, pages],
+  items: [panel],
   urlMap: {}
 };
 

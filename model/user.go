@@ -45,12 +45,16 @@ type User struct {
 	Quota            int64  `json:"quota" gorm:"bigint;default:0"`
 	UsedQuota        int64  `json:"used_quota" gorm:"bigint;default:0;column:used_quota"` // used quota
 	RequestCount     int    `json:"request_count" gorm:"type:int;default:0;"`             // request number
-	Group            string `json:"group" gorm:"type:varchar(32);default:'default'"`
-	AffCode          string `json:"aff_code" gorm:"type:varchar(32);column:aff_code;uniqueIndex"`
-	InviterId        int    `json:"inviter_id" gorm:"type:int;column:inviter_id;index"`
-	Phone            string `json:"phone" gorm:"type:varchar(20);column:phone;index"`
-	PhoneCode        string `json:"phone_code" gorm:"default:''"`
-	EbayBind         bool   `json:"ebay_bind" gorm:"-"`
+	//Group            string `json:"group" gorm:"type:varchar(32);default:'default'"`
+	AffCode   string `json:"aff_code" gorm:"type:varchar(32);column:aff_code;uniqueIndex"`
+	InviterId int    `json:"inviter_id" gorm:"type:int;column:inviter_id;index"`
+	Phone     string `json:"phone" gorm:"type:varchar(20);column:phone;index"`
+	PhoneCode string `json:"phone_code" gorm:"default:''"`
+	EbayBind  bool   `json:"ebay_bind" gorm:"-"`
+}
+
+func (User) TableName() string {
+	return "cd_users"
 }
 
 func GetMaxUserId() int {

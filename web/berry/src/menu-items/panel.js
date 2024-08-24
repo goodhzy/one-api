@@ -174,6 +174,14 @@ const panel = {
       isAdmin: true
     },
     {
+      id: 'pan',
+      title: '网盘',
+      type: 'item',
+      url: '/panel/pan',
+      icon: icons.IconAdjustments,
+      breadcrumbs: false,
+    },
+    {
       id: 'profile',
       title: '我的',
       type: 'item',
@@ -182,6 +190,7 @@ const panel = {
       breadcrumbs: false,
       isAdmin: false
     },
+
     {
       id: 'setting',
       title: '设置',
@@ -190,7 +199,8 @@ const panel = {
       icon: icons.IconAdjustments,
       breadcrumbs: false,
       isAdmin: true
-    }
+    },
+
   ]
 };
 
