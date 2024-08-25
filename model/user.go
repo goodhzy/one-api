@@ -1,14 +1,15 @@
 package model
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/songquanpeng/one-api/common"
 	"github.com/songquanpeng/one-api/common/blacklist"
 	"github.com/songquanpeng/one-api/common/config"
-	"github.com/songquanpeng/one-api/common/helper"
 	"github.com/songquanpeng/one-api/common/logger"
 	"github.com/songquanpeng/one-api/common/random"
 	"gorm.io/gorm"
@@ -30,13 +31,11 @@ const (
 // User if you add sensitive fields, don't forget to clean them in setupLogin function.
 // Otherwise, the sensitive information will be saved on local storage in plain text!
 type User struct {
+	gorm.Model
 	Id               int    `json:"id"`
 	Username         string `json:"username" gorm:"unique;index" validate:"max=12"`
-	Password         string `json:"password" gorm:"not null;" validate:"min=8,max=20"`
 	DisplayName      string `json:"display_name" gorm:"index" validate:"max=20"`
-	Role             int    `json:"role" gorm:"type:int;default:1"`   // admin, util
-	Status           int    `json:"status" gorm:"type:int;default:1"` // enabled, disabled
-	Email            string `json:"email" gorm:"index" validate:"max=50"`
+	Role             int    `json:"role" gorm:"type:int;default:1"` // admin, util
 	GitHubId         string `json:"github_id" gorm:"column:github_id;index"`
 	WeChatId         string `json:"wechat_id" gorm:"column:wechat_id;index"`
 	LarkId           string `json:"lark_id" gorm:"column:lark_id;index"`
@@ -45,12 +44,38 @@ type User struct {
 	Quota            int64  `json:"quota" gorm:"bigint;default:0"`
 	UsedQuota        int64  `json:"used_quota" gorm:"bigint;default:0;column:used_quota"` // used quota
 	RequestCount     int    `json:"request_count" gorm:"type:int;default:0;"`             // request number
-	//Group            string `json:"group" gorm:"type:varchar(32);default:'default'"`
-	AffCode   string `json:"aff_code" gorm:"type:varchar(32);column:aff_code;uniqueIndex"`
-	InviterId int    `json:"inviter_id" gorm:"type:int;column:inviter_id;index"`
-	Phone     string `json:"phone" gorm:"type:varchar(20);column:phone;index"`
-	PhoneCode string `json:"phone_code" gorm:"default:''"`
-	EbayBind  bool   `json:"ebay_bind" gorm:"-"`
+	AffCode          string `json:"aff_code" gorm:"type:varchar(32);column:aff_code;uniqueIndex"`
+	InviterId        int    `json:"inviter_id" gorm:"type:int;column:inviter_id;index"`
+	PhoneCode        string `json:"phone_code" gorm:"default:''"`
+	EbayBind         bool   `json:"ebay_bind" gorm:"-"`
+	Nick             string `gorm:"size:50"`
+	Password         string `json:"password" gorm:"not null;" validate:"min=8,max=20"`
+	Status           int    `json:"status" gorm:"type:int;default:1"` // enabled, disabled
+	Email            string `json:"email" gorm:"index" validate:"max=50"`
+	GroupID          uint   `json:"group_id"`
+	Storage          uint64
+	OpenID           string
+	TwoFactor        string
+	Avatar           string
+	Options          string `json:"-" gorm:"size:4294967295"`
+	Authn            string `gorm:"size:4294967295"`
+	Score            int
+	PreviousGroupID  uint       // 初始用户组
+	GroupExpires     *time.Time // 用户组过期日期
+	NotifyDate       *time.Time // 通知超出配额时的日期
+	Phone            string     `json:"phone" gorm:"type:varchar(20);column:phone;index"`
+
+	UserGroup string `json:"user_group" gorm:"type:varchar(32);default:'default'"`
+
+	// 数据库忽略字段
+	OptionsSerialized UserOption `gorm:"-"`
+}
+
+// UserOption 用户个性化配置字段
+type UserOption struct {
+	ProfileOff      bool   `json:"profile_off,omitempty"`
+	PreferredPolicy uint   `json:"preferred_policy,omitempty"`
+	PreferredTheme  string `json:"preferred_theme,omitempty"`
 }
 
 func (User) TableName() string {
@@ -149,22 +174,6 @@ func (user *User) Insert(inviterId int) error {
 			_ = IncreaseUserQuota(inviterId, config.QuotaForInviter)
 			RecordLog(inviterId, LogTypeSystem, fmt.Sprintf("邀请用户赠送 %s", common.LogQuota(config.QuotaForInviter)))
 		}
-	}
-	// create default token
-	cleanToken := Token{
-		UserId:         user.Id,
-		Name:           "default",
-		Key:            random.GenerateKey(),
-		CreatedTime:    helper.GetTimestamp(),
-		AccessedTime:   helper.GetTimestamp(),
-		ExpiredTime:    -1,
-		RemainQuota:    -1,
-		UnlimitedQuota: true,
-	}
-	result.Error = cleanToken.Insert()
-	if result.Error != nil {
-		// do not block
-		logger.SysError(fmt.Sprintf("create default token for user %d failed: %s", user.Id, result.Error.Error()))
 	}
 	return nil
 }
@@ -368,9 +377,9 @@ func GetUserEmail(id int) (email string, err error) {
 }
 
 func GetUserGroup(id int) (group string, err error) {
-	groupCol := "`group`"
+	groupCol := "`user_group`"
 	if common.UsingPostgreSQL {
-		groupCol = `"group"`
+		groupCol = `"user_group"`
 	}
 
 	err = DB.Model(&User{}).Where("id = ?", id).Select(groupCol).Find(&group).Error
@@ -456,4 +465,29 @@ func updateUserRequestCount(id int, count int) {
 func GetUsernameById(id int) (username string) {
 	DB.Model(&User{}).Where("id = ?", id).Select("username").Find(&username)
 	return username
+}
+
+// SerializeOptions 将序列后的Option写入到数据库字段
+func (user *User) SerializeOptions() (err error) {
+	optionsValue, err := json.Marshal(&user.OptionsSerialized)
+	user.Options = string(optionsValue)
+	return err
+}
+
+// BeforeSave Save用户前的钩子
+func (user *User) BeforeSave(tx *gorm.DB) (err error) {
+	err = user.SerializeOptions()
+	return err
+}
+
+// AfterCreate 创建用户后的钩子
+func (user *User) AfterCreate(tx *gorm.DB) (err error) {
+	// 创建用户的默认根目录
+	defaultFolder := &Folder{
+		Name:    "/",
+		OwnerID: uint(user.Id),
+	}
+	tx.Create(defaultFolder)
+
+	return err
 }

@@ -77,7 +77,9 @@ func chooseDB(envName string) (*gorm.DB, error) {
 		// Use MySQL
 		logger.SysLog("using MySQL as database")
 		common.UsingMySQL = true
-		return gorm.Open(mysql.Open(dsn), &gorm.Config{
+		dsnStr := dsn + "?parseTime=True"
+		fmt.Printf("dsnStr:%s\n", dsnStr)
+		return gorm.Open(mysql.Open(dsnStr), &gorm.Config{
 			PrepareStmt: true, // precompile SQL
 			// TODO 数据库日志
 			//Logger: logger2.Default.LogMode(logger2.Info), // 开启数据库语句日志
@@ -113,36 +115,36 @@ func InitDB(envName string) (db *gorm.DB, err error) {
 		if common.UsingMySQL {
 			_, _ = sqlDB.Exec("DROP INDEX idx_channels_key ON channels;") // TODO: delete this line when most users have upgraded
 		}
-		logger.SysLog("database migration started")
-		err = db.AutoMigrate(&Channel{})
-		if err != nil {
-			return nil, err
-		}
-		err = db.AutoMigrate(&Token{})
-		if err != nil {
-			return nil, err
-		}
-		err = db.AutoMigrate(&User{})
-		if err != nil {
-			return nil, err
-		}
-		err = db.AutoMigrate(&Option{})
-		if err != nil {
-			return nil, err
-		}
-		err = db.AutoMigrate(&Redemption{})
-		if err != nil {
-			return nil, err
-		}
-		err = db.AutoMigrate(&Ability{})
-		if err != nil {
-			return nil, err
-		}
-		err = db.AutoMigrate(&Log{})
-		if err != nil {
-			return nil, err
-		}
-		logger.SysLog("database migrated")
+		//logger.SysLog("database migration started")
+		//err = db.AutoMigrate(&Channel{})
+		//if err != nil {
+		//	return nil, err
+		//}
+		//err = db.AutoMigrate(&Token{})
+		//if err != nil {
+		//	return nil, err
+		//}
+		//err = db.AutoMigrate(&User{})
+		//if err != nil {
+		//	return nil, err
+		//}
+		//err = db.AutoMigrate(&Option{})
+		//if err != nil {
+		//	return nil, err
+		//}
+		//err = db.AutoMigrate(&Redemption{})
+		//if err != nil {
+		//	return nil, err
+		//}
+		//err = db.AutoMigrate(&Ability{})
+		//if err != nil {
+		//	return nil, err
+		//}
+		//err = db.AutoMigrate(&Log{})
+		//if err != nil {
+		//	return nil, err
+		//}
+		//logger.SysLog("database migrated")
 		return db, err
 	} else {
 		logger.FatalLog(err)

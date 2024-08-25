@@ -35,7 +35,7 @@ const validationSchema = Yup.object().shape({
     then: Yup.string().required('密码 不能为空'),
     otherwise: Yup.string()
   }),
-  group: Yup.string().when('is_edit', {
+  user_group: Yup.string().when('is_edit', {
     is: false,
     then: Yup.string().required('用户组 不能为空'),
     otherwise: Yup.string()
@@ -52,7 +52,7 @@ const originInputs = {
   username: '',
   display_name: '',
   password: '',
-  group: 'default',
+  user_group: 'default',
   quota: 0
 };
 
@@ -231,13 +231,13 @@ const EditModal = ({ open, userId, onCancel, onOk }) => {
                     )}
                   </FormControl>
 
-                  <FormControl fullWidth error={Boolean(touched.group && errors.group)} sx={{ ...theme.typography.otherInput }}>
+                  <FormControl fullWidth error={Boolean(touched.user_group && errors.user_group)} sx={{ ...theme.typography.otherInput }}>
                     <InputLabel htmlFor="channel-group-label">分组</InputLabel>
                     <Select
-                      id="channel-group-label"
+                      id="channel-user_group-label"
                       label="分组"
-                      value={values.group}
-                      name="group"
+                      value={values.user_group}
+                      name="user_group"
                       onBlur={handleBlur}
                       onChange={handleChange}
                       MenuProps={{
@@ -256,9 +256,9 @@ const EditModal = ({ open, userId, onCancel, onOk }) => {
                         );
                       })}
                     </Select>
-                    {touched.group && errors.group && (
-                      <FormHelperText error id="helper-tex-channel-group-label">
-                        {errors.group}
+                    {touched.user_group && errors.user_group && (
+                      <FormHelperText error id="helper-tex-channel-user_group-label">
+                        {errors.user_group}
                       </FormHelperText>
                     )}
                   </FormControl>

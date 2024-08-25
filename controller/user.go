@@ -166,6 +166,7 @@ func Register(c *gin.Context) {
 		InviterId:   inviterId,
 		Phone:       user.Phone,
 		PhoneCode:   user.PhoneCode,
+		GroupID:     2,
 	}
 	if config.EmailVerificationEnabled {
 		cleanUser.Email = user.Email
@@ -559,7 +560,10 @@ func DeleteSelf(c *gin.Context) {
 func CreateUser(c *gin.Context) {
 	var user model.User
 	err := json.NewDecoder(c.Request.Body).Decode(&user)
+	fmt.Printf("username: %v", user.Username)
+	fmt.Printf("Password: %v", user.Password)
 	if err != nil || user.Username == "" || user.Password == "" {
+		fmt.Printf("err: %v", err)
 		c.JSON(http.StatusOK, gin.H{
 			"success": false,
 			"message": "无效的参数",
@@ -589,6 +593,7 @@ func CreateUser(c *gin.Context) {
 		Username:    user.Username,
 		Password:    user.Password,
 		DisplayName: user.DisplayName,
+		GroupID:     2,
 	}
 	if err := cleanUser.Insert(0); err != nil {
 		c.JSON(http.StatusOK, gin.H{

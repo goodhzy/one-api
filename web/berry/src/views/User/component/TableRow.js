@@ -80,7 +80,7 @@ export default function UsersTableRow({ item, manageUser, handleOpenModal, setMo
         <TableCell>{item.username}</TableCell>
 
         <TableCell>
-          <Label>{item.group}</Label>
+          <Label>{item.user_group}</Label>
         </TableCell>
 
         <TableCell>
