@@ -80,11 +80,13 @@ func Upload(c *gin.Context) {
 	bucket, err := client.Bucket(config.BucketName)
 	if err != nil {
 		handleError(c, err)
+		return
 	}
 
 	err = bucket.PutObject(objectName, src)
 	if err != nil {
 		handleError(c, err)
+		return
 	}
 	insertFile, err := model.InsertFile(&model.Files{
 		FileName:  file.Filename,
@@ -97,6 +99,7 @@ func Upload(c *gin.Context) {
 	})
 	if err != nil {
 		handleError(c, err)
+		return
 	}
 	c.JSON(http.StatusOK, gin.H{
 		"success": true,

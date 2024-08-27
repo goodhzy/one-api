@@ -823,7 +823,6 @@ const EditEbayGoods = ({ setOpen, open, goodsId }) => {
                     <Stack direction={{ xs: 'column', md: 'row' }} spacing={2}>
                       <Uploader
                         listType="picture"
-                        action=""
                         fileListVisible={false}
                         onUpload={(file) => {
                           previewFile(file.blobFile, 0);
@@ -840,7 +839,6 @@ const EditEbayGoods = ({ setOpen, open, goodsId }) => {
 
                       <Uploader
                         listType="picture"
-                        action=""
                         fileListVisible={false}
                         onUpload={(file) => {
                           previewFile(file.blobFile, 1);

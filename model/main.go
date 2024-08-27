@@ -78,7 +78,6 @@ func chooseDB(envName string) (*gorm.DB, error) {
 		logger.SysLog("using MySQL as database")
 		common.UsingMySQL = true
 		dsnStr := dsn + "?parseTime=True"
-		fmt.Printf("dsnStr:%s\n", dsnStr)
 		return gorm.Open(mysql.Open(dsnStr), &gorm.Config{
 			PrepareStmt: true, // precompile SQL
 			// TODO 数据库日志

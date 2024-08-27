@@ -97,8 +97,8 @@ export default function PublishTableRow({item,setModalGoodsId, setSearching, Loa
         </TableCell>
         <TableCell>
           <PhotoProvider maskOpacity={0.2}>
-            <PhotoView key={item.id} src={ImageUrl + item.composite_image}>
-              <img alt="" style={{ width: '180px', height: '120px' }} src={ImageUrl + item.composite_image} />
+            <PhotoView key={item.id} src={item.composite_image ? ImageUrl + item.composite_image : ''}>
+              <img alt="暂无图片" style={{ width: '180px', height: '120px' }} src={item.composite_image ? ImageUrl + item.composite_image : ''} />
             </PhotoView>
           </PhotoProvider>
         </TableCell>
