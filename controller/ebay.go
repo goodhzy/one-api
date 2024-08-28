@@ -528,6 +528,11 @@ func GetEbayGoodsList(c *gin.Context) {
 		})
 		return
 	}
+	// 解析status为status_name
+	for i, ebayProduct := range ebayProducts {
+		ebayProducts[i].StatusName = common.GetStatusName(ebayProduct.Status)
+
+	}
 	c.JSON(http.StatusOK, gin.H{
 		"success": true,
 		"message": "get ebay goods list success",

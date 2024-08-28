@@ -126,14 +126,17 @@ export default function PublishEbay() {
 
   useEffect(() => {
     setSearchKeyword(originalKeyword);
-    setInitPage(false);
+    setActivePage(0);
+
     //setGoodsList虚拟数据
     LoadGoodsList(0)
       .then()
       .catch((reason)=>{
         showError(reason)
       })
-  }, []);
+    setInitPage(false);
+
+  }, [initPage]);
 
 
   return(
@@ -181,6 +184,7 @@ export default function PublishEbay() {
                  <TableCell>SKU</TableCell>
                  <TableCell>属地</TableCell>
                  <TableCell>标题</TableCell>
+                 <TableCell>刊登状态</TableCell>
                  <TableCell>操作</TableCell>
                </TableRow>
              </TableHead>
@@ -192,7 +196,8 @@ export default function PublishEbay() {
                    key={row.id}
                    setSearching={setSearching}
                    LoadGoodsList={LoadGoodsList}
-                    handleItemCheckChange={handleItemCheckChange}
+                   handleItemCheckChange={handleItemCheckChange}
+                   handleRefresh={handleRefresh}
                  />
                ))}
              </TableBody>

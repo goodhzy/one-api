@@ -82,7 +82,7 @@ export default function LogTableRow({ item, userIsAdmin,labelId,isSelected,handl
           <Button variant="contained" disabled={isDisabled} onClick={(event)=>{
             event.stopPropagation();
             handlePublish(item.id);
-          }}>刊登</Button>
+          }}>转移</Button>
         </TableCell>
       </TableRow>
     </>

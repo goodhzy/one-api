@@ -56,6 +56,7 @@ type EbayProduct struct {
 	FrontOssImage        string          `json:"front_oss_image"`
 	SelfSku              string          `json:"self_sku"`
 	Status               int             `json:"status"`
+	StatusName           string          `gorm:"-" json:"status_name"`
 	Sort                 int             `json:"sort"`
 	Availability         json.RawMessage `json:"availability,omitempty"`
 	Condition            string          `json:"condition,omitempty"`

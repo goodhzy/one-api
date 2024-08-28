@@ -95,7 +95,7 @@ export default function ProduceLog() {
     const { success, message } = res.data;
     if (success) {
       handleRefresh()
-      showSuccess('刊登成功');
+      showSuccess('转移成功');
     } else {
       showError(message)
     }
@@ -182,7 +182,7 @@ export default function ProduceLog() {
           <Container sx={{textAlign: 'left'}}>
             <Button variant="contained" disabled={isDisabled} onClick={()=>{
               handleAllPublish();
-            }}>批量刊登</Button>
+            }}>批量转移</Button>
           </Container>
 
 

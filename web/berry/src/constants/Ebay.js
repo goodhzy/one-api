@@ -67,6 +67,11 @@ export const EbayProductStatus = {
   PUBLISH: 'PUBLISH',
 }
 
+export const EbayProductStatusName = {
+  [EbayProductStatus.NOT_PUBLISH]: '未刊登',
+  [EbayProductStatus.PUBLISH]: '已刊登',
+}
+
 export const EbayUserStatus ={
   NORMAL: 1,
   EXPIRED: 2,

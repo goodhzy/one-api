@@ -25,7 +25,7 @@ import { API, ImageUrl } from 'utils/api';
 import { showError, showSuccess } from '../../../../utils/common';
 import { width } from '@mui/system';
 
-export default function PublishTableRow({item,setModalGoodsId, setSearching, LoadGoodsList, handleItemCheckChange}){
+export default function PublishTableRow({item,setModalGoodsId, setSearching, LoadGoodsList, handleItemCheckChange, handleRefresh}){
   const [statusSwitch, setStatusSwitch] = useState(item.status);
   const [open, setOpen] = useState(null);
   const [openDelete, setOpenDelete] = useState(false);
@@ -108,6 +108,7 @@ export default function PublishTableRow({item,setModalGoodsId, setSearching, Loa
         <TableCell>{item.marketplaceId ?? '无'}</TableCell>
 
         <TableCell>{item?.product?.title || item?.title}</TableCell>
+        <TableCell>{item.status_name}</TableCell>
 
         {/*<TableCell>*/}
         {/*  <TableSwitch id={`switch-${item.id}`} checked={statusSwitch === 1} onChange={handleStatus} />*/}
@@ -159,7 +160,7 @@ export default function PublishTableRow({item,setModalGoodsId, setSearching, Loa
         </DialogActions>
       </Dialog>
 
-      <EditEbayGoods open={editEbayGoodsOpen} setOpen={setEditEbayGoodsOpen} goodsId={item.id} />
+      <EditEbayGoods open={editEbayGoodsOpen} setOpen={setEditEbayGoodsOpen} goodsId={item.id} handleRefresh={handleRefresh} />
     </>
   );
 }

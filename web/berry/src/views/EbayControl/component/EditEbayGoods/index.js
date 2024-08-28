@@ -2,12 +2,9 @@ import {
   Autocomplete,
   Box,
   Button,
-  Checkbox,
-  Chip,
   Dialog,
   DialogActions,
   DialogContent,
-  DialogContentText,
   DialogTitle,
   FormControl,
   FormControlLabel,
@@ -29,24 +26,20 @@ import SubCard from '../../../../ui-component/cards/SubCard';
 import { LoadingButton } from '@mui/lab';
 import { IconLoader, IconPlus } from '@tabler/icons-react';
 import Uploader from 'rsuite/Uploader';
-import { API } from '../../../../utils/api';
+import { API, ImageUrl } from '../../../../utils/api';
 import Cascader from 'rsuite/Cascader';
 import { useTheme } from '@mui/material/styles';
 import { useNavigate } from 'react-router';
 import OptionsApi from '../EditOptions/OptionsApi';
 import { getOpenaiMsg, removeEmpty, showError, showInfo } from '../../../../utils/common';
-import { compressImage, handleIdentify, getFileName } from '../../../../utils/image-processing';
+import { compressImage, getFileName, handleIdentify } from '../../../../utils/image-processing';
 import { MODEL } from '../../../../utils/preset';
 import { useEffect, useRef, useState } from 'react';
 import * as Yup from 'yup';
-import { ImageUrl } from '../../../../utils/api';
 import { AvailabilityType, CardinalityEnum, ConditionEnum, ListingTypeEnum, ModeEnum } from '../../../../constants/Ebay';
 import _ from 'lodash';
-import { CheckTreePicker, MultiCascader } from 'rsuite';
-import { validate } from '@babel/core/lib/config/validation/options';
 import '@wangeditor/editor/dist/css/style.css'; // 引入 css
 import { Editor, Toolbar } from '@wangeditor/editor-for-react';
-import { IDomEditor, IEditorConfig, IToolbarConfig } from '@wangeditor/editor';
 
 const btnType = {
   save: 'save',
@@ -84,7 +77,7 @@ const validationSchema = Yup.object().shape({
     })
   }),
   sku: Yup.string().required('SKU为必填'),
-  format: Yup.string().required('刊登类型为必填'),
+  format: Yup.string().required('刊登类型为必填')
 });
 
 const originInputs = {
@@ -138,7 +131,7 @@ const originInputs = {
   }
 };
 
-const EditEbayGoods = ({ setOpen, open, goodsId }) => {
+const EditEbayGoods = ({ setOpen, open, goodsId, handleRefresh }) => {
   const ebayProduct = useRef(originInputs);
 
   const handleClose = () => {
@@ -217,6 +210,8 @@ const EditEbayGoods = ({ setOpen, open, goodsId }) => {
   const [listingDurationOptions, setListingDurationOptions] = useState([]);
   const [listingDurationLoading, setListingDurationLoading] = useState(false);
 
+  const [saveLoading, setSaveLoading] = useState(false);
+
   const formik = useFormik({
     initialValues: originInputs,
     validationSchema: validationSchema,
@@ -228,6 +223,7 @@ const EditEbayGoods = ({ setOpen, open, goodsId }) => {
       } else {
         url = '/api/ebay_publish_goods';
       }
+      setSaveLoading(true);
 
       try {
         const reqData = removeEmpty(restValues);
@@ -237,15 +233,32 @@ const EditEbayGoods = ({ setOpen, open, goodsId }) => {
         if (reqData.product) {
           reqData.product = removeEmpty(reqData.product);
         }
+        const aspects = itemAspectsForCategoryOptions
+        if(aspects.length && reqData.product.aspects){
+          for (let i = 0; i < aspects.length; i++) {
+            let aspect = aspects[i];
+            let { aspectConstraint } = aspect;
+            if (aspectConstraint&& aspectConstraint.aspectRequired) {
+                if (!reqData.product.aspects[aspect.localizedAspectName]) {
+                  showError('类目属性有必填项');
+                  return;
+                }
+            }
+          }
+        }
         const res = await API.post(url, removeEmpty(restValues));
         const { success, message } = res.data;
         if (success) {
           showInfo('保存成功');
+          handleRefresh();
+          handleClose();
         } else {
           showError(message);
         }
       } catch (e) {
         showError(e.message);
+      } finally {
+        setSaveLoading(false);
       }
     }
   });
@@ -357,8 +370,9 @@ const EditEbayGoods = ({ setOpen, open, goodsId }) => {
       MODEL.STARCARD.context[0].content[0].text = prompt;
       const { data } = await getOpenaiMsg(
         {
-          ...MODEL.STARCARD.modelConfig,
-          messages: MODEL.STARCARD.context,
+          type: 1,
+          image: url,
+          model: 'gpt-4o',
           front_base_64_image: front_base_64_image,
           back_base_64_image: back_base_64_image
         },
@@ -481,11 +495,11 @@ const EditEbayGoods = ({ setOpen, open, goodsId }) => {
   };
 
   const formatAspect = (aspects) => {
-    if(aspects.length > 0){
+    if (aspects.length > 0) {
       // aspectRequired排序放前面
       aspects.sort((a, b) => {
         return a.aspectRequired ? -1 : 1;
-      })
+      });
     }
     for (let i = 0; i < aspects.length; i++) {
       let aspect = aspects[i];
@@ -1263,7 +1277,11 @@ const EditEbayGoods = ({ setOpen, open, goodsId }) => {
                         error={Boolean(item.aspectConstraint.aspectRequired)}
                         required={Boolean(item.aspectConstraint.aspectRequired)}
                       >
-                        {Boolean(item.aspectConstraint.aspectRequired) ? <span style={{ color: 'red',paddingBottom:'5px' }}>*必选项</span> : ''}
+                        {Boolean(item.aspectConstraint.aspectRequired) ? (
+                          <span style={{ color: 'red', paddingBottom: '5px' }}>*必选项</span>
+                        ) : (
+                          ''
+                        )}
                         {item.aspectConstraint.aspectMode === ModeEnum.SELECTION_ONLY ? (
                           <>
                             <InputLabel id="demo-multiple-checkbox-label">{item.localizedAspectName}</InputLabel>
@@ -1627,24 +1645,26 @@ const EditEbayGoods = ({ setOpen, open, goodsId }) => {
         </DialogContent>
         <DialogActions>
           <Button onClick={handleClose}>取消</Button>
-          <Button
+          <LoadingButton
             type="submit"
+            loading={saveLoading}
             onClick={(e) => {
               formik.setFieldValue('btnType', btnType.save);
               formik.handleSubmit(e);
             }}
           >
             保存
-          </Button>
-          <Button
+          </LoadingButton>
+          <LoadingButton
             type="submit"
+            loading={saveLoading}
             onClick={() => {
               formik.setFieldValue('btnType', btnType.publish);
               formik.handleSubmit();
             }}
           >
             刊登
-          </Button>
+          </LoadingButton>
         </DialogActions>
         ;
       </Dialog>

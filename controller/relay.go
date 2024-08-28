@@ -54,7 +54,7 @@ func Relay(c *gin.Context) {
 	//	requestBody, _ := common.GetRequestBody(c)
 	//	logger.Debugf(ctx, "request body: %s", string(requestBody))
 	//}
-
+	fmt.Printf("relayMode: %v\n", relayMode)
 	var relayRequest RelayRequest
 	if err := common.UnmarshalBodyReusable(c, &relayRequest); err != nil {
 		logger.Errorf(ctx, "UnmarshalBodyReusable failed: %+v", err)
@@ -89,6 +89,7 @@ func Relay(c *gin.Context) {
 		Content: Content,
 		Role:    "user",
 	})
+	fmt.Printf("messages: %v\n", messages)
 	customBody := map[string]interface{}{
 		"back_base_64_image":  relayRequest.BackBase64Image,
 		"front_base_64_image": relayRequest.FrontBase64Image,
