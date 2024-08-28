@@ -103,7 +103,6 @@ func Relay(c *gin.Context) {
 	}
 	common.SetRequestBody(c, helper.Interface2Bytes(customBody))
 	c.Request.Body = io.NopCloser(bytes.NewBuffer(helper.Interface2Bytes(customBody)))
-
 	channelId := c.GetInt(ctxkey.ChannelId)
 	userId := c.GetInt("id")
 	bizErr := relayHelper(c, relayMode)
