@@ -1,6 +1,7 @@
 package helper
 
 import (
+	"encoding/json"
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/songquanpeng/one-api/common/random"
@@ -136,4 +137,12 @@ func String2Int(str string) int {
 		return 0
 	}
 	return num
+}
+
+func Interface2Bytes(body map[string]interface{}) []byte {
+	bytes, err := json.Marshal(body)
+	if err != nil {
+		return nil
+	}
+	return bytes
 }

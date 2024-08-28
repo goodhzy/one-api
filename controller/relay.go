@@ -40,13 +40,70 @@ func relayHelper(c *gin.Context, relayMode int) *model.ErrorWithStatusCode {
 	return err
 }
 
+type RelayRequest struct {
+	BackBase64Image  string `json:"back_base_64_image"`
+	FrontBase64Image string `json:"front_base_64_image"`
+	Type             int    `json:"type"`
+	Image            string `json:"image"`
+}
+
 func Relay(c *gin.Context) {
 	ctx := c.Request.Context()
 	relayMode := relaymode.GetByPath(c.Request.URL.Path)
-	if config.DebugEnabled {
-		requestBody, _ := common.GetRequestBody(c)
-		logger.Debugf(ctx, "request body: %s", string(requestBody))
+	//if config.DebugEnabled {
+	//	requestBody, _ := common.GetRequestBody(c)
+	//	logger.Debugf(ctx, "request body: %s", string(requestBody))
+	//}
+
+	var relayRequest RelayRequest
+	if err := common.UnmarshalBodyReusable(c, &relayRequest); err != nil {
+		logger.Errorf(ctx, "UnmarshalBodyReusable failed: %+v", err)
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": model.Error{
+				Message: "Invalid request body",
+				Type:    "invalid_request_error",
+				Param:   "",
+				Code:    "",
+			},
+		})
+		return
 	}
+	prompt := ""
+	if relayRequest.Type == 1 {
+		prompt = config.OptionMap["prompt"]
+	} else {
+		prompt = config.OptionMap["kaTaoPrompt"]
+	}
+	var messages []model.Message
+	var Content []model.MessageContent
+	Content = append(Content, model.MessageContent{
+		Type: model.ContentTypeText,
+		Text: prompt,
+	}, model.MessageContent{
+		Type: model.ContentTypeImageURL,
+		ImageURL: &model.ImageURL{
+			Url: relayRequest.Image,
+		},
+	})
+	messages = append(messages, model.Message{
+		Content: Content,
+		Role:    "user",
+	})
+	customBody := map[string]interface{}{
+		"back_base_64_image":  relayRequest.BackBase64Image,
+		"front_base_64_image": relayRequest.FrontBase64Image,
+		"messages":            messages,
+		"frequency_penalty":   0,
+		"max_tokens":          4000,
+		"model":               "gpt-4o",
+		"presence_penalty":    0,
+		"stream":              false,
+		"temperature":         0,
+		"top_p":               0,
+	}
+	common.SetRequestBody(c, helper.Interface2Bytes(customBody))
+	c.Request.Body = io.NopCloser(bytes.NewBuffer(helper.Interface2Bytes(customBody)))
+
 	channelId := c.GetInt(ctxkey.ChannelId)
 	userId := c.GetInt("id")
 	bizErr := relayHelper(c, relayMode)
@@ -76,8 +133,8 @@ func Relay(c *gin.Context) {
 			continue
 		}
 		middleware.SetupContextForSelectedChannel(c, channel, originalModel)
-		requestBody, err := common.GetRequestBody(c)
-		c.Request.Body = io.NopCloser(bytes.NewBuffer(requestBody))
+		common.SetRequestBody(c, helper.Interface2Bytes(customBody))
+		c.Request.Body = io.NopCloser(bytes.NewBuffer(helper.Interface2Bytes(customBody)))
 		bizErr = relayHelper(c, relayMode)
 		if bizErr == nil {
 			return

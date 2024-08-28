@@ -10,6 +10,10 @@ import (
 
 const KeyRequestBody = "key_request_body"
 
+func SetRequestBody(c *gin.Context, requestBody []byte) {
+	c.Set(KeyRequestBody, requestBody)
+}
+
 func GetRequestBody(c *gin.Context) ([]byte, error) {
 	requestBody, _ := c.Get(KeyRequestBody)
 	if requestBody != nil {

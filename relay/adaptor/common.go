@@ -4,10 +4,10 @@ import (
 	"errors"
 	"fmt"
 	"github.com/gin-gonic/gin"
-	"github.com/songquanpeng/one-api/common/client"
 	"github.com/songquanpeng/one-api/relay/meta"
 	"io"
 	"net/http"
+	"net/url"
 )
 
 func SetupCommonRequestHeader(c *gin.Context, req *http.Request, meta *meta.Meta) {
@@ -37,9 +37,21 @@ func DoRequestHelper(a Adaptor, c *gin.Context, meta *meta.Meta, requestBody io.
 	}
 	return resp, nil
 }
-
 func DoRequest(c *gin.Context, req *http.Request) (*http.Response, error) {
-	resp, err := client.HTTPClient.Do(req)
+	isProxy := true
+	var client *http.Client
+	if isProxy {
+		uri := url.URL{}
+		uriProxy, _ := uri.Parse("http://127.0.0.1:8888")
+		client = &http.Client{
+			Transport: &http.Transport{
+				Proxy: http.ProxyURL(uriProxy),
+			},
+		}
+	} else {
+		client = &http.Client{}
+	}
+	resp, err := client.Do(req)
 	if err != nil {
 		return nil, err
 	}

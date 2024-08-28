@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"bytes"
 	"fmt"
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
@@ -8,6 +9,7 @@ import (
 	"github.com/songquanpeng/one-api/common/ctxkey"
 	"github.com/songquanpeng/one-api/common/network"
 	"github.com/songquanpeng/one-api/model"
+	"io"
 	"net/http"
 	"strings"
 )
@@ -142,6 +144,24 @@ func TokenAuth() func(c *gin.Context) {
 		}
 		c.Next()
 	}
+}
+
+func ModifyRequestBody(c *gin.Context) {
+	// Step 1: 读取原始请求体
+	bodyBytes, err := io.ReadAll(c.Request.Body)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to read request body"})
+		return
+	}
+
+	// Step 2: 修改请求体内容（这里我们假设简单地在原始请求体前面添加 "Modified: "）
+	modifiedBody := []byte("Modified: " + string(bodyBytes))
+
+	// Step 3: 将修改后的内容重新设置到 c.Request.Body
+	c.Request.Body = io.NopCloser(bytes.NewBuffer(modifiedBody))
+
+	// 继续处理请求
+	c.Next()
 }
 
 func shouldCheckModel(c *gin.Context) bool {
