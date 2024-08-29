@@ -41,6 +41,7 @@ const OperationSetting = () => {
     ApproximateTokenEnabled: "",
     RetryTimes: 0,
     prompt: "",
+    kaTaoPrompt:""
   });
   const [originInputs, setOriginInputs] = useState({});
   let [loading, setLoading] = useState(false);
@@ -108,6 +109,9 @@ const OperationSetting = () => {
       case "prompt":
         if (originInputs["prompt"] !== inputs.prompt) {
           await updateOption("prompt", inputs.prompt);
+        }
+        if(originInputs["kaTaoPrompt"] !== inputs.kaTaoPrompt){
+          await updateOption("kaTaoPrompt", inputs.kaTaoPrompt);
         }
       break;
       case "monitor":
@@ -206,7 +210,7 @@ const OperationSetting = () => {
               multiline
               maxRows={15}
               id="channel-prompt-label"
-              label="提示词"
+              label="eBay提示词"
               value={inputs.prompt}
               name="prompt"
               onChange={handleInputChange}
@@ -215,6 +219,22 @@ const OperationSetting = () => {
               placeholder="设置模型提示词"
             />
           </FormControl>
+
+          <FormControl fullWidth>
+            <TextField
+              multiline
+              maxRows={15}
+              id="channel-kaTaoPrompt-label"
+              label="卡淘提示词"
+              value={inputs.kaTaoPrompt}
+              name="kaTaoPrompt"
+              onChange={handleInputChange}
+              aria-describedby="helper-text-channel-kataoprompt-label"
+              minRows={5}
+              placeholder="设置卡淘模型提示词"
+            />
+          </FormControl>
+
           <Button
             variant="contained"
             onClick={() => {
