@@ -3,6 +3,7 @@ import { Card,LinearProgress,Button,Stack,TableContainer,Table,TableBody,TableCe
 import { styled } from '@mui/material/styles';
 import {LoadingButton } from '@mui/lab'
 import JSZip from 'jszip';
+import { API } from 'utils/api';
 import { saveAs } from 'file-saver';
 import { DragDropContext,Droppable,Draggable } from 'react-beautiful-dnd'
 import { IconUpload,IconAxe,IconDownload } from '@tabler/icons-react';
@@ -30,6 +31,14 @@ export default function Picture() {
   const [fileList,setFileList] = useState([])
   const [imageList,setImageList] = useState([]);
   const [mergeStatus, setMergeStatus] = useState(1);
+  const [isOpen,setIsOpen] = useState(false);
+
+  const getDefault = async () => {
+    const {data} = await API.get('/api/user/self')
+    if(data.data.quota>0){
+      setIsOpen(true)
+    }
+  }
 
   const onDragEnd = (result) =>{
     console.log(result);
@@ -65,6 +74,7 @@ export default function Picture() {
   useEffect(()=>{
     setImageList(getNewFileList(fileList))
     console.log(imageList);
+    getDefault()
   },[fileList])
 
   //处理图片
@@ -130,7 +140,6 @@ export default function Picture() {
     );
   }
 
-
   const VisuallyHiddenInput = styled('input')({
     clip: 'rect(0 0 0 0)',
     clipPath: 'inset(50%)',
@@ -143,28 +152,27 @@ export default function Picture() {
     width: 1,
   });
 
-
   return(
     <>
-      <Card sx={{ userSelect: 'none',width:'100%' }}>
-            <DragDropContext onDragEnd={onDragEnd}>
-              <Droppable droppableId='picture' direction="horizontal">
-                {(provided) => (
-                  <Stack ref={provided.innerRef} {...provided.droppableProps} direction='row' spacing={3} padding={'20px'} sx={{ overflowX: 'auto',minWidth: '100%',}} >
-                    {fileList.map((item,index)=>(
-                      <Draggable key={index} draggableId={index.toString()} index={index}>
-                        {(provided) => (
-                          <div ref={provided.innerRef} {...provided.draggableProps} {...provided.dragHandleProps} >
-                            <img src={item.url} alt='' style={{ width:'120px',height:'180px' }} />
-                          </div>
-                        )}
-                      </Draggable>
-                    ))}
-                    {provided.placeholder}
-                  </Stack>
-                )}
-              </Droppable>
-            </DragDropContext>
+      {isOpen && <Card sx={{ userSelect: 'none',width:'100%' }} >
+        <DragDropContext onDragEnd={onDragEnd}>
+          <Droppable droppableId='picture' direction="horizontal">
+            {(provided) => (
+              <Stack ref={provided.innerRef} {...provided.droppableProps} direction='row' spacing={3} padding={'20px'} sx={{ overflowX: 'auto',minWidth: '100%',}} >
+                {fileList.map((item,index)=>(
+                  <Draggable key={index} draggableId={index.toString()} index={index}>
+                    {(provided) => (
+                      <div ref={provided.innerRef} {...provided.draggableProps} {...provided.dragHandleProps} >
+                        <img src={item.url} alt='' style={{ width:'120px',height:'180px' }} />
+                      </div>
+                    )}
+                  </Draggable>
+                ))}
+                {provided.placeholder}
+              </Stack>
+            )}
+          </Droppable>
+        </DragDropContext>
 
         {loading && <LinearProgress />}
         <Stack
@@ -212,7 +220,8 @@ export default function Picture() {
           </Table>
         </TableContainer>
 
-      </Card>
+      </Card>}
+      {!isOpen && '你没有权限使用'}
     </>
   )
 }
