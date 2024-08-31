@@ -28,7 +28,7 @@ import (
 const HeaderEbayId = "Ebay-id"
 const defaultMarketplaceId = "EBAY_US"
 
-const isProxy = true
+const isProxy = false
 
 func getEbayId(c *gin.Context) string {
 	ebayId := c.GetHeader(HeaderEbayId)
