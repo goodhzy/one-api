@@ -58,12 +58,20 @@ const panel = {
     },
     {
       id: 'ebayControl',
-      title: 'ebay',
+      title: 'eBay',
       type: 'collapse',
       icon: icons.IconShoppingBag,
       breadcrumbs: false,
       isAdmin: false,
       children: [
+        {
+          id: 'identify-eBay',
+          title: 'AI标题',
+          type: 'item',
+          url: '/panel/ebayIdentify',
+          icon: icons.IconCards,
+          breadcrumbs: false
+        },
         {
           id: 'account',
           title: '账号管理',
@@ -108,19 +116,54 @@ const panel = {
       ]
     },
     {
+      id: 'cardHobby',
+      title: '卡淘',
+      type: 'collapse',
+      icon: icons.IconShoppingBag,
+      breadcrumbs: false,
+      isAdmin: false,
+      children: [
+        {
+          id: 'identify-cardHobby',
+          title: 'AI标题',
+          type: 'item',
+          url: '/panel/cardHobbyIdentify',
+          icon: icons.IconCards,
+          breadcrumbs: false
+        },
+        {
+          id: 'account',
+          title: '账号管理',
+          type: 'item',
+          url: '/panel/cardHobby',
+          icon: icons.IconUser,
+          breadcrumbs: false
+        },
+        {
+          id: 'goods',
+          title: '刊登管理',
+          url: '/panel/cardHobby',
+          type: 'item',
+          icon: icons.IconShoppingBag,
+          breadcrumbs: false,
+
+        },
+        {
+          id: 'listing',
+          title: 'listing管理',
+          type: 'item',
+          icon: icons.IconShoppingBag,
+          breadcrumbs: false,
+          url: '/panel/cardHobby'
+        }
+      ]
+    },
+    {
       id: 'token',
       title: '令牌',
       type: 'item',
       url: '/panel/token',
       icon: icons.IconKey,
-      breadcrumbs: false
-    },
-    {
-      id: 'identify',
-      title: 'AI标题',
-      type: 'item',
-      url: '/panel/identify',
-      icon: icons.IconCards,
       breadcrumbs: false
     },
     {

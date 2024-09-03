@@ -8,6 +8,10 @@ import AccountEbay from '../views/EbayControl/AccountEbay';
 import MinimalLayout from '../layout/MinimalLayout';
 import PublishEbay from '../views/EbayControl/PublishEbay';
 import EbayListing from '../views/EbayControl/listing';
+import EbayIdentify from '../views/EbayControl/eBayIdentify';
+
+import CardHobbyIdentify from '../views/CardHobbyControl/CardHobbyIdentify'
+import CardHobby from '../views/CardHobbyControl'
 
 const Channel = Loadable(lazy(() => import('views/Channel')));
 const Log = Loadable(lazy(() => import('views/Log')));
@@ -65,13 +69,13 @@ const MainRoutes = {
       element: <Token />
     },
     {
-      path: 'identify',
-      element: <Identify />
-    },
-    {
       type: 'collapse',
       component: <MinimalLayout />,
       children: [
+        {
+          path: 'ebayIdentify',
+          element: <EbayIdentify />
+        },
         {
           path: 'goods',
           element: <PublishEbay />
@@ -83,6 +87,14 @@ const MainRoutes = {
         {
           path: 'listing',
           element: <EbayListing />
+        },
+        {
+          path: 'cardHobbyIdentify',
+          element: <CardHobbyIdentify />
+        },
+        {
+          path: 'cardHobby',
+          element: <CardHobby />
         }
       ]
     },
